@@ -11,25 +11,89 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 enum UserRole {
-  USER
-  SUPERADMIN
+  SUPER_ADMIN
+  AGENCY_ADMIN
+  AGENT
+  PUBLIC_USER
 }
 
-model Profile {
-  id            String               @id @default(cuid())
-  userId        String               @unique
-  avatarUrl     String?
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  active        Boolean              @default(true)
-  firstName     String?              @map("first_name")
-  lastName      String?              @map("last_name")
-  role          UserRole             @default(USER)
+enum PropertyType {
+  HOUSE
+  APARTMENT
+  OFFICE
+  LAND
+}
+
+enum TransactionType {
+  SALE
+  RENT
+}
+
+enum PropertyStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  active    Boolean  @default(true)
+  firstName String?  @map("first_name")
+  lastName  String?  @map("last_name")
+  role      UserRole @default(PUBLIC_USER)
+  phone     String?
+  whatsapp  String?
+
+  agency   Agency? @relation(fields: [agencyId], references: [id])
+  agencyId String?
+
+  properties Property[]
 
   @@index([userId])
-  @@map("profiles")
+  @@map("users")
+}
+
+model Agency {
+  id        String   @id @default(cuid())
+  name      String
+  logoUrl   String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agents     User[]
+  properties Property[]
+}
+
+model Property {
+  id              String          @id @default(cuid())
+  title           String
+  description     String
+  type            PropertyType
+  locationState   String
+  locationCity    String
+  locationNeigh   String
+  price           Float
+  bedrooms        Int
+  bathrooms       Int
+  garageSpaces    Int
+  squareMeters    Float
+  transactionType TransactionType
+  status          PropertyStatus  @default(PENDING)
+  images          String[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  agent    User   @relation(fields: [agentId], references: [id])
+  agentId  String
+
+  agency   Agency @relation(fields: [agencyId], references: [id])
+  agencyId String
 }
