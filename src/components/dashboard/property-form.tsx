@@ -40,6 +40,7 @@ import {
 } from "@/lib/validations/property";
 import { PropertyType, TransactionType } from "@prisma/client";
 import { useAuth } from "@/providers/auth-provider";
+import { uploadFiles, validateFile } from "@/lib/upload";
 
 interface PropertyFormProps {
   initialData?: Partial<CreatePropertyInput>;
@@ -59,6 +60,14 @@ export function PropertyForm({
     initialData?.features || []
   );
   const [newFeature, setNewFeature] = useState("");
+  const [images, setImages] = useState<File[]>([]);
+  const [videos, setVideos] = useState<File[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<string[]>(
+    initialData?.images || []
+  );
+  const [uploadedVideos, setUploadedVideos] = useState<string[]>(
+    initialData?.videos || []
+  );
   const { user, session, profile } = useAuth();
 
   const form = useForm<CreatePropertyInput>({
@@ -72,12 +81,12 @@ export function PropertyForm({
       address: initialData?.address || "",
       city: initialData?.city || "",
       state: initialData?.state || "",
-      zipCode: initialData?.zipCode || "",
       bedrooms: initialData?.bedrooms || 1,
       bathrooms: initialData?.bathrooms || 1,
       area: initialData?.area || undefined,
       features: initialData?.features || [],
       images: initialData?.images || [],
+      videos: initialData?.videos || [],
     },
   });
 
@@ -96,15 +105,79 @@ export function PropertyForm({
     form.setValue("features", updatedFeatures);
   };
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const validFiles = Array.from(files).filter((file) =>
+        validateFile(file, "image")
+      );
+      setImages((prev) => [...prev, ...validFiles]);
+    }
+    // Clear the input so the same file can be selected again
+    event.target.value = "";
+  };
+
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeUploadedImage = (index: number) => {
+    setUploadedImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const validFiles = Array.from(files).filter((file) =>
+        validateFile(file, "video")
+      );
+      setVideos((prev) => [...prev, ...validFiles]);
+    }
+    // Clear the input so the same file can be selected again
+    event.target.value = "";
+  };
+
+  const removeVideo = (index: number) => {
+    setVideos((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const removeUploadedVideo = (index: number) => {
+    setUploadedVideos((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const onSubmit = async (data: CreatePropertyInput) => {
     try {
       setIsSubmitting(true);
       console.log("Submitting property data:", data);
-      console.log("Authentication state:", {
-        user: user?.id,
-        session: !!session,
-        profile: profile?.id,
-      });
+
+      // Upload new files if any
+      let imageUrls = [...uploadedImages];
+      let videoUrls = [...uploadedVideos];
+
+      if (images.length > 0) {
+        toast({
+          title: "Uploading images...",
+          description: "Please wait while images are being uploaded",
+        });
+        const uploadedImageUrls = await uploadFiles(images, "images");
+        imageUrls = [...imageUrls, ...uploadedImageUrls];
+      }
+
+      if (videos.length > 0) {
+        toast({
+          title: "Uploading videos...",
+          description: "Please wait while videos are being uploaded",
+        });
+        const uploadedVideoUrls = await uploadFiles(videos, "videos");
+        videoUrls = [...videoUrls, ...uploadedVideoUrls];
+      }
+
+      // Prepare form data with uploaded URLs
+      const formData = {
+        ...data,
+        images: imageUrls,
+        videos: videoUrls,
+      };
 
       const url = propertyId
         ? `/api/properties/${propertyId}`
@@ -116,7 +189,7 @@ export function PropertyForm({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(formData),
       });
 
       console.log("Response status:", response.status);
@@ -153,30 +226,6 @@ export function PropertyForm({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // Test function to submit a valid form
-  const testSubmit = () => {
-    const testData = {
-      title: "Test Property",
-      description:
-        "This is a test property description that meets the minimum length requirement",
-      propertyType: PropertyType.APARTMENT,
-      transactionType: TransactionType.SALE,
-      address: "123 Test Street",
-      city: "Test City",
-      state: "TS",
-      zipCode: "12345",
-      price: 100000,
-      bedrooms: 2,
-      bathrooms: 2,
-      area: 1000,
-      features: ["Test Feature"],
-      images: [],
-    };
-
-    console.log("Testing with data:", testData);
-    onSubmit(testData);
   };
 
   return (
@@ -357,7 +406,7 @@ export function PropertyForm({
                 )}
               />
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="city"
@@ -380,20 +429,6 @@ export function PropertyForm({
                       <FormLabel>State *</FormLabel>
                       <FormControl>
                         <Input placeholder="e.g., NY" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="zipCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>ZIP Code *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g., 10001" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -517,41 +552,154 @@ export function PropertyForm({
               </div>
             </div>
 
+            {/* Media Upload */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-medium">Images and Videos</h3>
+
+              {/* Images Section */}
+              <div className="space-y-3">
+                <h4 className="text-md font-medium">Images</h4>
+                <p className="text-sm text-muted-foreground">
+                  Maximum file size: 50MB per file
+                </p>
+
+                {/* Existing uploaded images */}
+                {uploadedImages.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {uploadedImages.map((imageUrl, index) => (
+                      <div
+                        key={`uploaded-${index}`}
+                        className="relative group border rounded-lg p-2 bg-muted"
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`Uploaded image ${index + 1}`}
+                          className="w-20 h-20 object-cover rounded"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeUploadedImage(index)}
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* New image files */}
+                {images.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {images.map((file, index) => (
+                      <div
+                        key={`new-${index}`}
+                        className="relative group border rounded-lg p-2 bg-muted"
+                      >
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`New image ${index + 1}`}
+                          className="w-20 h-20 object-cover rounded"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/80"
+                  />
+                </div>
+              </div>
+
+              {/* Videos Section */}
+              <div className="space-y-3">
+                <h4 className="text-md font-medium">Videos</h4>
+                <p className="text-sm text-muted-foreground">
+                  Maximum file size: 50MB per file
+                </p>
+
+                {/* Existing uploaded videos */}
+                {uploadedVideos.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {uploadedVideos.map((videoUrl, index) => (
+                      <div
+                        key={`uploaded-video-${index}`}
+                        className="relative group border rounded-lg p-2 bg-muted"
+                      >
+                        <video
+                          src={videoUrl}
+                          className="w-20 h-20 object-cover rounded"
+                          controls={false}
+                          muted
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeUploadedVideo(index)}
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* New video files */}
+                {videos.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {videos.map((file, index) => (
+                      <div
+                        key={`new-video-${index}`}
+                        className="relative group border rounded-lg p-2 bg-muted"
+                      >
+                        <video
+                          src={URL.createObjectURL(file)}
+                          className="w-20 h-20 object-cover rounded"
+                          controls={false}
+                          muted
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeVideo(index)}
+                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <Input
+                    type="file"
+                    accept="video/*"
+                    multiple
+                    onChange={handleVideoUpload}
+                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/80"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Form Actions */}
             <div className="flex gap-4 pt-6">
               <Button type="submit" disabled={isSubmitting} className="flex-1">
                 {isSubmitting && <Loader className="mr-2 h-4 w-4" />}
                 {propertyId ? "Update Property" : "Create Property"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  console.log("Form values:", form.getValues());
-                  console.log("Form errors:", form.formState.errors);
-                  console.log("Form is valid:", form.formState.isValid);
-                  console.log("Form is dirty:", form.formState.isDirty);
-                }}
-              >
-                Debug Form
-              </Button>
-              <Button type="button" variant="outline" onClick={testSubmit}>
-                Test Submit
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  console.log("Auth state:", {
-                    user: user?.id,
-                    session: !!session,
-                    profile: profile?.id,
-                  });
-                  console.log("User email:", user?.email);
-                  console.log("Profile role:", profile?.role);
-                }}
-              >
-                Check Auth
               </Button>
               {onCancel && (
                 <Button type="button" variant="outline" onClick={onCancel}>

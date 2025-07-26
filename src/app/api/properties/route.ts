@@ -253,6 +253,7 @@ export async function POST(request: NextRequest) {
       squareMeters: propertyData.area, // Map area to squareMeters
       transactionType: propertyData.transactionType,
       images: propertyData.images,
+      videos: propertyData.videos,
       features: propertyData.features,
     };
 

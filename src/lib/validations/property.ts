@@ -16,12 +16,12 @@ export const createPropertySchema = z.object({
   address: z.string().min(10, "Full address is required"),
   city: z.string().min(2, "City is required"),
   state: z.string().min(2, "State is required"),
-  zipCode: z.string().min(5, "ZIP code is required"),
   price: z.number().positive("Price must be positive"),
   bedrooms: z.number().int().min(0, "Bedrooms cannot be negative"),
   bathrooms: z.number().min(0, "Bathrooms cannot be negative"),
   area: z.number().positive("Area must be positive"),
-  images: z.array(z.string().url("Invalid image URL")).default([]), // Make images optional with default empty array
+  images: z.array(z.string()).default([]), // Array of image file paths/URLs after upload
+  videos: z.array(z.string()).default([]), // Array of video file paths/URLs after upload
   features: z.array(z.string()).default([]),
 });
 
@@ -35,12 +35,12 @@ export const updatePropertySchema = z.object({
   address: z.string().min(10).optional(),
   city: z.string().min(2).optional(),
   state: z.string().min(2).optional(),
-  zipCode: z.string().min(5).optional(),
   price: z.number().positive().optional(),
   bedrooms: z.number().int().min(0).optional(),
   bathrooms: z.number().int().min(0).optional(),
   area: z.number().positive().optional(),
-  images: z.array(z.string().url()).min(1).optional(),
+  images: z.array(z.string()).optional(),
+  videos: z.array(z.string()).optional(),
   features: z.array(z.string()).optional(),
 });
 
