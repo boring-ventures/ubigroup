@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "prisma": {
-    "seed": "ts-node ./prisma/seed.ts"
+    "seed": "tsx ./prisma/seed.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.0",

@@ -13,7 +13,7 @@ UbiGroup, a leading real estate company, aims to digitalize its operations throu
 
 ## 3. User Stories
 
-- **As a potential home buyer,** I want to easily search for properties using various filters and connect with the listing agent to get more information.
+- **As a potential home buyer,** I want to easily search for properties using various filters and connect with the listing agent to get more information, this role not will be a create account, the information is public for him
 - **As a real estate agent,** I want to upload and manage my property listings and view all properties on the platform to better serve potential buyers.
 - **As an agency administrator,** I want to manage the agents in my agency, create their platform credentials, and oversee all properties listed by my agency.
 - **As a UbiGroup super administrator,** I want to have complete oversight of the platform, including managing agencies, users, and properties, as well as viewing key performance metrics.

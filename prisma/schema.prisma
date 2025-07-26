@@ -19,7 +19,6 @@ enum UserRole {
   SUPER_ADMIN
   AGENCY_ADMIN
   AGENT
-  PUBLIC_USER
 }
 
 enum PropertyType {
@@ -49,16 +48,20 @@ model User {
   active    Boolean  @default(true)
   firstName String?  @map("first_name")
   lastName  String?  @map("last_name")
-  role      UserRole @default(PUBLIC_USER)
+  role      UserRole @default(AGENT)
   phone     String?
   whatsapp  String?
 
+  // Agency relationship - Super Admins don't belong to agencies
   agency   Agency? @relation(fields: [agencyId], references: [id])
   agencyId String?
 
+  // Only agents create properties
   properties Property[]
 
   @@index([userId])
+  @@index([role])
+  @@index([agencyId])
   @@map("users")
 }
 
@@ -67,11 +70,17 @@ model Agency {
   name      String   @unique
   logoUrl   String?
   address   String?
+  phone     String?
+  email     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  active    Boolean  @default(true)
 
-  agents     User[]
+  // Agency has many users (Agency Admins and Agents)
+  users      User[]
   properties Property[]
+
+  @@map("agencies")
 }
 
 model Property {
@@ -79,23 +88,35 @@ model Property {
   title           String
   description     String
   type            PropertyType
-  locationState   String
-  locationCity    String
-  locationNeigh   String
+  locationState   String          @map("location_state")
+  locationCity    String          @map("location_city")
+  locationNeigh   String          @map("location_neighborhood")
+  address         String?         // Full address
   price           Float
   bedrooms        Int
   bathrooms       Int
-  garageSpaces    Int
-  squareMeters    Float
-  transactionType TransactionType
+  garageSpaces    Int             @map("garage_spaces")
+  squareMeters    Float           @map("square_meters")
+  transactionType TransactionType @map("transaction_type")
   status          PropertyStatus  @default(PENDING)
-  images          String[]
+  images          String[]        // Array of image URLs
+  features        String[]        // Additional features like "Pool", "Garden", etc.
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
+  // Property is created by an agent
   agent    User   @relation(fields: [agentId], references: [id])
-  agentId  String
+  agentId  String @map("agent_id")
 
+  // Property belongs to an agency
   agency   Agency @relation(fields: [agencyId], references: [id])
-  agencyId String
+  agencyId String @map("agency_id")
+
+  @@index([status])
+  @@index([type])
+  @@index([transactionType])
+  @@index([locationState, locationCity])
+  @@index([agentId])
+  @@index([agencyId])
+  @@map("properties")
 }

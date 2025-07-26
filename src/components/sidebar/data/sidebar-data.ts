@@ -1,155 +1,222 @@
 import {
-  AlertCircle,
-  AppWindow,
-  AudioWaveform,
-  Ban,
-  Bug,
-  CheckSquare,
-  Command,
-  GalleryVerticalEnd,
-  HelpCircle,
+  BarChart3,
+  Building2,
+  FileText,
+  Home,
   LayoutDashboard,
-  Lock,
-  LockKeyhole,
-  MessageSquare,
   Settings,
-  ServerCrash,
-  UserX,
   Users,
+  Plus,
+  CheckCircle,
+  Clock,
+  Eye,
 } from "lucide-react";
+import type { UserRole } from "@prisma/client";
 import type { SidebarData } from "../types";
 
-export const sidebarData: SidebarData = {
-  user: {
-    name: "satnaing",
-    email: "satnaingdev@gmail.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  teams: [
-    {
-      name: "Shadcn Admin",
-      logo: Command,
-      plan: "Vite + ShadcnUI",
-    },
-    {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
-    },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-  ],
-  navGroups: [
-    {
-      title: "General",
-      items: [
+// Default teams data for different roles
+const getDefaultTeams = (role: UserRole) => {
+  switch (role) {
+    case "SUPER_ADMIN":
+      return [
         {
-          title: "Dashboard",
-          url: "/",
-          icon: LayoutDashboard,
+          name: "UbiGroup Platform",
+          logo: Building2,
+          plan: "Super Admin",
         },
+      ];
+    case "AGENCY_ADMIN":
+      return [
         {
-          title: "Tasks",
-          url: "/tasks",
-          icon: CheckSquare,
+          name: "My Agency",
+          logo: Building2,
+          plan: "Agency Admin",
         },
+      ];
+    case "AGENT":
+      return [
         {
-          title: "Apps",
-          url: "/apps",
-          icon: AppWindow,
+          name: "My Agency",
+          logo: Building2,
+          plan: "Agent",
         },
+      ];
+    default:
+      return [
         {
-          title: "Chats",
-          url: "/chats",
-          badge: "3",
-          icon: MessageSquare,
+          name: "UbiGroup",
+          logo: Building2,
+          plan: "Default",
         },
-        {
-          title: "Users",
-          url: "/users",
-          icon: Users,
-        },
-      ],
-    },
-    {
-      title: "Pages",
-      items: [
-        {
-          title: "Auth",
-          icon: Lock,
-          items: [
-            {
-              title: "Sign In",
-              url: "/sign-in",
-            },
-            {
-              title: "Sign In (2 Col)",
-              url: "/sign-in-2",
-            },
-            {
-              title: "Sign Up",
-              url: "/sign-up",
-            },
-            {
-              title: "Forgot Password",
-              url: "/forgot-password",
-            },
-            {
-              title: "OTP",
-              url: "/otp",
-            },
-          ],
-        },
-        {
-          title: "Errors",
-          icon: Bug,
-          items: [
-            {
-              title: "Unauthorized",
-              url: "/401",
-              icon: LockKeyhole,
-            },
-            {
-              title: "Forbidden",
-              url: "/403",
-              icon: UserX,
-            },
-            {
-              title: "Not Found",
-              url: "/404",
-              icon: AlertCircle,
-            },
-            {
-              title: "Internal Server Error",
-              url: "/500",
-              icon: ServerCrash,
-            },
-            {
-              title: "Maintenance Error",
-              url: "/503",
-              icon: Ban,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      title: "Other",
-      items: [
-        {
-          title: "Settings",
-          icon: Settings,
-          url: "/settings",
-        },
-        {
-          title: "Help Center",
-          url: "/help-center",
-          icon: HelpCircle,
-        },
-      ],
-    },
-  ],
+      ];
+  }
 };
+
+// Base sidebar data that's common to all roles
+export const baseSidebarData: Omit<SidebarData, "navGroups"> = {
+  user: {
+    name: "",
+    email: "",
+    avatar: "",
+  },
+  teams: [],
+};
+
+// Role-specific navigation configurations
+export const getRoleBasedSidebarData = (role: UserRole): SidebarData => {
+  const baseNavGroups = [];
+
+  switch (role) {
+    case "SUPER_ADMIN":
+      baseNavGroups.push(
+        {
+          title: "Super Admin",
+          items: [
+            {
+              title: "Dashboard",
+              url: "/dashboard",
+              icon: LayoutDashboard,
+            },
+            {
+              title: "System Analytics",
+              url: "/analytics",
+              icon: BarChart3,
+            },
+            {
+              title: "User Management",
+              url: "/users",
+              icon: Users,
+            },
+          ],
+        },
+        {
+          title: "System Management",
+          items: [
+            {
+              title: "Agency Management",
+              url: "/agencies",
+              icon: Building2,
+            },
+            {
+              title: "All Properties",
+              url: "/all-properties",
+              icon: Home,
+            },
+          ],
+        }
+      );
+      break;
+
+    case "AGENCY_ADMIN":
+      baseNavGroups.push(
+        {
+          title: "Agency Admin",
+          items: [
+            {
+              title: "Dashboard",
+              url: "/dashboard",
+              icon: LayoutDashboard,
+            },
+            {
+              title: "Agency Analytics",
+              url: "/analytics",
+              icon: BarChart3,
+            },
+            {
+              title: "Agent Management",
+              url: "/agents",
+              icon: Users,
+            },
+          ],
+        },
+        {
+          title: "Property Management",
+          items: [
+            {
+              title: "All Properties",
+              url: "/properties",
+              icon: Home,
+            },
+            {
+              title: "Pending Approval",
+              url: "/properties/pending",
+              icon: Clock,
+              badge: "new",
+            },
+            {
+              title: "Approved Properties",
+              url: "/properties/approved",
+              icon: CheckCircle,
+            },
+          ],
+        }
+      );
+      break;
+
+    case "AGENT":
+      baseNavGroups.push(
+        {
+          title: "Agent",
+          items: [
+            {
+              title: "Dashboard",
+              url: "/dashboard",
+              icon: LayoutDashboard,
+            },
+            {
+              title: "My Properties",
+              url: "/my-properties",
+              icon: Home,
+            },
+            {
+              title: "Add Property",
+              url: "/properties/create",
+              icon: Plus,
+            },
+          ],
+        },
+        {
+          title: "Property Status",
+          items: [
+            {
+              title: "Pending Review",
+              url: "/properties/pending",
+              icon: Clock,
+            },
+            {
+              title: "Approved",
+              url: "/properties/approved",
+              icon: CheckCircle,
+            },
+            {
+              title: "Public View",
+              url: "/properties/public",
+              icon: Eye,
+            },
+          ],
+        }
+      );
+      break;
+  }
+
+  // Common settings section for all roles
+  baseNavGroups.push({
+    title: "Account",
+    items: [
+      {
+        title: "Settings",
+        url: "/settings",
+        icon: Settings,
+      },
+    ],
+  });
+
+  return {
+    ...baseSidebarData,
+    teams: getDefaultTeams(role),
+    navGroups: baseNavGroups,
+  };
+};
+
+// Default sidebar data (fallback)
+export const sidebarData: SidebarData = getRoleBasedSidebarData("AGENT");

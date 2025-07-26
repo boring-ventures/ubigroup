@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Sidebar,
   SidebarContent,
@@ -8,10 +10,15 @@ import {
 import { NavGroup } from "./nav-group";
 import { NavUser } from "./nav-user";
 import { TeamSwitcher } from "./team-switcher";
-import { sidebarData } from "./data/sidebar-data";
+import { getRoleBasedSidebarData } from "./data/sidebar-data";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import type { NavGroupProps } from "./types";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { profile } = useCurrentUser();
+  const userRole = profile?.role || "AGENT";
+  const sidebarData = getRoleBasedSidebarData(userRole);
+
   return (
     <Sidebar collapsible="icon" variant="floating" {...props}>
       <SidebarHeader>
