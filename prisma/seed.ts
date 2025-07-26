@@ -9,62 +9,160 @@ import {
 const prisma = new PrismaClient();
 
 async function main() {
-  // Crear agencia inicial
-  const agency = await prisma.agency.upsert({
-    where: { name: "UbiGroup Real Estate" },
-    update: {},
-    create: {
-      name: "UbiGroup Real Estate",
-      logoUrl: null,
-      address: "Av. Principal 123, Ciudad",
-      phone: "+1 234 567 8900",
-      email: "info@ubigroup.com",
+  console.log("🌱 Starting to seed database...");
+
+  // Clean existing data in the correct order to avoid foreign key conflicts
+  await prisma.property.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.agency.deleteMany();
+
+  // Create Agencies
+  const futureworksAgency = await prisma.agency.create({
+    data: {
+      name: "FutureWorks Real Estate",
+      logoUrl: "/logos/futureworks.svg",
+      address: "Rua das Palmeiras, 123, São Paulo, SP",
+      phone: "+55 11 9999-1234",
+      email: "contact@futureworks.com",
     },
   });
 
-  // Crear usuario super admin
-  await prisma.user.upsert({
-    where: { userId: "superadmin" },
-    update: {},
-    create: {
-      userId: "superadmin",
-      firstName: "Super",
-      lastName: "Admin",
+  const innovateLabsAgency = await prisma.agency.create({
+    data: {
+      name: "InnovateLabs Properties",
+      logoUrl: "/logos/innovatelabs.svg",
+      address: "Av. Paulista, 456, São Paulo, SP",
+      phone: "+55 11 8888-5678",
+      email: "info@innovatelabs.com",
+    },
+  });
+
+  const zenithHealthAgency = await prisma.agency.create({
+    data: {
+      name: "Zenith Health Real Estate",
+      logoUrl: "/logos/zenithhealth.svg",
+      address: "Rua da Consolação, 789, São Paulo, SP",
+      phone: "+55 11 7777-9012",
+      email: "hello@zenithhealth.com",
+    },
+  });
+
+  console.log("✅ Created agencies");
+
+  // Create Users
+  // Super Admin (doesn't belong to any agency)
+  const superAdmin = await prisma.user.create({
+    data: {
+      userId: "super-admin-001",
+      firstName: "Carlos",
+      lastName: "Silva",
       role: UserRole.SUPER_ADMIN,
-      phone: "0000000000",
-      whatsapp: "0000000000",
-      agencyId: agency.id,
-      active: true,
+      phone: "+55 11 9999-0000",
+      whatsapp: "+55 11 9999-0000",
+      agencyId: null, // Super admins don't belong to agencies
     },
   });
 
-  // Crear agente de ejemplo
-  const agent = await prisma.user.upsert({
-    where: { userId: "agent1" },
-    update: {},
-    create: {
-      userId: "agent1",
-      firstName: "María",
-      lastName: "González",
+  // Agency Admins
+  const futureworksAdmin = await prisma.user.create({
+    data: {
+      userId: "admin-futureworks-001",
+      firstName: "Maria",
+      lastName: "Santos",
+      role: UserRole.AGENCY_ADMIN,
+      phone: "+55 11 9999-1111",
+      whatsapp: "+55 11 9999-1111",
+      agencyId: futureworksAgency.id,
+    },
+  });
+
+  const innovateLabsAdmin = await prisma.user.create({
+    data: {
+      userId: "admin-innovate-001",
+      firstName: "João",
+      lastName: "Costa",
+      role: UserRole.AGENCY_ADMIN,
+      phone: "+55 11 8888-2222",
+      whatsapp: "+55 11 8888-2222",
+      agencyId: innovateLabsAgency.id,
+    },
+  });
+
+  const zenithHealthAdmin = await prisma.user.create({
+    data: {
+      userId: "admin-zenith-001",
+      firstName: "Ana",
+      lastName: "Oliveira",
+      role: UserRole.AGENCY_ADMIN,
+      phone: "+55 11 7777-3333",
+      whatsapp: "+55 11 7777-3333",
+      agencyId: zenithHealthAgency.id,
+    },
+  });
+
+  // Agents
+  const agent1 = await prisma.user.create({
+    data: {
+      userId: "agent-futureworks-001",
+      firstName: "Pedro",
+      lastName: "Rodrigues",
       role: UserRole.AGENT,
-      phone: "+1 234 567 8901",
-      whatsapp: "+1 234 567 8901",
-      agencyId: agency.id,
-      active: true,
+      phone: "+55 11 9999-4444",
+      whatsapp: "+55 11 9999-4444",
+      agencyId: futureworksAgency.id,
     },
   });
 
-  // Crear propiedades de ejemplo
-  const sampleProperties = [
+  const agent2 = await prisma.user.create({
+    data: {
+      userId: "agent-futureworks-002",
+      firstName: "Lucia",
+      lastName: "Fernandes",
+      role: UserRole.AGENT,
+      phone: "+55 11 9999-5555",
+      whatsapp: "+55 11 9999-5555",
+      agencyId: futureworksAgency.id,
+    },
+  });
+
+  const agent3 = await prisma.user.create({
+    data: {
+      userId: "agent-innovate-001",
+      firstName: "Roberto",
+      lastName: "Lima",
+      role: UserRole.AGENT,
+      phone: "+55 11 8888-6666",
+      whatsapp: "+55 11 8888-6666",
+      agencyId: innovateLabsAgency.id,
+    },
+  });
+
+  const agent4 = await prisma.user.create({
+    data: {
+      userId: "agent-zenith-001",
+      firstName: "Fernanda",
+      lastName: "Alves",
+      role: UserRole.AGENT,
+      phone: "+55 11 7777-7777",
+      whatsapp: "+55 11 7777-7777",
+      agencyId: zenithHealthAgency.id,
+    },
+  });
+
+  console.log("✅ Created users (1 Super Admin, 3 Agency Admins, 4 Agents)");
+
+  // Create Properties
+  const properties = [
+    // FutureWorks Properties
     {
-      title: "Hermosa Casa Familiar en Residencial",
+      title: "Casa Moderna em Condomínio Fechado",
       description:
-        "Casa moderna con 3 habitaciones, 2 baños, cocina equipada, jardín privado y garaje para 2 autos. Ubicada en zona residencial tranquila con excelentes escuelas cercanas.",
+        "Linda casa com 3 quartos, piscina e churrasqueira em condomínio de alto padrão. Acabamento de primeira qualidade com vista para área verde.",
       type: PropertyType.HOUSE,
-      locationState: "California",
-      locationCity: "Los Angeles",
-      locationNeigh: "Beverly Hills",
-      address: "123 Sunset Blvd, Beverly Hills, CA",
+      locationState: "São Paulo",
+      locationCity: "São Paulo",
+      locationNeigh: "Vila Olímpia",
+      address: "Rua das Flores, 456 - Vila Olímpia, São Paulo - SP",
       price: 850000,
       bedrooms: 3,
       bathrooms: 2,
@@ -73,159 +171,189 @@ async function main() {
       transactionType: TransactionType.SALE,
       status: PropertyStatus.APPROVED,
       images: [
-        "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800",
+        "/property-images/house-1-1.jpg",
+        "/property-images/house-1-2.jpg",
       ],
-      features: ["Jardín", "Piscina", "Cocina Equipada", "Seguridad 24/7"],
-      agentId: agent.id,
-      agencyId: agency.id,
+      features: ["Piscina", "Churrasqueira", "Jardim", "Portaria 24h"],
+      agentId: agent1.id,
+      agencyId: futureworksAgency.id,
     },
     {
-      title: "Apartamento de Lujo en Centro",
+      title: "Apartamento Luxuoso na Paulista",
       description:
-        "Apartamento de lujo con vista panorámica, 2 habitaciones, 2 baños, cocina gourmet y amenities de primera clase. Ubicado en el corazón de la ciudad.",
+        "Apartamento com 2 suítes, varanda gourmet e vista panorâmica da cidade. Prédio com lazer completo e localização privilegiada.",
       type: PropertyType.APARTMENT,
-      locationState: "California",
-      locationCity: "San Francisco",
-      locationNeigh: "Downtown",
-      address: "456 Market St, San Francisco, CA",
-      price: 1200000,
+      locationState: "São Paulo",
+      locationCity: "São Paulo",
+      locationNeigh: "Bela Vista",
+      address: "Av. Paulista, 1000 - Bela Vista, São Paulo - SP",
+      price: 4500,
       bedrooms: 2,
       bathrooms: 2,
       garageSpaces: 1,
-      squareMeters: 120,
-      transactionType: TransactionType.SALE,
-      status: PropertyStatus.APPROVED,
-      images: [
-        "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800",
-      ],
-      features: ["Vista Panorámica", "Gimnasio", "Piscina", "Concierge"],
-      agentId: agent.id,
-      agencyId: agency.id,
-    },
-    {
-      title: "Oficina Comercial en Zona Empresarial",
-      description:
-        "Oficina moderna con 200m², 4 espacios de trabajo, sala de reuniones, recepción y estacionamiento privado. Ideal para empresas en crecimiento.",
-      type: PropertyType.OFFICE,
-      locationState: "Texas",
-      locationCity: "Houston",
-      locationNeigh: "Business District",
-      address: "789 Business Ave, Houston, TX",
-      price: 2500,
-      bedrooms: 0,
-      bathrooms: 2,
-      garageSpaces: 4,
-      squareMeters: 200,
+      squareMeters: 95,
       transactionType: TransactionType.RENT,
       status: PropertyStatus.APPROVED,
-      images: [
-        "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800",
-      ],
-      features: [
-        "Sala de Reuniones",
-        "Recepción",
-        "Estacionamiento",
-        "Seguridad",
-      ],
-      agentId: agent.id,
-      agencyId: agency.id,
+      images: ["/property-images/apt-1-1.jpg", "/property-images/apt-1-2.jpg"],
+      features: ["Varanda Gourmet", "Vista Panorâmica", "Academia", "Piscina"],
+      agentId: agent2.id,
+      agencyId: futureworksAgency.id,
     },
     {
-      title: "Terreno Residencial con Vista al Mar",
+      title: "Terreno Comercial - Centro",
       description:
-        "Terreno de 500m² con vista panorámica al mar, listo para construir. Incluye permisos de construcción y acceso a servicios públicos.",
+        "Excelente terreno para investimento comercial no centro da cidade. Documentação em ordem e pronto para construção.",
       type: PropertyType.LAND,
-      locationState: "Florida",
-      locationCity: "Miami",
-      locationNeigh: "Miami Beach",
-      address: "321 Ocean Dr, Miami Beach, FL",
-      price: 350000,
+      locationState: "São Paulo",
+      locationCity: "São Paulo",
+      locationNeigh: "Centro",
+      address: "Rua XV de Novembro, 500 - Centro, São Paulo - SP",
+      price: 1200000,
       bedrooms: 0,
       bathrooms: 0,
       garageSpaces: 0,
-      squareMeters: 500,
+      squareMeters: 400,
       transactionType: TransactionType.SALE,
+      status: PropertyStatus.PENDING,
+      images: ["/property-images/land-1-1.jpg"],
+      features: ["Esquina", "Documentação OK", "Zoneamento Comercial"],
+      agentId: agent1.id,
+      agencyId: futureworksAgency.id,
+    },
+    // InnovateLabs Properties
+    {
+      title: "Escritório Moderno - Faria Lima",
+      description:
+        "Sala comercial de alto padrão na Faria Lima. Totalmente mobiliada com vista para a cidade. Ideal para startups e empresas de tecnologia.",
+      type: PropertyType.OFFICE,
+      locationState: "São Paulo",
+      locationCity: "São Paulo",
+      locationNeigh: "Itaim Bibi",
+      address: "Av. Faria Lima, 2000 - Itaim Bibi, São Paulo - SP",
+      price: 8500,
+      bedrooms: 0,
+      bathrooms: 2,
+      garageSpaces: 3,
+      squareMeters: 120,
+      transactionType: TransactionType.RENT,
       status: PropertyStatus.APPROVED,
       images: [
-        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800",
+        "/property-images/office-1-1.jpg",
+        "/property-images/office-1-2.jpg",
       ],
-      features: [
-        "Vista al Mar",
-        "Permisos de Construcción",
-        "Acceso a Servicios",
-        "Zona Residencial",
-      ],
-      agentId: agent.id,
-      agencyId: agency.id,
+      features: ["Mobiliado", "Internet Fibra", "Sala de Reunião", "Copa"],
+      agentId: agent3.id,
+      agencyId: innovateLabsAgency.id,
     },
     {
-      title: "Casa de Campo con Piscina",
+      title: "Cobertura Duplex - Jardins",
       description:
-        "Casa de campo con 4 habitaciones, 3 baños, piscina privada, jardín extenso y garaje para 3 autos. Perfecta para familias que buscan tranquilidad.",
-      type: PropertyType.HOUSE,
-      locationState: "Arizona",
-      locationCity: "Phoenix",
-      locationNeigh: "Scottsdale",
-      address: "654 Desert Rd, Scottsdale, AZ",
-      price: 650000,
+        "Cobertura duplex com terraço gourmet, piscina privativa e vista deslumbrante. O imóvel dos seus sonhos nos Jardins.",
+      type: PropertyType.APARTMENT,
+      locationState: "São Paulo",
+      locationCity: "São Paulo",
+      locationNeigh: "Jardins",
+      address: "Rua Augusta, 800 - Jardins, São Paulo - SP",
+      price: 2500000,
       bedrooms: 4,
-      bathrooms: 3,
+      bathrooms: 4,
       garageSpaces: 3,
       squareMeters: 250,
       transactionType: TransactionType.SALE,
       status: PropertyStatus.APPROVED,
       images: [
-        "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800",
-      ],
-      features: ["Piscina", "Jardín", "Terraza", "Seguridad"],
-      agentId: agent.id,
-      agencyId: agency.id,
-    },
-    {
-      title: "Apartamento para Alquiler en Universidad",
-      description:
-        "Apartamento ideal para estudiantes, 1 habitación, 1 baño, cocina compacta. Ubicado cerca de la universidad con transporte público.",
-      type: PropertyType.APARTMENT,
-      locationState: "California",
-      locationCity: "Berkeley",
-      locationNeigh: "University District",
-      address: "987 College Ave, Berkeley, CA",
-      price: 1800,
-      bedrooms: 1,
-      bathrooms: 1,
-      garageSpaces: 0,
-      squareMeters: 60,
-      transactionType: TransactionType.RENT,
-      status: PropertyStatus.APPROVED,
-      images: [
-        "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800",
+        "/property-images/penthouse-1-1.jpg",
+        "/property-images/penthouse-1-2.jpg",
       ],
       features: [
-        "Cerca de Universidad",
-        "Transporte Público",
-        "Lavandería",
-        "Internet Incluido",
+        "Terraço Gourmet",
+        "Piscina Privativa",
+        "Vista Panorâmica",
+        "Duplex",
       ],
-      agentId: agent.id,
-      agencyId: agency.id,
+      agentId: agent3.id,
+      agencyId: innovateLabsAgency.id,
+    },
+    // Zenith Health Properties
+    {
+      title: "Casa Familiar - Morumbi",
+      description:
+        "Casa espaçosa para família grande, com quintal amplo e área de lazer completa. Localizada em rua tranquila no Morumbi.",
+      type: PropertyType.HOUSE,
+      locationState: "São Paulo",
+      locationCity: "São Paulo",
+      locationNeigh: "Morumbi",
+      address: "Rua das Acácias, 300 - Morumbi, São Paulo - SP",
+      price: 1500000,
+      bedrooms: 4,
+      bathrooms: 3,
+      garageSpaces: 4,
+      squareMeters: 320,
+      transactionType: TransactionType.SALE,
+      status: PropertyStatus.APPROVED,
+      images: [
+        "/property-images/house-2-1.jpg",
+        "/property-images/house-2-2.jpg",
+      ],
+      features: [
+        "Quintal Amplo",
+        "Área de Lazer",
+        "Quarto de Empregada",
+        "Rua Tranquila",
+      ],
+      agentId: agent4.id,
+      agencyId: zenithHealthAgency.id,
+    },
+    {
+      title: "Loft Industrial - Vila Madalena",
+      description:
+        "Loft moderno em prédio industrial convertido. Pé direito alto, muito iluminado e com acabamento contemporâneo.",
+      type: PropertyType.APARTMENT,
+      locationState: "São Paulo",
+      locationCity: "São Paulo",
+      locationNeigh: "Vila Madalena",
+      address: "Rua Harmonia, 150 - Vila Madalena, São Paulo - SP",
+      price: 3200,
+      bedrooms: 1,
+      bathrooms: 1,
+      garageSpaces: 1,
+      squareMeters: 65,
+      transactionType: TransactionType.RENT,
+      status: PropertyStatus.PENDING,
+      images: ["/property-images/loft-1-1.jpg"],
+      features: [
+        "Pé Direito Alto",
+        "Industrial",
+        "Muito Iluminado",
+        "Mobiliado",
+      ],
+      agentId: agent4.id,
+      agencyId: zenithHealthAgency.id,
     },
   ];
 
-  // Verificar si ya existen propiedades para evitar duplicados
-  const existingProperties = await prisma.property.count();
-
-  if (existingProperties === 0) {
-    // Crear las propiedades solo si no existen
-    await prisma.property.createMany({
-      data: sampleProperties,
+  for (const propertyData of properties) {
+    await prisma.property.create({
+      data: propertyData,
     });
-    console.log("Propiedades de ejemplo creadas.");
-  } else {
-    console.log("Las propiedades ya existen, saltando creación.");
   }
 
+  console.log("✅ Created properties (7 total: 5 approved, 2 pending)");
+
+  console.log("🎉 Seed completed successfully!");
+  console.log("\n📊 Summary:");
+  console.log("- 3 Agencies created");
+  console.log("- 1 Super Admin created");
+  console.log("- 3 Agency Admins created");
+  console.log("- 4 Agents created");
+  console.log("- 7 Properties created (5 approved, 2 pending)");
+  console.log("\n🔑 Test Users:");
+  console.log("Super Admin: super-admin-001");
   console.log(
-    "Seed completado: Agencia, Super Admin, Agente y Propiedades de ejemplo creados."
+    "Agency Admins: admin-futureworks-001, admin-innovate-001, admin-zenith-001"
+  );
+  console.log(
+    "Agents: agent-futureworks-001, agent-futureworks-002, agent-innovate-001, agent-zenith-001"
   );
 }
 

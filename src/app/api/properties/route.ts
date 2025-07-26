@@ -1,22 +1,231 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { UserRole, PropertyStatus } from "@prisma/client";
+import {
+  authenticateUser,
+  validateRequestBody,
+  validateQueryParams,
+  canManageProperty,
+} from "@/lib/auth/rbac";
+import {
+  createPropertySchema,
+  propertyQuerySchema,
+  CreatePropertyInput,
+  PropertyQueryInput,
+} from "@/lib/validations/property";
 
+// GET - Fetch properties with filtering
 export async function GET(request: NextRequest) {
   try {
-    // Get query parameters for filtering
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get("status") || "APPROVED";
-    const limit = parseInt(searchParams.get("limit") || "50");
-    const offset = parseInt(searchParams.get("offset") || "0");
+    const { data: queryParams, error: validationError } =
+      validateQueryParams<PropertyQueryInput>(
+        propertyQuerySchema,
+        searchParams
+      );
 
-    // Fetch properties with agent and agency information
-    const properties = await prisma.property.findMany({
-      where: {
-        status: status as any,
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
+    }
+
+    // For public access, only show approved properties
+    // For authenticated users, show based on their role and permissions
+    const { user } = await authenticateUser();
+
+    let whereClause: any = {};
+
+    // Build where clause based on user role and filters
+    if (!user) {
+      // Public access - only approved properties
+      whereClause.status = PropertyStatus.APPROVED;
+    } else {
+      // Authenticated access - apply role-based filters
+      if (user.role === UserRole.AGENT) {
+        // Agents can see their own properties (all statuses) + public approved properties
+        if (queryParams.status || queryParams.agentId) {
+          // If specific filters are applied, respect them
+          if (queryParams.agentId === user.id) {
+            // Agent viewing their own properties - all statuses
+            whereClause.agentId = user.id;
+          } else {
+            // Agent viewing other properties - only approved
+            whereClause.status = PropertyStatus.APPROVED;
+          }
+        } else {
+          // Default for agents - their own properties
+          whereClause.agentId = user.id;
+        }
+      } else if (user.role === UserRole.AGENCY_ADMIN) {
+        // Agency Admins can see all properties from their agency
+        whereClause.agencyId = user.agencyId;
+      }
+      // Super Admins can see all properties (no additional filters)
+    }
+
+    // Apply query filters
+    if (queryParams.status) {
+      whereClause.status = queryParams.status;
+    }
+    if (queryParams.type) {
+      whereClause.type = queryParams.type;
+    }
+    if (queryParams.transactionType) {
+      whereClause.transactionType = queryParams.transactionType;
+    }
+    if (queryParams.locationState) {
+      whereClause.locationState = {
+        contains: queryParams.locationState,
+        mode: "insensitive",
+      };
+    }
+    if (queryParams.locationCity) {
+      whereClause.locationCity = {
+        contains: queryParams.locationCity,
+        mode: "insensitive",
+      };
+    }
+    if (queryParams.locationNeigh) {
+      whereClause.locationNeigh = {
+        contains: queryParams.locationNeigh,
+        mode: "insensitive",
+      };
+    }
+    if (queryParams.minPrice || queryParams.maxPrice) {
+      whereClause.price = {};
+      if (queryParams.minPrice) whereClause.price.gte = queryParams.minPrice;
+      if (queryParams.maxPrice) whereClause.price.lte = queryParams.maxPrice;
+    }
+    if (queryParams.minBedrooms || queryParams.maxBedrooms) {
+      whereClause.bedrooms = {};
+      if (queryParams.minBedrooms)
+        whereClause.bedrooms.gte = queryParams.minBedrooms;
+      if (queryParams.maxBedrooms)
+        whereClause.bedrooms.lte = queryParams.maxBedrooms;
+    }
+    if (queryParams.minBathrooms || queryParams.maxBathrooms) {
+      whereClause.bathrooms = {};
+      if (queryParams.minBathrooms)
+        whereClause.bathrooms.gte = queryParams.minBathrooms;
+      if (queryParams.maxBathrooms)
+        whereClause.bathrooms.lte = queryParams.maxBathrooms;
+    }
+    if (queryParams.minSquareMeters || queryParams.maxSquareMeters) {
+      whereClause.squareMeters = {};
+      if (queryParams.minSquareMeters)
+        whereClause.squareMeters.gte = queryParams.minSquareMeters;
+      if (queryParams.maxSquareMeters)
+        whereClause.squareMeters.lte = queryParams.maxSquareMeters;
+    }
+    if (queryParams.features && queryParams.features.length > 0) {
+      whereClause.features = { hasEvery: queryParams.features };
+    }
+    if (queryParams.search) {
+      whereClause.OR = [
+        { title: { contains: queryParams.search, mode: "insensitive" } },
+        { description: { contains: queryParams.search, mode: "insensitive" } },
+      ];
+    }
+    if (queryParams.agentId && user?.role !== UserRole.AGENT) {
+      // Only allow agentId filter for non-agents (agents are automatically filtered to their own)
+      whereClause.agentId = queryParams.agentId;
+    }
+    if (queryParams.agencyId && user?.role === UserRole.SUPER_ADMIN) {
+      // Only Super Admins can filter by agency
+      whereClause.agencyId = queryParams.agencyId;
+    }
+
+    // Fetch properties with pagination
+    const [properties, totalCount] = await Promise.all([
+      prisma.property.findMany({
+        where: whereClause,
+        include: {
+          agent: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+              whatsapp: true,
+            },
+          },
+          agency: {
+            select: {
+              id: true,
+              name: true,
+              logoUrl: true,
+            },
+          },
+        },
+        orderBy: {
+          [queryParams.sortBy]: queryParams.sortOrder,
+        },
+        take: queryParams.limit,
+        skip: queryParams.offset,
+      }),
+      prisma.property.count({ where: whereClause }),
+    ]);
+
+    return NextResponse.json({
+      properties,
+      totalCount,
+      hasMore: queryParams.offset + queryParams.limit < totalCount,
+      pagination: {
+        limit: queryParams.limit,
+        offset: queryParams.offset,
+        page: Math.floor(queryParams.offset / queryParams.limit) + 1,
+        totalPages: Math.ceil(totalCount / queryParams.limit),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching properties:", error);
+    return NextResponse.json(
+      { error: "Error fetching properties" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST - Create new property (Agents only)
+export async function POST(request: NextRequest) {
+  try {
+    // Authenticate user
+    const { user, error: authError } = await authenticateUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: authError || "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Only agents can create properties
+    if (user.role !== UserRole.AGENT) {
+      return NextResponse.json(
+        { error: "Only agents can create properties" },
+        { status: 403 }
+      );
+    }
+
+    // Validate request body
+    const body = await request.json();
+    const { data: propertyData, error: validationError } =
+      validateRequestBody<CreatePropertyInput>(createPropertySchema, body);
+
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
+    }
+
+    // Create property
+    const property = await prisma.property.create({
+      data: {
+        ...propertyData,
+        agentId: user.id,
+        agencyId: user.agencyId!,
+        status: PropertyStatus.PENDING, // All new properties start as pending
       },
       include: {
         agent: {
           select: {
+            id: true,
             firstName: true,
             lastName: true,
             phone: true,
@@ -25,34 +234,19 @@ export async function GET(request: NextRequest) {
         },
         agency: {
           select: {
+            id: true,
             name: true,
             logoUrl: true,
           },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: limit,
-      skip: offset,
     });
 
-    // Get total count for pagination
-    const totalCount = await prisma.property.count({
-      where: {
-        status: status as any,
-      },
-    });
-
-    return NextResponse.json({
-      properties,
-      totalCount,
-      hasMore: offset + limit < totalCount,
-    });
+    return NextResponse.json({ property }, { status: 201 });
   } catch (error) {
-    console.error("Error fetching properties:", error);
+    console.error("Error creating property:", error);
     return NextResponse.json(
-      { error: "Error fetching properties" },
+      { error: "Error creating property" },
       { status: 500 }
     );
   }

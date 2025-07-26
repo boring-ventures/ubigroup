@@ -24,37 +24,37 @@
 
 ## Tasks
 
-- [ ] 1.0 **Foundation & Database Setup**
+- [x] 1.0 **Foundation & Database Setup**
 
   - [x] 1.1 Define `User`, `Agency`, and `Property` models in `prisma/schema.prisma`.
   - [x] 1.2 Define an `enum` for `UserRole` with only three roles: `SUPER_ADMIN`, `AGENCY_ADMIN`, `AGENT`.
   - [x] 1.3 Establish relations: a `User` has a `UserRole` and may belong to an `Agency` (Super Admins don't belong to agencies); an `Agency` has many `Users`; a `Property` is created by a `User` (Agent).
   - [x] 1.4 Add fields to `Property` for type, location, price, features, transaction type, status (e.g., `PENDING`, `APPROVED`, `REJECTED`), etc.
-  - [ ] 1.5 Run `pnpm prisma migrate dev --name init-ubigroup-schema` to apply the new schema to the database.
-  - [ ] 1.6 (Optional) Create a Prisma seed script to populate the database with initial roles and a super admin user.
+  - [x] 1.5 Run `pnpm prisma migrate dev --name init-ubigroup-schema` to apply the new schema to the database.
+  - [x] 1.6 (Optional) Create a Prisma seed script to populate the database with initial roles and a super admin user.
 
-- [ ] 2.0 **Backend API & Authentication**
+- [x] 2.0 **Backend API & Authentication**
 
-  - [ ] 2.1 Implement role-based access control middleware in `src/middleware.ts` to protect API and dashboard routes (only authenticated users with valid roles can access admin features).
-  - [ ] 2.2 Create API route (`/api/properties`) for property CRUD operations, ensuring only agents can create/update their own properties.
-  - [ ] 2.3 Create API route (`/api/agencies`) for Super Admins to perform CRUD on agencies.
-  - [ ] 2.4 Create API route (`/api/agents`) for Agency Admins to create and manage agent accounts within their agency.
-  - [ ] 2.5 Add an endpoint for Agency Admins to approve or reject pending property listings.
-  - [ ] 2.6 Create API endpoints to fetch the specific metrics required for each dashboard role.
-  - [ ] 2.7 Implement Zod validation for all incoming API requests.
-  - [ ] 2.8 Create public API endpoints for property catalog (no authentication required) for public users to browse properties.
+  - [x] 2.1 Implement role-based access control middleware in `src/middleware.ts` to protect API and dashboard routes (only authenticated users with valid roles can access admin features).
+  - [x] 2.2 Create API route (`/api/properties`) for property CRUD operations, ensuring only agents can create/update their own properties.
+  - [x] 2.3 Create API route (`/api/agencies`) for Super Admins to perform CRUD on agencies.
+  - [x] 2.4 Create API route (`/api/agents`) for Agency Admins to create and manage agent accounts within their agency.
+  - [x] 2.5 Add an endpoint for Agency Admins to approve or reject pending property listings.
+  - [x] 2.6 Create API endpoints to fetch the specific metrics required for each dashboard role.
+  - [x] 2.7 Implement Zod validation for all incoming API requests.
+  - [x] 2.8 Create public API endpoints for property catalog (no authentication required) for public users to browse properties.
 
 - [ ] 3.0 **Administrative Dashboard - UI/UX**
 
   - [ ] 3.1 Create a shared layout for the dashboard in `src/app/(dashboard)/layout.tsx` with role-based sidebar navigation.
-  - [ ] 3.2 **Agent Dashboard:**
-    - [ ] 3.2.1 Build a form (`property-form.tsx`) for creating/editing properties with image upload functionality.
-    - [ ] 3.2.2 Create a page to display a table of the agent's own properties with their status (pending, approved, rejected).
-    - [ ] 3.2.3 Implement the UI for the agent's personal dashboard showing basic metrics (total listings, approved listings, views).
-  - [ ] 3.3 **Agency Admin Dashboard:**
-    - [ ] 3.3.1 Build a user management page with a table to display, create, and suspend agents within their agency.
-    - [ ] 3.3.2 Create a property management page to oversee all properties from their agency.
-    - [ ] 3.3.3 Implement a queue for pending listings with "Approve" and "Reject" buttons.
+  - [x] 3.2 **Agent Dashboard:**
+    - [x] 3.2.1 Build a form (`property-form.tsx`) for creating/editing properties with image upload functionality.
+    - [x] 3.2.2 Create a page to display a table of the agent's own properties with their status (pending, approved, rejected).
+    - [x] 3.2.3 Implement the UI for the agent's personal dashboard showing basic metrics (total listings, approved listings, views).
+  - [x] 3.3 **Agency Admin Dashboard:**
+    - [x] 3.3.1 Build a user management page with a table to display, create, and suspend agents within their agency.
+    - [x] 3.3.2 Create a property management page to oversee all properties from their agency.
+    - [x] 3.3.3 Implement a queue for pending listings with "Approve" and "Reject" buttons.
     - [ ] 3.3.4 Add agency profile management (name, logo, contact information).
   - [ ] 3.4 **Super Admin Dashboard:**
     - [ ] 3.4.1 Build an agency management page with a table to display, create, and suspend agencies.

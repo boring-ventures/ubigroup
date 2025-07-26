@@ -1,25 +1,59 @@
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import prisma from "@/lib/prisma";
+import { SuperAdminDashboard } from "@/components/dashboard/super-admin-dashboard";
+import { AgencyAdminDashboard } from "@/components/dashboard/agency-admin-dashboard";
+import { AgentDashboard } from "@/components/dashboard/agent-dashboard";
 
 export default async function DashboardPage() {
   const supabase = createServerComponentClient({ cookies });
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   if (!session) {
     redirect("/sign-in");
   }
 
+  // Get user profile from database to check role
+  const userProfile = await prisma.user.findUnique({
+    where: { userId: session.user.id },
+    include: {
+      agency: true,
+    },
+  });
+
+  if (!userProfile) {
+    redirect("/sign-up");
+  }
+
+  // Render role-specific dashboard
+  const renderDashboard = () => {
+    switch (userProfile.role) {
+      case "SUPER_ADMIN":
+        return <SuperAdminDashboard />;
+      case "AGENCY_ADMIN":
+        return <AgencyAdminDashboard />;
+      case "AGENT":
+        return <AgentDashboard />;
+      default:
+        return (
+          <div className="space-y-8">
+            <div className="bg-card rounded-lg p-6">
+              <h2 className="text-2xl font-semibold mb-4">Dashboard</h2>
+              <p className="text-muted-foreground">
+                Welcome to your dashboard. Your role access is being configured.
+              </p>
+            </div>
+          </div>
+        );
+    }
+  };
+
   return (
-    <div className="space-y-8">
-      <div className="bg-card rounded-lg p-6">
-        <h2 className="text-2xl font-semibold mb-4">Dashboard Overview</h2>
-        <p className="text-muted-foreground">
-          This is your protected dashboard page. You can start adding your content here.
-        </p>
-      </div>
-      
-      {/* Add more dashboard sections here */}
-    </div>
+    <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      {renderDashboard()}
+    </main>
   );
-} 
+}

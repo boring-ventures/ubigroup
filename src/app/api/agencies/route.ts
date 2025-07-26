@@ -1,50 +1,90 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
+import { UserRole } from "@prisma/client";
+import {
+  authenticateUser,
+  validateRequestBody,
+  validateQueryParams,
+} from "@/lib/auth/rbac";
+import {
+  createAgencySchema,
+  agencyQuerySchema,
+  CreateAgencyInput,
+  AgencyQueryInput,
+} from "@/lib/validations/agency";
 
-export async function GET() {
+// GET - Fetch agencies (Super Admin only)
+export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerComponentClient({
-      cookies: () => cookieStore,
-    });
-
-    // Use getUser() instead of getSession() for better security
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Authenticate user
+    const { user, error: authError } = await authenticateUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: authError || "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    // Get current user to check if they're a SUPER_ADMIN
-    const currentUser = await prisma.user.findUnique({
-      where: { userId: user.id },
-    });
-
-    if (!currentUser || currentUser.role !== "SUPER_ADMIN") {
+    // Only Super Admins can access agency management
+    if (user.role !== UserRole.SUPER_ADMIN) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Fetch all agencies with user and property counts
-    const agencies = await prisma.agency.findMany({
-      include: {
-        _count: {
-          select: {
-            users: true,
-            properties: true,
+    // Validate query parameters
+    const { searchParams } = new URL(request.url);
+    const { data: queryParams, error: validationError } =
+      validateQueryParams<AgencyQueryInput>(agencyQuerySchema, searchParams);
+
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
+    }
+
+    // Build where clause
+    let whereClause: any = {};
+
+    if (queryParams.active !== undefined) {
+      whereClause.active = queryParams.active;
+    }
+
+    if (queryParams.search) {
+      whereClause.OR = [
+        { name: { contains: queryParams.search, mode: "insensitive" } },
+        { email: { contains: queryParams.search, mode: "insensitive" } },
+      ];
+    }
+
+    // Fetch agencies with pagination and counts
+    const [agencies, totalCount] = await Promise.all([
+      prisma.agency.findMany({
+        where: whereClause,
+        include: {
+          _count: {
+            select: {
+              users: true,
+              properties: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
+        orderBy: {
+          [queryParams.sortBy]: queryParams.sortOrder,
+        },
+        take: queryParams.limit,
+        skip: queryParams.offset,
+      }),
+      prisma.agency.count({ where: whereClause }),
+    ]);
+
+    return NextResponse.json({
+      agencies,
+      totalCount,
+      hasMore: queryParams.offset + queryParams.limit < totalCount,
+      pagination: {
+        limit: queryParams.limit,
+        offset: queryParams.offset,
+        page: Math.floor(queryParams.offset / queryParams.limit) + 1,
+        totalPages: Math.ceil(totalCount / queryParams.limit),
       },
     });
-
-    return NextResponse.json({ agencies });
   } catch (error) {
     console.error("Failed to fetch agencies:", error);
     return NextResponse.json(
@@ -54,46 +94,35 @@ export async function GET() {
   }
 }
 
+// POST - Create new agency (Super Admin only)
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerComponentClient({
-      cookies: () => cookieStore,
-    });
-
-    // Use getUser() instead of getSession() for better security
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Authenticate user
+    const { user, error: authError } = await authenticateUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: authError || "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    // Get current user to check if they're a SUPER_ADMIN
-    const currentUser = await prisma.user.findUnique({
-      where: { userId: user.id },
-    });
-
-    if (!currentUser || currentUser.role !== "SUPER_ADMIN") {
+    // Only Super Admins can create agencies
+    if (user.role !== UserRole.SUPER_ADMIN) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Validate request body
     const body = await request.json();
-    const { name, address, phone, email } = body;
+    const { data: agencyData, error: validationError } =
+      validateRequestBody<CreateAgencyInput>(createAgencySchema, body);
 
-    // Validate required fields
-    if (!name) {
-      return NextResponse.json(
-        { error: "Agency name is required" },
-        { status: 400 }
-      );
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
     // Check if agency name already exists
     const existingAgency = await prisma.agency.findUnique({
-      where: { name },
+      where: { name: agencyData.name },
     });
 
     if (existingAgency) {
@@ -106,10 +135,12 @@ export async function POST(request: NextRequest) {
     // Create agency
     const agency = await prisma.agency.create({
       data: {
-        name,
-        address: address || null,
-        phone: phone || null,
-        email: email || null,
+        name: agencyData.name,
+        logoUrl: agencyData.logoUrl || null,
+        address: agencyData.address || null,
+        phone: agencyData.phone || null,
+        email: agencyData.email || null,
+        active: true,
       },
       include: {
         _count: {
@@ -121,7 +152,13 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ agency }, { status: 201 });
+    return NextResponse.json(
+      {
+        agency,
+        message: `Agency "${agency.name}" created successfully`,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Failed to create agency:", error);
     return NextResponse.json(
