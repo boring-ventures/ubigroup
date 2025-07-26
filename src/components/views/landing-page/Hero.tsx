@@ -1,5 +1,5 @@
-import Link from "next/link"
-import { ArrowRight, Sparkles } from "lucide-react"
+import Link from "next/link";
+import { ArrowRight, Sparkles, Home, Building2, MapPin } from "lucide-react";
 import { SparklesText } from "@/components/magicui/sparkles-text";
 import { BoxReveal } from "@/components/magicui/box-reveal";
 import { ShineBorder } from "@/components/magicui/shine-border";
@@ -20,45 +20,44 @@ export default function Hero() {
               <BlurFade>
                 <div className="inline-flex items-center rounded-full border border-primary/20 bg-background/50 px-6 py-2 mb-8 shadow-glow backdrop-blur-sm">
                   <Sparkles className="h-4 w-4 text-primary mr-2" />
-                  <SparklesText text="AI-Powered Mental Fitness" />
+                  <SparklesText text="Plataforma Líder en Bienes Raíces" />
                 </div>
               </BlurFade>
 
               <BoxReveal>
                 <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground leading-tight tracking-tight">
-                  Your mind is your best friend—
+                  Encuentra tu
                   <br />
-                  <span className="text-primary">
-                    But it can also be your worst enemy.
-                  </span>
+                  <span className="text-primary">Propiedad Ideal</span>
                 </h1>
               </BoxReveal>
 
               <BlurFade delay={0.2}>
                 <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-                  Learn to harness the power of your mind with
-                  POSITIVE-Next&apos;s science-backed mental fitness platform.
+                  Explora nuestra amplia selección de propiedades en venta y
+                  alquiler. Conectamos compradores con los mejores agentes
+                  inmobiliarios.
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
                   <ShimmerButton>
                     <Link
-                      href="/sign-up"
+                      href="/#properties"
                       className="inline-flex items-center px-8 py-3 text-lg font-medium"
                     >
-                      Get Started Free
+                      Ver Propiedades
                       <ArrowRight
                         className="ml-2 group-hover:translate-x-1 transition-transform"
                         size={20}
                       />
                     </Link>
                   </ShimmerButton>
-                  
+
                   <Link
                     href="/#features"
                     className="inline-flex items-center text-foreground hover:text-primary transition-colors px-8 py-3"
                   >
-                    Learn More
+                    Conoce Más
                   </Link>
                 </div>
               </BlurFade>
@@ -67,15 +66,20 @@ export default function Hero() {
             {/* Stats section with enhanced styling */}
             <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto">
               {[
-                { label: "Active Users", value: "10,000+" },
-                { label: "Mental Fitness Score", value: "85% Improvement" },
-                { label: "User Satisfaction", value: "4.9/5" },
+                { label: "Propiedades Activas", value: "500+", icon: Home },
+                {
+                  label: "Agentes Certificados",
+                  value: "50+",
+                  icon: Building2,
+                },
+                { label: "Ciudades Cubiertas", value: "25+", icon: MapPin },
               ].map((stat, i) => (
                 <BlurFade
                   key={stat.label}
                   delay={i * 0.1}
                   className="flex flex-col items-center p-4 rounded-lg bg-card/50 backdrop-blur-sm border border-border/50 hover:border-primary/50 transition-all duration-300"
                 >
+                  <stat.icon className="h-8 w-8 text-primary mb-2" />
                   <div className="text-2xl font-bold text-foreground">
                     {stat.value}
                   </div>
@@ -91,4 +95,3 @@ export default function Hero() {
     </section>
   );
 }
-

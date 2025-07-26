@@ -1,50 +1,50 @@
-import { Brain, Heart, Zap, Target, Smile, TrendingUp } from "lucide-react";
+import { Search, Shield, Users, MapPin, Phone, TrendingUp } from "lucide-react";
 import { ShineBorder } from "@/components/magicui/shine-border";
 import { AnimatedShinyText } from "@/components/magicui/animated-shiny-text";
 import { BlurFade } from "@/components/magicui/blur-fade";
 
 const features = [
   {
-    id: "mental-fitness",
-    icon: Brain,
-    title: "Mental Fitness",
+    id: "advanced-search",
+    icon: Search,
+    title: "Búsqueda Avanzada",
     description:
-      "Train your mind to overcome negative thoughts and boost your mental resilience.",
+      "Encuentra tu propiedad ideal con filtros avanzados por ubicación, precio, características y más.",
   },
   {
-    id: "emotional-intelligence",
-    icon: Heart,
-    title: "Emotional Intelligence",
+    id: "verified-properties",
+    icon: Shield,
+    title: "Propiedades Verificadas",
     description:
-      "Develop a deeper understanding of your emotions and learn to manage them effectively.",
+      "Todas nuestras propiedades son verificadas y aprobadas por administradores certificados.",
   },
   {
-    id: "peak-performance",
-    icon: Zap,
-    title: "Peak Performance",
+    id: "expert-agents",
+    icon: Users,
+    title: "Agentes Expertos",
     description:
-      "Unlock your full potential and achieve your goals with a positive mindset.",
+      "Conecta con agentes inmobiliarios profesionales y certificados para obtener la mejor asesoría.",
   },
   {
-    id: "goal-setting",
-    icon: Target,
-    title: "Goal Setting",
+    id: "location-coverage",
+    icon: MapPin,
+    title: "Amplia Cobertura",
     description:
-      "Learn to set and achieve meaningful goals that align with your values and aspirations.",
+      "Propiedades disponibles en múltiples ciudades y estados con información detallada de ubicación.",
   },
   {
-    id: "stress-management",
-    icon: Smile,
-    title: "Stress Management",
+    id: "direct-contact",
+    icon: Phone,
+    title: "Contacto Directo",
     description:
-      "Discover techniques to reduce stress and maintain a calm, focused state of mind.",
+      "Comunícate directamente con los agentes por teléfono o WhatsApp para obtener información inmediata.",
   },
   {
-    id: "personal-growth",
+    id: "market-insights",
     icon: TrendingUp,
-    title: "Personal Growth",
+    title: "Información de Mercado",
     description:
-      "Embark on a journey of continuous self-improvement and lifelong learning.",
+      "Accede a datos actualizados del mercado inmobiliario y tendencias de precios en tiempo real.",
   },
 ].map((feature, index) => ({
   ...feature,
@@ -62,12 +62,12 @@ export default function Features() {
         <BlurFade className="text-center mb-16">
           <AnimatedShinyText>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Empower Your Mind
+              ¿Por Qué Elegir UbiGroup?
             </h2>
           </AnimatedShinyText>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Discover powerful tools and techniques to enhance your mental
-            fitness and emotional intelligence.
+            Descubre las ventajas de nuestra plataforma inmobiliaria y encuentra
+            la propiedad perfecta con la ayuda de expertos certificados.
           </p>
         </BlurFade>
 
