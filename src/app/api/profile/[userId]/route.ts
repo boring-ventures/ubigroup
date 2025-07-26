@@ -3,48 +3,32 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 
+// GET: Fetch profile for a specific user ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ userId: string }> }
+  { params }: { params: { userId: string } }
 ) {
   try {
-    const userId = (await params).userId;
+    const { userId } = params;
 
-    // Create Supabase client with awaited cookies
-    const supabase = createRouteHandlerClient({ cookies });
-
-    // Get the current user's session
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    if (sessionError || !session) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    // Only allow users to view their own profile (or admin users to view any profile)
-    const currentUser = session.user;
-    const userProfile = await prisma.profile.findUnique({
-      where: { userId: currentUser.id },
-    });
-
-    if (userId !== currentUser.id && userProfile?.role !== "SUPERADMIN") {
-      return NextResponse.json(
-        { error: "Unauthorized to view this profile" },
-        { status: 403 }
-      );
-    }
-
-    const profile = await prisma.profile.findUnique({
+    // Fetch user profile from the database
+    const userProfile = await prisma.user.findUnique({
       where: { userId },
+      include: {
+        agency: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
-    if (!profile) {
+    if (!userProfile) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ profile });
+    return NextResponse.json(userProfile);
   } catch (error) {
     console.error("Error fetching profile:", error);
     return NextResponse.json(
@@ -54,52 +38,38 @@ export async function GET(
   }
 }
 
-export async function PATCH(
+// PUT: Update profile for a specific user ID
+export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ userId: string }> }
+  { params }: { params: { userId: string } }
 ) {
   try {
-    const userId = (await params).userId;
+    const { userId } = params;
+    const data = await request.json();
+    const { firstName, lastName, avatarUrl, active, phone, whatsapp } = data;
 
-    // Create Supabase client with awaited cookies
-    const supabase = createRouteHandlerClient({ cookies });
-
-    // Get the current user's session
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-
-    if (sessionError || !session) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    // Only allow users to update their own profile (or admin users to update any profile)
-    const currentUser = session.user;
-    const userProfile = await prisma.profile.findUnique({
-      where: { userId: currentUser.id },
-    });
-
-    if (userId !== currentUser.id && userProfile?.role !== "SUPERADMIN") {
-      return NextResponse.json(
-        { error: "Unauthorized to update this profile" },
-        { status: 403 }
-      );
-    }
-
-    const json = await request.json();
-
-    const updatedProfile = await prisma.profile.update({
+    // Update user profile in the database
+    const updatedUser = await prisma.user.update({
       where: { userId },
       data: {
-        firstName: json.firstName || undefined,
-        lastName: json.lastName || undefined,
-        avatarUrl: json.avatarUrl || undefined,
-        active: json.active !== undefined ? json.active : undefined,
+        firstName,
+        lastName,
+        avatarUrl,
+        active,
+        phone,
+        whatsapp,
+      },
+      include: {
+        agency: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
-    return NextResponse.json({ profile: updatedProfile });
+    return NextResponse.json(updatedUser);
   } catch (error) {
     console.error("Error updating profile:", error);
     return NextResponse.json(

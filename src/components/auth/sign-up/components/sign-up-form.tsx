@@ -41,6 +41,8 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
       lastName: "",
       password: "",
       confirmPassword: "",
+      phone: "",
+      whatsapp: "",
     },
   });
 
@@ -66,15 +68,10 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
     try {
       setIsLoading(true);
 
-      // Hash the password with email as salt before sending to server
-      const hashedPassword = await saltAndHashPassword(
-        data.password,
-        data.email
-      );
-
-      const { success, user, session, confirmEmail, error } = await signUp(
+      // Send raw password to Supabase - it handles hashing automatically
+      const { success, user, session, error } = await signUp(
         data.email,
-        hashedPassword
+        data.password
       );
 
       if (!success || error) {
@@ -97,56 +94,84 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
           }
         }
 
-        const response = await fetch("/api/profile", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: user.id,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            birthDate: data.birthDate,
-            avatarUrl,
-          }),
-        });
+        // Check if user profile already exists in database
+        const existingProfileResponse = await fetch(`/api/profile/${user.id}`);
+        let existingProfile = null;
 
-        let result: Record<string, unknown>;
-        let text = ""; // Define text outside the try block
+        if (existingProfileResponse.ok) {
+          existingProfile = await existingProfileResponse.json();
+        }
 
-        try {
-          text = await response.text(); // Assign value inside try
-          result = text ? JSON.parse(text) : {};
+        if (existingProfile) {
+          // Profile already exists, just update it with auth user ID
+          const updateResponse = await fetch("/api/profile", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId: user.id,
+              firstName: data.firstName,
+              lastName: data.lastName,
+              phone: data.phone,
+              whatsapp: data.whatsapp,
+              avatarUrl,
+            }),
+          });
 
-          if (!response.ok) {
-            throw new Error(
-              typeof result.error === "string"
-                ? result.error
-                : `Server responded with status ${response.status}`
-            );
+          if (!updateResponse.ok) {
+            throw new Error("Failed to update existing profile");
           }
-        } catch (parseError) {
-          console.error(
-            "Response parsing error:",
-            parseError,
-            "Response text:",
-            text
-          );
-          throw new Error("Invalid server response");
+        } else {
+          // Create new profile
+          const response = await fetch("/api/profile", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId: user.id,
+              firstName: data.firstName,
+              lastName: data.lastName,
+              phone: data.phone,
+              whatsapp: data.whatsapp,
+              role: "SUPER_ADMIN", // Always create as SUPER_ADMIN
+              avatarUrl,
+            }),
+          });
+
+          let result: Record<string, unknown>;
+          let text = ""; // Define text outside the try block
+
+          try {
+            text = await response.text(); // Assign value inside try
+            result = text ? JSON.parse(text) : {};
+
+            if (!response.ok) {
+              throw new Error(
+                typeof result.error === "string"
+                  ? result.error
+                  : `Server responded with status ${response.status}`
+              );
+            }
+          } catch (parseError) {
+            console.error(
+              "Response parsing error:",
+              parseError,
+              "Response text:",
+              text
+            );
+            throw new Error("Invalid server response");
+          }
         }
 
         toast({
           title: "Success",
-          description:
-            "Your account has been created! Please verify your email to continue.",
+          description: "Account created successfully!",
         });
 
-        // Redirect to verification page instead of dashboard if email confirmation is required
-        if (confirmEmail) {
-          router.push("/verify-email");
-        } else if (session) {
-          router.push("/dashboard");
-        }
+        // Redirect directly to dashboard (no email verification needed)
+        router.push("/dashboard");
       }
     } catch (error) {
       console.error("Sign up error:", error);
@@ -167,6 +192,15 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
 
   return (
     <div className={cn("grid gap-6", className)} {...props}>
+      <div className="mb-4 text-center">
+        <h2 className="text-lg font-semibold text-primary">
+          Create Super Admin Account
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          This will create a Super Admin account with full system access
+        </p>
+      </div>
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="flex flex-col items-center gap-4">
@@ -199,7 +233,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="name@example.com" {...field} />
+                  <Input placeholder="admin@ubigroup.com" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -228,6 +262,35 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
                   <FormLabel>Last Name</FormLabel>
                   <FormControl>
                     <Input placeholder="Doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone</FormLabel>
+                  <FormControl>
+                    <Input placeholder="+1234567890" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="whatsapp"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>WhatsApp</FormLabel>
+                  <FormControl>
+                    <Input placeholder="+1234567890" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -269,7 +332,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
           />
 
           <Button className="w-full" disabled={isLoading}>
-            Create Account
+            Create Super Admin Account
           </Button>
         </form>
       </Form>

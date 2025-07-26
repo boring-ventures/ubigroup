@@ -6,30 +6,39 @@ import prisma from "@/lib/prisma";
 // GET: Fetch profile for the current authenticated user
 export async function GET() {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
-    // Get the current user's session
+    // Use getUser() instead of getSession() for better security
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (sessionError || !session) {
+    if (userError || !user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const userId = session.user.id;
+    const userId = user.id;
 
-    // Fetch profile from the database
-    const profile = await prisma.profile.findUnique({
+    // Fetch user profile from the database
+    const userProfile = await prisma.user.findUnique({
       where: { userId },
+      include: {
+        agency: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
-    if (!profile) {
+    if (!userProfile) {
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    return NextResponse.json(profile);
+    return NextResponse.json(userProfile);
   } catch (error) {
     console.error("Error fetching profile:", error);
     return NextResponse.json(
@@ -42,34 +51,45 @@ export async function GET() {
 // PUT: Update profile for the current authenticated user
 export async function PUT(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
-    // Get the current user's session
+    // Use getUser() instead of getSession() for better security
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (sessionError || !session) {
+    if (userError || !user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const userId = session.user.id;
+    const userId = user.id;
     const data = await request.json();
-    const { firstName, lastName, avatarUrl, active } = data;
+    const { firstName, lastName, avatarUrl, active, phone, whatsapp } = data;
 
-    // Update profile in the database
-    const updatedProfile = await prisma.profile.update({
+    // Update user profile in the database
+    const updatedUser = await prisma.user.update({
       where: { userId },
       data: {
         firstName,
         lastName,
         avatarUrl,
         active,
+        phone,
+        whatsapp,
+      },
+      include: {
+        agency: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
-    return NextResponse.json(updatedProfile);
+    return NextResponse.json(updatedUser);
   } catch (error) {
     console.error("Error updating profile:", error);
     return NextResponse.json(
@@ -83,77 +103,108 @@ export async function PUT(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    const { userId, firstName, lastName, avatarUrl } = data;
+    const {
+      userId,
+      firstName,
+      lastName,
+      avatarUrl,
+      role = "SUPER_ADMIN",
+      phone,
+      whatsapp,
+      agencyId,
+    } = data;
 
     // If userId is provided directly (during signup flow)
     if (userId) {
-      // Check if profile already exists
-      const existingProfile = await prisma.profile.findUnique({
+      // Check if user profile already exists
+      const existingUser = await prisma.user.findUnique({
         where: { userId },
       });
 
-      if (existingProfile) {
+      if (existingUser) {
         return NextResponse.json(
           { error: "Profile already exists" },
           { status: 409 }
         );
       }
 
-      // Create profile in the database
-      const newProfile = await prisma.profile.create({
+      // Create user profile in the database
+      const newUser = await prisma.user.create({
         data: {
           userId,
           firstName,
           lastName,
           avatarUrl,
           active: true,
-          role: "USER",
+          role,
+          phone: phone || null,
+          whatsapp: whatsapp || null,
+          agencyId: role === "SUPER_ADMIN" ? null : agencyId || null,
+        },
+        include: {
+          agency: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
         },
       });
 
-      return NextResponse.json(newProfile, { status: 201 });
+      return NextResponse.json(newUser, { status: 201 });
     }
 
     // Normal flow requiring authentication
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
-    // Get the current user's session
+    // Use getUser() instead of getSession() for better security
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (sessionError || !session) {
+    if (userError || !user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const authenticatedUserId = session.user.id;
+    const authenticatedUserId = user.id;
 
-    // Check if profile already exists
-    const existingProfile = await prisma.profile.findUnique({
+    // Check if user profile already exists
+    const existingUser = await prisma.user.findUnique({
       where: { userId: authenticatedUserId },
     });
 
-    if (existingProfile) {
+    if (existingUser) {
       return NextResponse.json(
         { error: "Profile already exists" },
         { status: 409 }
       );
     }
 
-    // Create profile in the database
-    const newProfile = await prisma.profile.create({
+    // Create user profile in the database
+    const newUser = await prisma.user.create({
       data: {
         userId: authenticatedUserId,
         firstName,
         lastName,
         avatarUrl,
         active: true,
-        role: "USER",
+        role: "SUPER_ADMIN", // Default to SUPER_ADMIN for new signups
+        phone: phone || null,
+        whatsapp: whatsapp || null,
+      },
+      include: {
+        agency: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
-    return NextResponse.json(newProfile, { status: 201 });
+    return NextResponse.json(newUser, { status: 201 });
   } catch (error) {
     console.error("Error creating profile:", error);
     return NextResponse.json(

@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 
-// PUT: Update user password
-export async function PUT(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
-    // Get the current user's session
     const {
       data: { session },
       error: sessionError,
@@ -17,22 +16,27 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const { newPassword } = await request.json();
+    const { password } = await request.json();
 
-    // Update the password using Supabase Auth API
+    if (!password) {
+      return NextResponse.json(
+        { error: "Password is required" },
+        { status: 400 }
+      );
+    }
+
     const { error } = await supabase.auth.updateUser({
-      password: newPassword,
+      password: password,
     });
 
     if (error) {
-      console.error("Password update error:", error);
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return NextResponse.json(
+        { error: "Failed to update password" },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json(
-      { message: "Password updated successfully" },
-      { status: 200 }
-    );
+    return NextResponse.json({ message: "Password updated successfully" });
   } catch (error) {
     console.error("Error updating password:", error);
     return NextResponse.json(

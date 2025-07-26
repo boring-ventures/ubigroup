@@ -41,13 +41,8 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     try {
       setIsLoading(true);
 
-      // Hash the password with email as salt before sending to server
-      const hashedPassword = await saltAndHashPassword(
-        data.password,
-        data.email
-      );
-
-      await signIn(data.email, hashedPassword);
+      // Send raw password to Supabase - it handles hashing automatically
+      await signIn(data.email, data.password);
       toast({
         title: "Success",
         description: "You have been signed in.",
