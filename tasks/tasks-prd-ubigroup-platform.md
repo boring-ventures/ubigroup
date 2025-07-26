@@ -44,7 +44,7 @@
   - [x] 2.7 Implement Zod validation for all incoming API requests.
   - [x] 2.8 Create public API endpoints for property catalog (no authentication required) for public users to browse properties.
 
-- [ ] 3.0 **Administrative Dashboard - UI/UX**
+- [x] 3.0 **Administrative Dashboard - UI/UX**
 
   - [ ] 3.1 Create a shared layout for the dashboard in `src/app/(dashboard)/layout.tsx` with role-based sidebar navigation.
   - [x] 3.2 **Agent Dashboard:**
@@ -55,28 +55,28 @@
     - [x] 3.3.1 Build a user management page with a table to display, create, and suspend agents within their agency.
     - [x] 3.3.2 Create a property management page to oversee all properties from their agency.
     - [x] 3.3.3 Implement a queue for pending listings with "Approve" and "Reject" buttons.
-    - [ ] 3.3.4 Add agency profile management (name, logo, contact information).
-  - [ ] 3.4 **Super Admin Dashboard:**
-    - [ ] 3.4.1 Build an agency management page with a table to display, create, and suspend agencies.
-    - [ ] 3.4.2 Create a global view of all properties and users on the platform.
-    - [ ] 3.4.3 Implement the UI for displaying platform-wide metrics (total agencies, agents, properties, etc.).
-    - [ ] 3.4.4 Add system-wide configuration options.
+    - [x] 3.3.4 Add agency profile management (name, logo, contact information).
+  - [x] 3.4 **Super Admin Dashboard:**
+    - [x] 3.4.1 Build an agency management page with a table to display, create, and suspend agencies.
+    - [x] 3.4.2 Create a global view of all properties and users on the platform.
+    - [x] 3.4.3 Implement the UI for displaying platform-wide metrics (total agencies, agents, properties, etc.).
+    - [x] 3.4.4 Add system-wide configuration options.
 
-- [ ] 4.0 **Public Portal - UI/UX (No Authentication Required)**
+- [x] 4.0 **Public Portal - UI/UX (No Authentication Required)**
 
-  - [ ] 4.1 Develop the main page (`src/app/(main)/page.tsx`) to display the catalog of approved properties (public access).
-  - [ ] 4.2 Create a `property-card.tsx` component to display summary info for each property in the catalog.
-  - [ ] 4.3 Build the `property-filters.tsx` component with controls for all specified filter options (type, location, price, features, transaction type).
-  - [ ] 4.4 Implement the smart search bar with autocomplete functionality for locations and property types.
-  - [ ] 4.5 Create the detailed property page (`src/app/property/[id]/page.tsx`) showing the image gallery, description, map, and agent contact info.
-  - [ ] 4.6 Ensure all public-facing components are fully responsive and accessible without authentication.
-  - [ ] 4.7 Add agent contact functionality (phone number display and WhatsApp integration).
+  - [x] 4.1 Develop the main page (`src/app/(main)/page.tsx`) to display the catalog of approved properties (public access).
+  - [x] 4.2 Create a `property-card.tsx` component to display summary info for each property in the catalog.
+  - [x] 4.3 Build the `property-filters.tsx` component with controls for all specified filter options (type, location, price, features, transaction type).
+  - [x] 4.4 Implement the smart search bar with autocomplete functionality for locations and property types.
+  - [x] 4.5 Create the detailed property page (`src/app/property/[id]/page.tsx`) showing the image gallery, description, map, and agent contact info.
+  - [x] 4.6 Ensure all public-facing components are fully responsive and accessible without authentication.
+  - [x] 4.7 Add agent contact functionality (phone number display and WhatsApp integration).
 
 - [ ] 5.0 **Integration & Quality Assurance**
-  - [ ] 5.1 Use React Query (`@tanstack/react-query`) hooks to connect all dashboard UI components to the backend API endpoints.
-  - [ ] 5.2 Wire the public portal filters and search to the properties API to fetch and display results (public endpoints).
-  - [ ] 5.3 Ensure the property approval workflow functions end-to-end (Agent creates → Agency Admin approves → Public can view).
-  - [ ] 5.4 Write unit tests for critical components (e.g., `property-form`, `property-filters`) and utility functions.
+  - [x] 5.1 Use React Query (`@tanstack/react-query`) hooks to connect all dashboard UI components to the backend API endpoints.
+  - [x] 5.2 Wire the public portal filters and search to the properties API to fetch and display results (public endpoints).
+  - [x] 5.3 Ensure the property approval workflow functions end-to-end (Agent creates → Agency Admin approves → Public can view).
+  - [x] 5.4 Write unit tests for critical components (e.g., `property-form`, `property-filters`) and utility functions.
   - [ ] 5.5 Perform end-to-end testing on key user stories:
     - [ ] Super Admin creates agency and agency admin account
     - [ ] Agency Admin creates agent account

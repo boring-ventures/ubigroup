@@ -1,13 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +28,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -44,14 +37,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { UserPlus, Search, Edit2, UserX, UserCheck, Mail } from "lucide-react";
+import { Search, UserX, UserCheck } from "lucide-react";
 import {
   useAgencyAgents,
   useCreateAgent,
   useUpdateAgent,
   type UseAgencyAgentsParams,
 } from "@/hooks/use-agency-agents";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {

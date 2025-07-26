@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import type { User, Session } from "@supabase/auth-helpers-nextjs";
 import { useRouter } from "next/navigation";
@@ -32,37 +39,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const supabase = createClientComponentClient();
 
-  // Fetch profile function
-  const fetchProfile = async (userId: string) => {
-    try {
-      const response = await fetch(`/api/profile`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          // Profile not found, this is normal for new users
-          setProfile(null);
-          return;
+  // Create supabase client once and memoize it
+  const supabase = useMemo(() => createClientComponentClient(), []);
+
+  // Fetch profile function - memoized to prevent infinite loops
+  const fetchProfile = useMemo(
+    () => async (userId: string) => {
+      try {
+        const response = await fetch(`/api/profile`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            // Profile not found, this is normal for new users
+            setProfile(null);
+            return;
+          }
+          throw new Error("Failed to fetch profile");
         }
-        throw new Error("Failed to fetch profile");
+        const data = await response.json();
+        setProfile(data);
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        setProfile(null);
       }
-      const data = await response.json();
-      setProfile(data);
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      setProfile(null);
-    }
-  };
+    },
+    []
+  );
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
+    supabase.auth.getUser().then(({ data: { user }, error }) => {
+      if (error) {
+        console.error("Auth error:", error);
+        setSession(null);
+        setUser(null);
+        setIsLoading(false);
+        return;
       }
-      setIsLoading(false);
+
+      // If we have a user, get their session
+      if (user) {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          setSession(session);
+          setUser(user);
+          fetchProfile(user.id);
+          setIsLoading(false);
+        });
+      } else {
+        setSession(null);
+        setUser(null);
+        setIsLoading(false);
+      }
     });
 
     const {
@@ -87,34 +113,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [router, supabase]);
+  }, [router, supabase, fetchProfile]);
 
-  const signIn = async (email: string, password: string) => {
-    const { error, data } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
-    if (data.user) {
-      await fetchProfile(data.user.id);
-    }
-    router.push("/dashboard");
-  };
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      const { error, data } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+      if (data.user) {
+        await fetchProfile(data.user.id);
+      }
+      router.push("/dashboard");
+    },
+    [supabase, fetchProfile, router]
+  );
 
-  const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    if (error) throw error;
-  };
+  const signUp = useCallback(
+    async (email: string, password: string) => {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      if (error) throw error;
+    },
+    [supabase]
+  );
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     setProfile(null);
     router.push("/sign-in");
-  };
+  }, [supabase, router]);
 
   return (
     <AuthContext.Provider

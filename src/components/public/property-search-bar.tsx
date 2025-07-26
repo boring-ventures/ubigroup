@@ -3,13 +3,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {  CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
@@ -22,11 +21,10 @@ import {
   Search,
   MapPin,
   Home,
-  Building2,
   TrendingUp,
   Clock,
-  X,
 } from "lucide-react";
+import { usePropertySearchSuggestions } from "@/hooks/use-property-search";
 
 interface SearchSuggestion {
   id: string;
@@ -52,11 +50,18 @@ export function PropertySearchBar({
 }: PropertySearchBarProps) {
   const [inputValue, setInputValue] = useState(value);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Use React Query hook for search suggestions
+  const { data: apiSuggestions = [], isLoading } = usePropertySearchSuggestions(
+    {
+      query: debouncedQuery,
+      enabled: debouncedQuery.length >= 2,
+    }
+  );
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -86,116 +91,52 @@ export function PropertySearchBar({
     }
   };
 
-  // Mock suggestions data - in a real app, this would come from an API
-  const mockSuggestions: SearchSuggestion[] = [
-    // Locations
-    {
-      id: "sp-capital",
-      type: "location",
-      label: "São Paulo, SP",
-      description: "Capital",
-      count: 1250,
-      icon: MapPin,
-    },
-    {
-      id: "rj-capital",
-      type: "location",
-      label: "Rio de Janeiro, RJ",
-      description: "Capital",
-      count: 890,
-      icon: MapPin,
-    },
-    {
-      id: "bh-capital",
-      type: "location",
-      label: "Belo Horizonte, MG",
-      description: "Capital",
-      count: 420,
-      icon: MapPin,
-    },
-    {
-      id: "curitiba",
-      type: "location",
-      label: "Curitiba, PR",
-      description: "Capital",
-      count: 380,
-      icon: MapPin,
-    },
-
-    // Property types
-    {
-      id: "apartamento",
-      type: "property_type",
-      label: "Apartamento",
-      count: 2100,
-      icon: Building2,
-    },
-    {
-      id: "casa",
-      type: "property_type",
-      label: "Casa",
-      count: 1800,
-      icon: Home,
-    },
-    {
-      id: "terreno",
-      type: "property_type",
-      label: "Terreno",
-      count: 340,
-      icon: MapPin,
-    },
-
-    // Price ranges
-    {
-      id: "ate-300k",
-      type: "price_range",
-      label: "Até R$ 300.000",
-      count: 850,
-      icon: TrendingUp,
-    },
-    {
-      id: "300k-500k",
-      type: "price_range",
-      label: "R$ 300.000 - R$ 500.000",
-      count: 1200,
-      icon: TrendingUp,
-    },
-    {
-      id: "500k-1m",
-      type: "price_range",
-      label: "R$ 500.000 - R$ 1.000.000",
-      count: 980,
-      icon: TrendingUp,
-    },
-  ];
-
-  // Filter suggestions based on input
-  const getFilteredSuggestions = (query: string): SearchSuggestion[] => {
-    if (!query.trim()) {
-      // Show recent searches and popular options when no query
-      const recent = recentSearches.map((search) => ({
-        id: `recent-${search}`,
-        type: "recent" as const,
-        label: search,
-        icon: Clock,
-      }));
-
-      const popular = mockSuggestions.slice(0, 6);
-
-      return [...recent, ...popular];
+  // Get icon for suggestion type
+  const getIconForType = (type: string) => {
+    switch (type) {
+      case "location":
+        return MapPin;
+      case "property_type":
+        return Home;
+      case "price_range":
+        return TrendingUp;
+      default:
+        return Search;
     }
-
-    // Filter suggestions based on query
-    const filtered = mockSuggestions.filter(
-      (suggestion) =>
-        suggestion.label.toLowerCase().includes(query.toLowerCase()) ||
-        suggestion.description?.toLowerCase().includes(query.toLowerCase())
-    );
-
-    return filtered.slice(0, 8);
   };
 
-  // Handle input changes with debounced suggestions
+  // Combine API suggestions with recent searches
+  const getAllSuggestions = (): SearchSuggestion[] => {
+    const suggestions: SearchSuggestion[] = [];
+
+    // Add recent searches when no query or short query
+    if (debouncedQuery.length < 2 && recentSearches.length > 0) {
+      const recent = recentSearches.map((search, index) => ({
+        id: `recent-${index}`,
+        type: "recent" as const,
+        label: search,
+        description: "Busca recente",
+        icon: Clock,
+      }));
+      suggestions.push(...recent);
+    }
+
+    // Add API suggestions
+    if (apiSuggestions.length > 0) {
+      const converted = apiSuggestions.map((suggestion, index) => ({
+        id: `api-${index}`,
+        type: suggestion.type,
+        label: suggestion.label,
+        description: suggestion.category,
+        icon: getIconForType(suggestion.type),
+      }));
+      suggestions.push(...converted);
+    }
+
+    return suggestions.slice(0, 8);
+  };
+
+  // Handle input changes with debounced API calls
   const handleInputChange = (newValue: string) => {
     setInputValue(newValue);
 
@@ -204,11 +145,10 @@ export function PropertySearchBar({
       clearTimeout(searchTimeoutRef.current);
     }
 
-    // Update suggestions with debounce
+    // Update debounced query for API calls
     searchTimeoutRef.current = setTimeout(() => {
-      const newSuggestions = getFilteredSuggestions(newValue);
-      setSuggestions(newSuggestions);
-    }, 150);
+      setDebouncedQuery(newValue);
+    }, 300);
   };
 
   // Handle search submission
@@ -232,8 +172,10 @@ export function PropertySearchBar({
   // Handle input focus
   const handleFocus = () => {
     setShowSuggestions(true);
-    const newSuggestions = getFilteredSuggestions(inputValue);
-    setSuggestions(newSuggestions);
+    // Set debounced query immediately on focus if there's input
+    if (inputValue.length >= 2) {
+      setDebouncedQuery(inputValue);
+    }
   };
 
   // Handle clear
@@ -332,7 +274,7 @@ export function PropertySearchBar({
                 <div className="p-4 text-center text-sm text-muted-foreground">
                   Buscando sugestões...
                 </div>
-              ) : suggestions.length === 0 ? (
+              ) : getAllSuggestions().length === 0 ? (
                 <CommandEmpty className="py-6 text-center text-sm">
                   {inputValue.trim()
                     ? "Nenhuma sugestão encontrada."
@@ -342,7 +284,7 @@ export function PropertySearchBar({
                 <>
                   {recentSearches.length > 0 && !inputValue.trim() && (
                     <CommandGroup heading="Buscas Recentes">
-                      {suggestions
+                      {getAllSuggestions()
                         .filter((s) => s.type === "recent")
                         .map((suggestion) => (
                           <CommandItem
@@ -367,12 +309,12 @@ export function PropertySearchBar({
                     </CommandGroup>
                   )}
 
-                  {suggestions.filter((s) => s.type !== "recent").length >
-                    0 && (
+                  {getAllSuggestions().filter((s) => s.type !== "recent")
+                    .length > 0 && (
                     <CommandGroup
                       heading={inputValue.trim() ? "Sugestões" : "Populares"}
                     >
-                      {suggestions
+                      {getAllSuggestions()
                         .filter((s) => s.type !== "recent")
                         .map((suggestion) => (
                           <CommandItem

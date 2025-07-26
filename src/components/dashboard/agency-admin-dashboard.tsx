@@ -9,14 +9,7 @@ import {
 } from "@/components/ui/card";
 import { MetricsCard } from "./metrics-card";
 import { useDashboardMetrics } from "@/hooks/use-dashboard-metrics";
-import {
-  Building2,
-  Users,
-  Home,
-  Clock,
-  CheckCircle,
-  UserPlus,
-} from "lucide-react";
+import { Users, Home, Clock, CheckCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

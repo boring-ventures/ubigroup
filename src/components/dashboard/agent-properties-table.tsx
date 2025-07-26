@@ -33,7 +33,7 @@ import {
   type UseAgentPropertiesParams,
 } from "@/hooks/use-agent-properties";
 import { PropertyStatus } from "@prisma/client";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import Link from "next/link";
 

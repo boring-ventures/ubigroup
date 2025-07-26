@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  Card,
-  CardContent,
+  
+  
   CardDescription,
   CardHeader,
   CardTitle,
@@ -11,12 +11,8 @@ import { MetricsCard } from "./metrics-card";
 import { useDashboardMetrics } from "@/hooks/use-dashboard-metrics";
 import {
   Home,
-  Plus,
   Clock,
   CheckCircle,
-  XCircle,
-  Eye,
-  DollarSign,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";

@@ -22,7 +22,7 @@ export async function authenticateUser(): Promise<{
   error: string | null;
 }> {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const supabase = createServerComponentClient({
       cookies: () => cookieStore,
     });

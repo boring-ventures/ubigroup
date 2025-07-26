@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { UserManagement } from "@/components/user-management/user-management";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Plus, Settings, Shield } from "lucide-react";
+import { Users, Shield, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function UsersPage() {

@@ -42,19 +42,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  Plus,
   Search,
   Edit,
   Trash2,
-  Eye,
   EyeOff,
-  UserPlus,
-  Building2,
   Phone,
-  Mail,
   Shield,
   Users,
   Settings,
+  UserPlus,
+  Building2,
+  Mail,
+  Eye,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { PasswordInput } from "@/components/utils/password-input";

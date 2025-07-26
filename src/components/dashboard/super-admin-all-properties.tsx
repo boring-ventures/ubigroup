@@ -32,16 +32,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Home,
-  Building2,
   Users,
   Search,
   Filter,
-  Eye,
   CheckCircle,
-  XCircle,
   Clock,
   MapPin,
   DollarSign,
+  Eye,
+  Building2,
 } from "lucide-react";
 
 interface Property {

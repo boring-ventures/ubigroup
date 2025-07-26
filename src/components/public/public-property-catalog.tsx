@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {  CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PropertyCard } from "./property-card";
 import { PropertyFilters } from "./property-filters";
@@ -15,7 +15,6 @@ import {
   SlidersHorizontal,
   MapPin,
   Home,
-  Building2,
 } from "lucide-react";
 
 interface Property {
@@ -87,13 +86,18 @@ export function PublicPropertyCatalog() {
         params.append("search", searchQuery.trim());
       }
 
-      // Add filters
+      // Add filters with proper mapping for API
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== "") {
           if (Array.isArray(value)) {
             value.forEach((v) => params.append(`${key}[]`, v));
           } else {
-            params.append(key, value.toString());
+            // Map frontend filter names to API parameter names
+            let apiKey = key;
+            if (key === "bedrooms") apiKey = "minBedrooms";
+            if (key === "bathrooms") apiKey = "minBathrooms";
+
+            params.append(apiKey, value.toString());
           }
         }
       });

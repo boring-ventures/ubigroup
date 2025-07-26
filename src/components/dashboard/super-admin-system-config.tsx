@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  Card,
-  CardContent,
+  
+  
   CardDescription,
   CardHeader,
   CardTitle,
@@ -28,13 +28,11 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  Settings,
+  
   Save,
   Loader2,
-  Mail,
   Globe,
   Shield,
-  Database,
   Users,
   Home,
   AlertTriangle,

@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, MapPin, Plus } from "lucide-react";
+import { Users, MapPin, Building2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AgencyManagement } from "@/components/agency-management/agency-management";
 

@@ -5,18 +5,19 @@ import prisma from "@/lib/prisma";
 import { AgencyProfileManagement } from "@/components/dashboard/agency-profile-management";
 
 export default async function AgencyProfilePage() {
-  const supabase = createServerComponentClient({ cookies });
+  const cookieStore = cookies();
+  const supabase = createServerComponentClient({ cookies: () => cookieStore });
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     redirect("/sign-in");
   }
 
   // Get user profile to verify they are an agency admin
   const userProfile = await prisma.user.findUnique({
-    where: { userId: session.user.id },
+    where: { userId: user.id },
   });
 
   if (!userProfile || userProfile.role !== "AGENCY_ADMIN") {

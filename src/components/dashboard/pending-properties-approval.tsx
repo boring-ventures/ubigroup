@@ -23,21 +23,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   CheckCircle,
-  XCircle,
-  Eye,
   Clock,
   Home,
   Bed,
   Bath,
   MapPin,
-  DollarSign,
+  XCircle,
 } from "lucide-react";
 import {
   usePendingProperties,
   useUpdatePropertyStatus,
   type UsePendingPropertiesParams,
 } from "@/hooks/use-pending-properties";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/use-toast";
 
 export function PendingPropertiesApproval() {
   const [params, setParams] = useState<UsePendingPropertiesParams>({
@@ -149,7 +147,7 @@ export function PendingPropertiesApproval() {
                 </Card>
               ))}
             </div>
-          ) : data?.properties.length === 0 ? (
+          ) : !data?.properties || data.properties.length === 0 ? (
             <div className="text-center py-10">
               <CheckCircle className="mx-auto h-12 w-12 text-green-500/40" />
               <h3 className="mt-4 text-lg font-medium">All caught up!</h3>
@@ -160,7 +158,7 @@ export function PendingPropertiesApproval() {
           ) : (
             <>
               <div className="space-y-6">
-                {data?.properties.map((property) => (
+                {data?.properties?.map((property) => (
                   <Card
                     key={property.id}
                     className="border-l-4 border-l-yellow-500"

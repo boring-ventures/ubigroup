@@ -7,18 +7,19 @@ import { AgencyAdminDashboard } from "@/components/dashboard/agency-admin-dashbo
 import { AgentDashboard } from "@/components/dashboard/agent-dashboard";
 
 export default async function DashboardPage() {
-  const supabase = createServerComponentClient({ cookies });
+  const cookieStore = cookies();
+  const supabase = createServerComponentClient({ cookies: () => cookieStore });
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     redirect("/sign-in");
   }
 
   // Get user profile from database to check role
   const userProfile = await prisma.user.findUnique({
-    where: { userId: session.user.id },
+    where: { userId: user.id },
     include: {
       agency: true,
     },

@@ -12,8 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Card,
-  CardContent,
+  
+  
   CardDescription,
   CardHeader,
   CardTitle,
@@ -36,13 +36,12 @@ import {
 import {
   Filter,
   ChevronDown,
-  X,
   MapPin,
   Home,
-  DollarSign,
   Square,
   Settings2,
 } from "lucide-react";
+import { usePropertyLocations } from "@/hooks/use-property-search";
 
 interface PropertyFilters {
   transactionType?: "SALE" | "RENT" | "";
@@ -85,18 +84,7 @@ const FEATURES_OPTIONS = [
   "Quadra Esportiva",
 ];
 
-const STATES = [
-  "São Paulo",
-  "Rio de Janeiro",
-  "Minas Gerais",
-  "Bahia",
-  "Paraná",
-  "Rio Grande do Sul",
-  "Pernambuco",
-  "Ceará",
-  "Pará",
-  "Santa Catarina",
-];
+// Dynamic location data will be loaded from API
 
 export function PropertyFilters({
   filters,
@@ -106,6 +94,10 @@ export function PropertyFilters({
   isMobile = false,
 }: PropertyFiltersProps) {
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+
+  // Load dynamic location data from API
+  const { data: locationData, isLoading: locationsLoading } =
+    usePropertyLocations();
 
   const updateFilter = (key: keyof PropertyFilters, value: any) => {
     onFiltersChange({
@@ -195,25 +187,77 @@ export function PropertyFilters({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="">Todos os Estados</SelectItem>
-              {STATES.map((state) => (
-                <SelectItem key={state} value={state}>
-                  {state}
+              {locationsLoading ? (
+                <SelectItem value="" disabled>
+                  Carregando estados...
                 </SelectItem>
-              ))}
+              ) : (
+                locationData?.states?.map((state: string) => (
+                  <SelectItem key={state} value={state}>
+                    {state}
+                  </SelectItem>
+                )) || []
+              )}
             </SelectContent>
           </Select>
 
-          <Input
-            placeholder="Cidade"
+          <Select
             value={filters.locationCity || ""}
-            onChange={(e) => updateFilter("locationCity", e.target.value)}
-          />
+            onValueChange={(value) => updateFilter("locationCity", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Cidade" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Todas as Cidades</SelectItem>
+              {locationsLoading ? (
+                <SelectItem value="" disabled>
+                  Carregando cidades...
+                </SelectItem>
+              ) : (
+                locationData?.cities
+                  ?.filter(
+                    (city: any) =>
+                      !filters.locationState ||
+                      city.state === filters.locationState
+                  )
+                  ?.map((city: any) => (
+                    <SelectItem key={city.value} value={city.value}>
+                      {city.label}
+                    </SelectItem>
+                  )) || []
+              )}
+            </SelectContent>
+          </Select>
 
-          <Input
-            placeholder="Bairro"
+          <Select
             value={filters.locationNeigh || ""}
-            onChange={(e) => updateFilter("locationNeigh", e.target.value)}
-          />
+            onValueChange={(value) => updateFilter("locationNeigh", value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Bairro" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Todos os Bairros</SelectItem>
+              {locationsLoading ? (
+                <SelectItem value="" disabled>
+                  Carregando bairros...
+                </SelectItem>
+              ) : (
+                locationData?.neighborhoods
+                  ?.filter(
+                    (neigh: any) =>
+                      !filters.locationCity ||
+                      neigh.city.includes(filters.locationCity)
+                  )
+                  ?.map((neigh: any) => (
+                    <SelectItem key={neigh.value} value={neigh.value}>
+                      {neigh.label}
+                    </SelectItem>
+                  )) || []
+              )}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
