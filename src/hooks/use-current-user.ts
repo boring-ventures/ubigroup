@@ -20,6 +20,49 @@ export function useCurrentUser(): CurrentUserData {
   const [error, setError] = useState<Error | null>(null);
   const supabase = createClientComponentClient();
 
+  const fetchProfile = useCallback(
+    async (userId: string, retryCount = 0): Promise<Profile | null> => {
+      const maxRetries = 3;
+
+      try {
+        const response = await fetch("/api/profile", {
+          headers: {
+            "Cache-Control": "no-cache",
+          },
+        });
+
+        if (!response.ok) {
+          if (response.status === 404 && retryCount < maxRetries) {
+            // Wait a bit and retry
+            await new Promise((resolve) =>
+              setTimeout(resolve, 1000 * (retryCount + 1))
+            );
+            return fetchProfile(userId, retryCount + 1);
+          }
+          throw new Error(
+            `Failed to fetch profile: ${response.status} ${response.statusText}`
+          );
+        }
+
+        const profileData = await response.json();
+        return profileData;
+      } catch (err) {
+        if (retryCount < maxRetries) {
+          console.warn(
+            `Profile fetch attempt ${retryCount + 1} failed, retrying...`,
+            err
+          );
+          await new Promise((resolve) =>
+            setTimeout(resolve, 1000 * (retryCount + 1))
+          );
+          return fetchProfile(userId, retryCount + 1);
+        }
+        throw err;
+      }
+    },
+    []
+  );
+
   const fetchUserData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -36,23 +79,32 @@ export function useCurrentUser(): CurrentUserData {
       if (userData.user) {
         setUser(userData.user);
 
-        // Fetch the user's profile from the API
-        const response = await fetch("/api/profile");
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch profile");
+        // Fetch the user's profile from the API with retry logic
+        try {
+          const profileData = await fetchProfile(userData.user.id);
+          setProfile(profileData);
+        } catch (profileError) {
+          console.error("Error fetching profile:", profileError);
+          setError(
+            profileError instanceof Error
+              ? profileError
+              : new Error(String(profileError))
+          );
+          // Don't throw here - we still want to set the user even if profile fails
         }
-
-        const profileData = await response.json();
-        setProfile(profileData);
+      } else {
+        setUser(null);
+        setProfile(null);
       }
     } catch (err) {
       console.error("Error fetching user data:", err);
       setError(err instanceof Error ? err : new Error(String(err)));
+      setUser(null);
+      setProfile(null);
     } finally {
       setIsLoading(false);
     }
-  }, [supabase.auth]);
+  }, [supabase.auth, fetchProfile]);
 
   useEffect(() => {
     fetchUserData();
@@ -66,18 +118,18 @@ export function useCurrentUser(): CurrentUserData {
 
             // Fetch the user's profile when auth state changes
             try {
-              const response = await fetch("/api/profile");
-              if (response.ok) {
-                const profileData = await response.json();
-                setProfile(profileData);
-              }
+              const profileData = await fetchProfile(session.user.id);
+              setProfile(profileData);
+              setError(null);
             } catch (err) {
-              console.error("Error fetching profile:", err);
+              console.error("Error fetching profile on auth change:", err);
+              setError(err instanceof Error ? err : new Error(String(err)));
             }
           }
         } else if (event === "SIGNED_OUT") {
           setUser(null);
           setProfile(null);
+          setError(null);
         }
       }
     );
@@ -85,7 +137,7 @@ export function useCurrentUser(): CurrentUserData {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [supabase.auth, fetchUserData]);
+  }, [supabase.auth, fetchUserData, fetchProfile]);
 
   return { user, profile, isLoading, error, refetch: fetchUserData };
 }

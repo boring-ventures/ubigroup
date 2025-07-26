@@ -117,20 +117,32 @@ export async function GET(request: NextRequest) {
         whereClause.squareMeters.lte = queryParams.maxSquareMeters;
     }
     if (queryParams.features && queryParams.features.length > 0) {
-      whereClause.features = { hasEvery: queryParams.features };
+      whereClause.features = {
+        hasSome: queryParams.features,
+      };
     }
     if (queryParams.search) {
       whereClause.OR = [
-        { title: { contains: queryParams.search, mode: "insensitive" } },
-        { description: { contains: queryParams.search, mode: "insensitive" } },
+        {
+          title: {
+            contains: queryParams.search,
+            mode: "insensitive",
+          },
+        },
+        {
+          description: {
+            contains: queryParams.search,
+            mode: "insensitive",
+          },
+        },
       ];
     }
-    if (queryParams.agentId && user?.role !== UserRole.AGENT) {
-      // Only allow agentId filter for non-agents (agents are automatically filtered to their own)
+
+    // Apply admin filters
+    if (queryParams.agentId) {
       whereClause.agentId = queryParams.agentId;
     }
-    if (queryParams.agencyId && user?.role === UserRole.SUPER_ADMIN) {
-      // Only Super Admins can filter by agency
+    if (queryParams.agencyId) {
       whereClause.agencyId = queryParams.agencyId;
     }
 
@@ -188,8 +200,12 @@ export async function GET(request: NextRequest) {
 // POST - Create new property (Agents only)
 export async function POST(request: NextRequest) {
   try {
+    console.log("POST /api/properties - Starting property creation");
+
     // Authenticate user
     const { user, error: authError } = await authenticateUser();
+    console.log("Authentication result:", { user: user?.id, error: authError });
+
     if (!user) {
       return NextResponse.json(
         { error: authError || "Unauthorized" },
@@ -199,6 +215,10 @@ export async function POST(request: NextRequest) {
 
     // Only agents can create properties
     if (user.role !== UserRole.AGENT) {
+      console.log("User role check failed:", {
+        role: user.role,
+        expected: UserRole.AGENT,
+      });
       return NextResponse.json(
         { error: "Only agents can create properties" },
         { status: 403 }
@@ -207,17 +227,41 @@ export async function POST(request: NextRequest) {
 
     // Validate request body
     const body = await request.json();
+    console.log("Request body:", body);
+
     const { data: propertyData, error: validationError } =
       validateRequestBody<CreatePropertyInput>(createPropertySchema, body);
 
     if (validationError) {
+      console.log("Validation error:", validationError);
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
+
+    // Map form fields to database fields
+    const mappedData = {
+      title: propertyData.title,
+      description: propertyData.description,
+      type: propertyData.propertyType, // Map propertyType to type
+      locationState: propertyData.state, // Map state to locationState
+      locationCity: propertyData.city, // Map city to locationCity
+      locationNeigh: propertyData.city, // Use city as neighborhood for now
+      address: propertyData.address,
+      price: propertyData.price,
+      bedrooms: propertyData.bedrooms,
+      bathrooms: propertyData.bathrooms,
+      garageSpaces: 0, // Default value
+      squareMeters: propertyData.area, // Map area to squareMeters
+      transactionType: propertyData.transactionType,
+      images: propertyData.images,
+      features: propertyData.features,
+    };
+
+    console.log("Mapped data for database:", mappedData);
 
     // Create property
     const property = await prisma.property.create({
       data: {
-        ...propertyData,
+        ...mappedData,
         agentId: user.id,
         agencyId: user.agencyId!,
         status: PropertyStatus.PENDING, // All new properties start as pending
@@ -242,11 +286,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    console.log("Property created successfully:", property.id);
     return NextResponse.json({ property }, { status: 201 });
   } catch (error) {
     console.error("Error creating property:", error);
     return NextResponse.json(
-      { error: "Error creating property" },
+      {
+        error:
+          error instanceof Error ? error.message : "Error creating property",
+      },
       { status: 500 }
     );
   }

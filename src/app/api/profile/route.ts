@@ -6,7 +6,7 @@ import prisma from "@/lib/prisma";
 // GET: Fetch profile for the current authenticated user
 export async function GET() {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     // Use getUser() instead of getSession() for better security
@@ -15,11 +15,21 @@ export async function GET() {
       error: userError,
     } = await supabase.auth.getUser();
 
-    if (userError || !user) {
+    if (userError) {
+      console.error("Supabase auth error:", userError);
+      return NextResponse.json(
+        { error: "Authentication failed" },
+        { status: 401 }
+      );
+    }
+
+    if (!user) {
+      console.error("No user found in session");
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
     const userId = user.id;
+    console.log("Fetching profile for user:", userId);
 
     // Fetch user profile from the database
     const userProfile = await prisma.user.findUnique({
@@ -35,10 +45,59 @@ export async function GET() {
     });
 
     if (!userProfile) {
-      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+      console.error("Profile not found for user:", userId);
+      // Instead of returning 404, let's try to create a basic profile
+      // This handles cases where the user exists in Supabase but not in our database
+      try {
+        const newProfile = await prisma.user.create({
+          data: {
+            userId,
+            firstName:
+              user.user_metadata?.firstName ||
+              user.email?.split("@")[0] ||
+              "User",
+            lastName: user.user_metadata?.lastName || "",
+            role: "AGENT", // Default role
+            active: true,
+          },
+          include: {
+            agency: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        });
+        console.log("Created new profile for user:", userId);
+        return NextResponse.json(newProfile);
+      } catch (createError) {
+        console.error("Failed to create profile:", createError);
+        return NextResponse.json(
+          { error: "Profile not found" },
+          { status: 404 }
+        );
+      }
     }
 
-    return NextResponse.json(userProfile);
+    // Ensure the response format matches what the frontend expects
+    const profileResponse = {
+      id: userProfile.id,
+      userId: userProfile.userId,
+      avatarUrl: userProfile.avatarUrl,
+      createdAt: userProfile.createdAt,
+      updatedAt: userProfile.updatedAt,
+      active: userProfile.active,
+      firstName: userProfile.firstName,
+      lastName: userProfile.lastName,
+      role: userProfile.role,
+      phone: userProfile.phone,
+      whatsapp: userProfile.whatsapp,
+      agencyId: userProfile.agencyId,
+      agency: userProfile.agency,
+    };
+
+    return NextResponse.json(profileResponse);
   } catch (error) {
     console.error("Error fetching profile:", error);
     return NextResponse.json(

@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  
-  
+  Card,
+  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -13,6 +13,9 @@ import {
   Home,
   Clock,
   CheckCircle,
+  XCircle,
+  Plus,
+  DollarSign,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -46,7 +49,16 @@ export function AgentDashboard() {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-destructive">Failed to load dashboard metrics</p>
+          <div className="text-center">
+            <p className="text-destructive mb-4">
+              Failed to load dashboard metrics
+            </p>
+            <p className="text-sm text-muted-foreground mb-4">
+              {error.message ||
+                "There was an error loading your dashboard data"}
+            </p>
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
+          </div>
         </CardContent>
       </Card>
     );

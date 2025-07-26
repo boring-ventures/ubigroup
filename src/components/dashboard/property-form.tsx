@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,12 +33,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import { Loader } from "@/components/ui/loader";
-import { X } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import {
   createPropertySchema,
   type CreatePropertyInput,
 } from "@/lib/validations/property";
 import { PropertyType, TransactionType } from "@prisma/client";
+import { useAuth } from "@/providers/auth-provider";
 
 interface PropertyFormProps {
   initialData?: Partial<CreatePropertyInput>;
@@ -52,13 +59,14 @@ export function PropertyForm({
     initialData?.features || []
   );
   const [newFeature, setNewFeature] = useState("");
+  const { user, session, profile } = useAuth();
 
   const form = useForm<CreatePropertyInput>({
     resolver: zodResolver(createPropertySchema),
     defaultValues: {
       title: initialData?.title || "",
       description: initialData?.description || "",
-      price: initialData?.price || 0,
+      price: initialData?.price || undefined,
       propertyType: initialData?.propertyType || PropertyType.APARTMENT,
       transactionType: initialData?.transactionType || TransactionType.SALE,
       address: initialData?.address || "",
@@ -67,7 +75,7 @@ export function PropertyForm({
       zipCode: initialData?.zipCode || "",
       bedrooms: initialData?.bedrooms || 1,
       bathrooms: initialData?.bathrooms || 1,
-      area: initialData?.area || 0,
+      area: initialData?.area || undefined,
       features: initialData?.features || [],
       images: initialData?.images || [],
     },
@@ -91,6 +99,12 @@ export function PropertyForm({
   const onSubmit = async (data: CreatePropertyInput) => {
     try {
       setIsSubmitting(true);
+      console.log("Submitting property data:", data);
+      console.log("Authentication state:", {
+        user: user?.id,
+        session: !!session,
+        profile: profile?.id,
+      });
 
       const url = propertyId
         ? `/api/properties/${propertyId}`
@@ -105,10 +119,18 @@ export function PropertyForm({
         body: JSON.stringify(data),
       });
 
+      console.log("Response status:", response.status);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to save property");
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: "Unknown error" }));
+        console.error("API Error:", errorData);
+        throw new Error(errorData.error || "Failed to save property");
       }
+
+      const result = await response.json();
+      console.log("Success response:", result);
 
       toast({
         title: "Success",
@@ -133,6 +155,30 @@ export function PropertyForm({
     }
   };
 
+  // Test function to submit a valid form
+  const testSubmit = () => {
+    const testData = {
+      title: "Test Property",
+      description:
+        "This is a test property description that meets the minimum length requirement",
+      propertyType: PropertyType.APARTMENT,
+      transactionType: TransactionType.SALE,
+      address: "123 Test Street",
+      city: "Test City",
+      state: "TS",
+      zipCode: "12345",
+      price: 100000,
+      bedrooms: 2,
+      bathrooms: 2,
+      area: 1000,
+      features: ["Test Feature"],
+      images: [],
+    };
+
+    console.log("Testing with data:", testData);
+    onSubmit(testData);
+  };
+
   return (
     <Card className="w-full max-w-4xl">
       <CardHeader>
@@ -147,7 +193,23 @@ export function PropertyForm({
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(
+              (data) => {
+                console.log("Form validation passed, data:", data);
+                onSubmit(data);
+              },
+              (errors) => {
+                console.error("Form validation failed:", errors);
+                toast({
+                  title: "Validation Error",
+                  description: "Please check all required fields",
+                  variant: "destructive",
+                });
+              }
+            )}
+            className="space-y-6"
+          >
             {/* Basic Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Basic Information</h3>
@@ -210,14 +272,8 @@ export function PropertyForm({
                           <SelectItem value={PropertyType.HOUSE}>
                             House
                           </SelectItem>
-                          <SelectItem value={PropertyType.CONDO}>
-                            Condo
-                          </SelectItem>
-                          <SelectItem value={PropertyType.TOWNHOUSE}>
-                            Townhouse
-                          </SelectItem>
-                          <SelectItem value={PropertyType.COMMERCIAL}>
-                            Commercial
+                          <SelectItem value={PropertyType.OFFICE}>
+                            Office
                           </SelectItem>
                           <SelectItem value={PropertyType.LAND}>
                             Land
@@ -270,9 +326,10 @@ export function PropertyForm({
                         type="number"
                         placeholder="0"
                         {...field}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value) || 0)
-                        }
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value);
+                          field.onChange(isNaN(value) ? undefined : value);
+                        }}
                       />
                     </FormControl>
                     <FormDescription>Enter the price in USD</FormDescription>
@@ -362,9 +419,10 @@ export function PropertyForm({
                           min="0"
                           placeholder="1"
                           {...field}
-                          onChange={(e) =>
-                            field.onChange(parseInt(e.target.value) || 0)
-                          }
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value);
+                            field.onChange(isNaN(value) ? undefined : value);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -385,9 +443,10 @@ export function PropertyForm({
                           step="0.5"
                           placeholder="1"
                           {...field}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
+                          onChange={(e) => {
+                            const value = parseFloat(e.target.value);
+                            field.onChange(isNaN(value) ? undefined : value);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -407,9 +466,10 @@ export function PropertyForm({
                           min="0"
                           placeholder="1000"
                           {...field}
-                          onChange={(e) =>
-                            field.onChange(parseInt(e.target.value) || 0)
-                          }
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value);
+                            field.onChange(isNaN(value) ? undefined : value);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -462,6 +522,36 @@ export function PropertyForm({
               <Button type="submit" disabled={isSubmitting} className="flex-1">
                 {isSubmitting && <Loader className="mr-2 h-4 w-4" />}
                 {propertyId ? "Update Property" : "Create Property"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  console.log("Form values:", form.getValues());
+                  console.log("Form errors:", form.formState.errors);
+                  console.log("Form is valid:", form.formState.isValid);
+                  console.log("Form is dirty:", form.formState.isDirty);
+                }}
+              >
+                Debug Form
+              </Button>
+              <Button type="button" variant="outline" onClick={testSubmit}>
+                Test Submit
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  console.log("Auth state:", {
+                    user: user?.id,
+                    session: !!session,
+                    profile: profile?.id,
+                  });
+                  console.log("User email:", user?.email);
+                  console.log("Profile role:", profile?.role);
+                }}
+              >
+                Check Auth
               </Button>
               {onCancel && (
                 <Button type="button" variant="outline" onClick={onCancel}>

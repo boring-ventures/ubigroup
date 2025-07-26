@@ -1,54 +1,69 @@
 import { useQuery } from "@tanstack/react-query";
 import { useCurrentUser } from "./use-current-user";
 
-export interface DashboardMetrics {
-  // Super Admin metrics
-  totalAgencies?: number;
-  totalUsers?: number;
-  totalAgents?: number;
-  totalProperties?: number;
-  approvalRate?: number;
-  recentActivities?: Array<{
-    id: string;
-    type: string;
-    description: string;
-    timestamp: string;
-  }>;
+// Define the metrics types based on user role
+interface AgentProperties {
+  total: number;
+  approved: number;
+  pending: number;
+  rejected: number;
+}
+
+interface RecentProperty {
+  id: string;
+  title: string;
+  status: string;
+  price: number;
+  transactionType: string;
+  createdAt: string;
+}
+
+interface DashboardMetrics {
+  // Agent-specific metrics
+  agentProperties?: AgentProperties;
+  recentProperties?: RecentProperty[];
+  averagePropertyPrice?: number;
 
   // Agency Admin metrics
   agencyInfo?: {
     name: string;
+    logoUrl?: string;
+  };
+  agentStats?: {
     totalAgents: number;
     activeAgents: number;
   };
-  agencyProperties?: {
-    total: number;
-    approved: number;
-    pending: number;
-    rejected: number;
+  propertyStats?: {
+    totalProperties: number;
+    approvedProperties: number;
+    pendingProperties: number;
+    rejectedProperties: number;
+    approvalRate: number;
   };
   topAgents?: Array<{
     id: string;
     name: string;
-    propertyCount: number;
+    propertiesCount: number;
+    active: boolean;
   }>;
-  recentProperties?: Array<{
+
+  // Super Admin metrics
+  platformStats?: {
+    totalAgencies: number;
+    activeAgencies: number;
+    totalUsers: number;
+    totalAgents: number;
+    totalAgencyAdmins: number;
+  };
+  recentActivities?: Array<{
+    type: string;
     id: string;
     title: string;
-    agentName: string;
+    agent: string;
+    agency: string;
     status: string;
     createdAt: string;
   }>;
-
-  // Agent metrics
-  agentProperties?: {
-    total: number;
-    approved: number;
-    pending: number;
-    rejected: number;
-  };
-  averagePropertyPrice?: number;
-  totalViews?: number;
 }
 
 export function useDashboardMetrics() {
@@ -63,7 +78,25 @@ export function useDashboardMetrics() {
         throw new Error("Failed to fetch dashboard metrics");
       }
 
-      return response.json();
+      const data = await response.json();
+
+      // Transform the API response based on user role
+      if (profile?.role === "AGENT") {
+        return {
+          agentProperties: {
+            total: data.metrics.personalStats?.totalProperties || 0,
+            approved: data.metrics.personalStats?.approvedProperties || 0,
+            pending: data.metrics.personalStats?.pendingProperties || 0,
+            rejected: data.metrics.personalStats?.rejectedProperties || 0,
+          },
+          recentProperties: data.metrics.recentProperties || [],
+          averagePropertyPrice:
+            data.metrics.performanceInsights?.averagePropertyPrice || 0,
+        };
+      }
+
+      // Return the metrics as-is for other roles
+      return data.metrics;
     },
     enabled: !!profile?.role,
     staleTime: 5 * 60 * 1000, // 5 minutes

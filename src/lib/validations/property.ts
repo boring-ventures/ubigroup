@@ -11,20 +11,17 @@ export const createPropertySchema = z.object({
     .string()
     .min(20, "Description must be at least 20 characters")
     .max(1000, "Description must be less than 1000 characters"),
-  type: z.nativeEnum(PropertyType),
-  locationState: z.string().min(2, "State is required"),
-  locationCity: z.string().min(2, "City is required"),
-  locationNeigh: z.string().min(2, "Neighborhood is required"),
-  address: z.string().min(10, "Full address is required").optional(),
+  propertyType: z.nativeEnum(PropertyType),
+  transactionType: z.nativeEnum(TransactionType),
+  address: z.string().min(10, "Full address is required"),
+  city: z.string().min(2, "City is required"),
+  state: z.string().min(2, "State is required"),
+  zipCode: z.string().min(5, "ZIP code is required"),
   price: z.number().positive("Price must be positive"),
   bedrooms: z.number().int().min(0, "Bedrooms cannot be negative"),
-  bathrooms: z.number().int().min(0, "Bathrooms cannot be negative"),
-  garageSpaces: z.number().int().min(0, "Garage spaces cannot be negative"),
-  squareMeters: z.number().positive("Square meters must be positive"),
-  transactionType: z.nativeEnum(TransactionType),
-  images: z
-    .array(z.string().url("Invalid image URL"))
-    .min(1, "At least one image is required"),
+  bathrooms: z.number().min(0, "Bathrooms cannot be negative"),
+  area: z.number().positive("Area must be positive"),
+  images: z.array(z.string().url("Invalid image URL")).default([]), // Make images optional with default empty array
   features: z.array(z.string()).default([]),
 });
 
@@ -33,17 +30,16 @@ export const updatePropertySchema = z.object({
   id: z.string().cuid("Invalid property ID"),
   title: z.string().min(5).max(100).optional(),
   description: z.string().min(20).max(1000).optional(),
-  type: z.nativeEnum(PropertyType).optional(),
-  locationState: z.string().min(2).optional(),
-  locationCity: z.string().min(2).optional(),
-  locationNeigh: z.string().min(2).optional(),
+  propertyType: z.nativeEnum(PropertyType).optional(),
+  transactionType: z.nativeEnum(TransactionType).optional(),
   address: z.string().min(10).optional(),
+  city: z.string().min(2).optional(),
+  state: z.string().min(2).optional(),
+  zipCode: z.string().min(5).optional(),
   price: z.number().positive().optional(),
   bedrooms: z.number().int().min(0).optional(),
   bathrooms: z.number().int().min(0).optional(),
-  garageSpaces: z.number().int().min(0).optional(),
-  squareMeters: z.number().positive().optional(),
-  transactionType: z.nativeEnum(TransactionType).optional(),
+  area: z.number().positive().optional(),
   images: z.array(z.string().url()).min(1).optional(),
   features: z.array(z.string()).optional(),
 });

@@ -43,26 +43,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Create supabase client once and memoize it
   const supabase = useMemo(() => createClientComponentClient(), []);
 
-  // Fetch profile function - memoized to prevent infinite loops
+  // Fetch profile function with retry logic - memoized to prevent infinite loops
   const fetchProfile = useMemo(
-    () => async (userId: string) => {
-      try {
-        const response = await fetch(`/api/profile`);
-        if (!response.ok) {
-          if (response.status === 404) {
-            // Profile not found, this is normal for new users
-            setProfile(null);
-            return;
+    () =>
+      async (userId: string, retryCount = 0) => {
+        const maxRetries = 3;
+
+        try {
+          const response = await fetch(`/api/profile`, {
+            headers: {
+              "Cache-Control": "no-cache",
+            },
+          });
+
+          if (!response.ok) {
+            if (response.status === 404 && retryCount < maxRetries) {
+              // Wait a bit and retry
+              await new Promise((resolve) =>
+                setTimeout(resolve, 1000 * (retryCount + 1))
+              );
+              return fetchProfile(userId, retryCount + 1);
+            }
+
+            if (response.status === 404) {
+              // Profile not found, this is normal for new users
+              setProfile(null);
+              return;
+            }
+
+            throw new Error(
+              `Failed to fetch profile: ${response.status} ${response.statusText}`
+            );
           }
-          throw new Error("Failed to fetch profile");
+
+          const data = await response.json();
+          setProfile(data);
+        } catch (error) {
+          if (retryCount < maxRetries) {
+            console.warn(
+              `Profile fetch attempt ${retryCount + 1} failed, retrying...`,
+              error
+            );
+            await new Promise((resolve) =>
+              setTimeout(resolve, 1000 * (retryCount + 1))
+            );
+            return fetchProfile(userId, retryCount + 1);
+          }
+
+          console.error("Error fetching profile:", error);
+          setProfile(null);
         }
-        const data = await response.json();
-        setProfile(data);
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-        setProfile(null);
-      }
-    },
+      },
     []
   );
 
