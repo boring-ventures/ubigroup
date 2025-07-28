@@ -3,11 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import type { User } from "@supabase/supabase-js";
-import type { Profile } from "@prisma/client";
+import type { User as DBUser } from "@prisma/client";
 
 type CurrentUserData = {
   user: User | null;
-  profile: Profile | null;
+  profile: DBUser | null;
   isLoading: boolean;
   error: Error | null;
   refetch?: () => Promise<void>;
@@ -15,13 +15,13 @@ type CurrentUserData = {
 
 export function useCurrentUser(): CurrentUserData {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<DBUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const supabase = createClientComponentClient();
 
   const fetchProfile = useCallback(
-    async (userId: string, retryCount = 0): Promise<Profile | null> => {
+    async (userId: string, retryCount = 0): Promise<DBUser | null> => {
       const maxRetries = 3;
 
       try {

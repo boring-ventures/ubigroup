@@ -46,6 +46,9 @@ export default async function DashboardPage() {
               <p className="text-muted-foreground">
                 Welcome to your dashboard. Your role access is being configured.
               </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Current role: {userProfile.role}
+              </p>
             </div>
           </div>
         );

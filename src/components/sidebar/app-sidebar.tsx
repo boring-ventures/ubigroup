@@ -15,9 +15,22 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import type { NavGroupProps } from "./types";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { profile } = useCurrentUser();
+  const { profile, isLoading } = useCurrentUser();
   const userRole = profile?.role || "AGENT";
   const sidebarData = getRoleBasedSidebarData(userRole);
+
+  if (isLoading) {
+    return (
+      <Sidebar collapsible="icon" variant="floating" {...props}>
+        <SidebarHeader>
+          <div className="p-4 text-sm text-muted-foreground">Loading...</div>
+        </SidebarHeader>
+        <SidebarContent />
+        <SidebarFooter />
+        <SidebarRail />
+      </Sidebar>
+    );
+  }
 
   return (
     <Sidebar collapsible="icon" variant="floating" {...props}>

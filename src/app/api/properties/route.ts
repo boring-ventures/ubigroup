@@ -258,13 +258,27 @@ export async function POST(request: NextRequest) {
     };
 
     console.log("Mapped data for database:", mappedData);
+    console.log("User data:", {
+      id: user.id,
+      agencyId: user.agencyId,
+      role: user.role,
+    });
+
+    // Check if user has an agency (required for agents)
+    if (!user.agencyId) {
+      console.error("User has no agency assigned:", user.id);
+      return NextResponse.json(
+        { error: "Agent must be assigned to an agency to create properties" },
+        { status: 400 }
+      );
+    }
 
     // Create property
     const property = await prisma.property.create({
       data: {
         ...mappedData,
         agentId: user.id,
-        agencyId: user.agencyId!,
+        agencyId: user.agencyId,
         status: PropertyStatus.PENDING, // All new properties start as pending
       },
       include: {
