@@ -42,6 +42,12 @@ import { PropertyType, TransactionType } from "@prisma/client";
 import { useAuth } from "@/providers/auth-provider";
 import { uploadFiles, validateFile } from "@/lib/upload";
 
+// Define currency enum locally since it's not exported from Prisma client
+enum Currency {
+  BOLIVIANOS = "BOLIVIANOS",
+  DOLLARS = "DOLLARS",
+}
+
 interface PropertyFormProps {
   initialData?: Partial<CreatePropertyInput>;
   propertyId?: string;
@@ -68,6 +74,12 @@ export function PropertyForm({
   const [uploadedVideos, setUploadedVideos] = useState<string[]>(
     initialData?.videos || []
   );
+  const [currency, setCurrency] = useState<Currency>(
+    (initialData?.currency as Currency) || Currency.BOLIVIANOS
+  );
+  const [exchangeRate, setExchangeRate] = useState<number | undefined>(
+    initialData?.exchangeRate
+  );
   const { user, session, profile } = useAuth();
 
   const form = useForm<CreatePropertyInput>({
@@ -76,6 +88,8 @@ export function PropertyForm({
       title: initialData?.title || "",
       description: initialData?.description || "",
       price: initialData?.price || 0,
+      currency: (initialData?.currency as Currency) || Currency.BOLIVIANOS,
+      exchangeRate: initialData?.exchangeRate,
       propertyType: initialData?.propertyType || PropertyType.APARTMENT,
       transactionType: initialData?.transactionType || TransactionType.SALE,
       address: initialData?.address || "",
@@ -188,6 +202,8 @@ export function PropertyForm({
       // Prepare form data with uploaded URLs
       const formData = {
         ...data,
+        currency: currency,
+        exchangeRate: currency === Currency.DOLLARS ? exchangeRate : undefined,
         images: imageUrls,
         videos: videoUrls,
       };
@@ -387,28 +403,94 @@ export function PropertyForm({
                 />
               </div>
 
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price *</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        {...field}
-                        onChange={(e) => {
-                          const value = parseFloat(e.target.value);
-                          field.onChange(isNaN(value) ? undefined : value);
-                        }}
-                      />
-                    </FormControl>
-                    <FormDescription>Enter the price in USD</FormDescription>
-                    <FormMessage />
-                  </FormItem>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="currency-bolivianos"
+                      name="currency"
+                      value={Currency.BOLIVIANOS}
+                      checked={currency === Currency.BOLIVIANOS}
+                      onChange={(e) => setCurrency(e.target.value as Currency)}
+                      className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
+                    />
+                    <Label htmlFor="currency-bolivianos">
+                      Price in Bolivianos (Bs)
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="currency-dollars"
+                      name="currency"
+                      value={Currency.DOLLARS}
+                      checked={currency === Currency.DOLLARS}
+                      onChange={(e) => setCurrency(e.target.value as Currency)}
+                      className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
+                    />
+                    <Label htmlFor="currency-dollars">
+                      Price in US Dollars ($)
+                    </Label>
+                  </div>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Price *</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          {...field}
+                          onChange={(e) => {
+                            const value = parseFloat(e.target.value);
+                            field.onChange(isNaN(value) ? undefined : value);
+                          }}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Enter the price in{" "}
+                        {currency === Currency.BOLIVIANOS
+                          ? "Bolivianos (Bs)"
+                          : "US Dollars ($)"}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {currency === Currency.DOLLARS && (
+                  <FormField
+                    control={form.control}
+                    name="exchangeRate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Exchange Rate (Bs/$) *</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            placeholder="6.96"
+                            value={exchangeRate || ""}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value);
+                              setExchangeRate(isNaN(value) ? undefined : value);
+                            }}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Current exchange rate from US Dollars to Bolivianos
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
-              />
+              </div>
             </div>
 
             {/* Location */}

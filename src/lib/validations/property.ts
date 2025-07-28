@@ -5,6 +5,11 @@ export const createPropertySchema = z.object({
   title: z.string().min(1, "Property title is required").max(200),
   description: z.string().min(1, "Property description is required").max(2000),
   price: z.number().min(0, "Price must be a positive number"),
+  currency: z.enum(["BOLIVIANOS", "DOLLARS"]).default("BOLIVIANOS"),
+  exchangeRate: z
+    .number()
+    .min(0, "Exchange rate must be a positive number")
+    .optional(),
   propertyType: z.nativeEnum(PropertyType),
   transactionType: z.nativeEnum(TransactionType),
   address: z.string().min(1, "Address is required").max(500),

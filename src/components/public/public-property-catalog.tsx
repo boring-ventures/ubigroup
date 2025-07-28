@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import {  CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PropertyCard } from "./property-card";
 import { PropertyFilters } from "./property-filters";
@@ -15,6 +15,7 @@ import {
   SlidersHorizontal,
   MapPin,
   Home,
+  Building2,
 } from "lucide-react";
 
 interface Property {
@@ -27,6 +28,8 @@ interface Property {
   locationNeigh: string;
   address: string | null;
   price: number;
+  currency: string;
+  exchangeRate: number | null;
   bedrooms: number;
   bathrooms: number;
   garageSpaces: number;

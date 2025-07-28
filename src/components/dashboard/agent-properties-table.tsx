@@ -254,7 +254,31 @@ export function AgentPropertiesTable() {
                           </div>
                         </TableCell>
                         <TableCell className="font-medium">
-                          ${property.price.toLocaleString()}
+                          {property.currency === "DOLLARS" ? (
+                            <>
+                              ${property.price.toLocaleString()}
+                              {property.exchangeRate && (
+                                <div className="text-xs text-muted-foreground">
+                                  ≈ Bs{" "}
+                                  {(
+                                    property.price * property.exchangeRate
+                                  ).toLocaleString()}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              Bs {property.price.toLocaleString()}
+                              {property.exchangeRate && (
+                                <div className="text-xs text-muted-foreground">
+                                  ≈ $
+                                  {(
+                                    property.price / property.exchangeRate
+                                  ).toLocaleString()}
+                                </div>
+                              )}
+                            </>
+                          )}
                         </TableCell>
                         <TableCell>
                           {getStatusBadge(

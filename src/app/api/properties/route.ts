@@ -247,6 +247,8 @@ export async function POST(request: NextRequest) {
       locationNeigh: propertyData.city, // Use city as neighborhood for now
       address: propertyData.address,
       price: propertyData.price,
+      currency: propertyData.currency,
+      exchangeRate: propertyData.exchangeRate,
       bedrooms: propertyData.bedrooms,
       bathrooms: propertyData.bathrooms,
       garageSpaces: 0, // Default value

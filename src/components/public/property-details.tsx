@@ -35,6 +35,8 @@ interface Property {
   locationNeigh: string;
   address: string | null;
   price: number;
+  currency: string;
+  exchangeRate: number | null;
   bedrooms: number;
   bathrooms: number;
   garageSpaces: number;
@@ -83,13 +85,49 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
     },
   });
 
-  const formatPrice = (price: number, transactionType: string) => {
-    const formatted = new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(price);
+  const formatPrice = (
+    price: number,
+    currency: string,
+    exchangeRate: number | null,
+    transactionType: string
+  ) => {
+    if (currency === "DOLLARS") {
+      const formatted = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+      }).format(price);
 
-    return transactionType === "RENT" ? `${formatted}/mês` : formatted;
+      if (exchangeRate) {
+        const bolivianosPrice = price * exchangeRate;
+        const bolivianosFormatted = new Intl.NumberFormat("es-BO", {
+          style: "currency",
+          currency: "BOB",
+        }).format(bolivianosPrice);
+
+        const result = `${formatted} (≈ ${bolivianosFormatted})`;
+        return transactionType === "RENT" ? `${result}/mes` : result;
+      }
+
+      return transactionType === "RENT" ? `${formatted}/mes` : formatted;
+    } else {
+      const formatted = new Intl.NumberFormat("es-BO", {
+        style: "currency",
+        currency: "BOB",
+      }).format(price);
+
+      if (exchangeRate) {
+        const dollarsPrice = price / exchangeRate;
+        const dollarsFormatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(dollarsPrice);
+
+        const result = `${formatted} (≈ ${dollarsFormatted})`;
+        return transactionType === "RENT" ? `${result}/mes` : result;
+      }
+
+      return transactionType === "RENT" ? `${formatted}/mes` : formatted;
+    }
   };
 
   const getTransactionBadge = (type: string) => {
@@ -228,7 +266,12 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-primary mb-1">
-                {formatPrice(property.price, property.transactionType)}
+                {formatPrice(
+                  property.price,
+                  property.currency,
+                  property.exchangeRate,
+                  property.transactionType
+                )}
               </div>
               <div className="text-sm text-muted-foreground">
                 {property.squareMeters}m² • Publicado em{" "}

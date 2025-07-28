@@ -52,7 +52,6 @@ export async function GET(
             name: true,
             logoUrl: true,
             phone: true,
-            email: true,
           },
         },
       },

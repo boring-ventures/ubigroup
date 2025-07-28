@@ -6,6 +6,8 @@ export interface AgencyProperty {
   title: string;
   description: string;
   price: number;
+  currency: string;
+  exchangeRate: number | null;
   type: string;
   transactionType: string;
   address: string | null;
