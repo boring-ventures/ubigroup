@@ -1,10 +1,57 @@
-import { Suspense } from "react";
+"use client";
+
+import { Suspense, useEffect, useState } from "react";
 import { UserManagement } from "@/components/user-management/user-management";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Shield, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+interface UserMetrics {
+  totalUsers: number;
+  superAdmins: number;
+  agencyAdmins: number;
+  agents: number;
+}
+
 export default function UsersPage() {
+  const [metrics, setMetrics] = useState<UserMetrics>({
+    totalUsers: 0,
+    superAdmins: 0,
+    agencyAdmins: 0,
+    agents: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  const fetchUserMetrics = async () => {
+    try {
+      const response = await fetch("/api/users");
+      if (response.ok) {
+        const data = await response.json();
+        const users = data.users || [];
+
+        const metrics = {
+          totalUsers: users.length,
+          superAdmins: users.filter((user: any) => user.role === "SUPER_ADMIN")
+            .length,
+          agencyAdmins: users.filter(
+            (user: any) => user.role === "AGENCY_ADMIN"
+          ).length,
+          agents: users.filter((user: any) => user.role === "AGENT").length,
+        };
+
+        setMetrics(metrics);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user metrics:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserMetrics();
+  }, []);
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -23,7 +70,9 @@ export default function UsersPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">
+              {loading ? "..." : metrics.totalUsers}
+            </div>
             <p className="text-xs text-muted-foreground">All system users</p>
           </CardContent>
         </Card>
@@ -34,7 +83,9 @@ export default function UsersPage() {
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">
+              {loading ? "..." : metrics.superAdmins}
+            </div>
             <p className="text-xs text-muted-foreground">
               Platform administrators
             </p>
@@ -47,7 +98,9 @@ export default function UsersPage() {
             <Settings className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">
+              {loading ? "..." : metrics.agencyAdmins}
+            </div>
             <p className="text-xs text-muted-foreground">Agency managers</p>
           </CardContent>
         </Card>
@@ -58,14 +111,16 @@ export default function UsersPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">
+              {loading ? "..." : metrics.agents}
+            </div>
             <p className="text-xs text-muted-foreground">Property agents</p>
           </CardContent>
         </Card>
       </div>
 
       <Suspense fallback={<div>Loading...</div>}>
-        <UserManagement />
+        <UserManagement onUserUpdate={fetchUserMetrics} />
       </Suspense>
     </div>
   );

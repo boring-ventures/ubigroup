@@ -45,7 +45,6 @@ import {
   Search,
   Edit,
   Trash2,
-  EyeOff,
   Phone,
   Shield,
   Users,
@@ -53,7 +52,7 @@ import {
   UserPlus,
   Building2,
   Mail,
-  Eye,
+  Key,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { PasswordInput } from "@/components/utils/password-input";
@@ -100,7 +99,11 @@ const createUserSchema = z.object({
 
 type CreateUserFormData = z.infer<typeof createUserSchema>;
 
-export function UserManagement() {
+interface UserManagementProps {
+  onUserUpdate?: () => void;
+}
+
+export function UserManagement({ onUserUpdate }: UserManagementProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,6 +114,9 @@ export function UserManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [passwordUser, setPasswordUser] = useState<User | null>(null);
 
   const form = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
@@ -233,6 +239,7 @@ export function UserManagement() {
         setIsCreateDialogOpen(false);
         form.reset();
         fetchUsers();
+        onUserUpdate?.();
       } else {
         throw new Error(result.error || "Failed to create user");
       }
@@ -246,36 +253,6 @@ export function UserManagement() {
       });
     } finally {
       setIsCreating(false);
-    }
-  };
-
-  // Toggle user status
-  const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
-    try {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ active: !currentStatus }),
-      });
-
-      if (response.ok) {
-        toast({
-          title: "Éxito",
-          description: `Usuario ${!currentStatus ? "activado" : "desactivado"} exitosamente`,
-        });
-        fetchUsers();
-      } else {
-        throw new Error("Failed to update user status");
-      }
-    } catch (error) {
-      console.error("Failed to toggle user status:", error);
-      toast({
-        title: "Error",
-        description: "Error al actualizar el estado del usuario",
-        variant: "destructive",
-      });
     }
   };
 
@@ -330,6 +307,7 @@ export function UserManagement() {
         setEditingUser(null);
         editForm.reset();
         fetchUsers();
+        onUserUpdate?.();
       } else {
         throw new Error(result.error || "Failed to update user");
       }
@@ -345,6 +323,54 @@ export function UserManagement() {
       });
     } finally {
       setIsEditing(false);
+    }
+  };
+
+  // Reset password
+  const handleResetPassword = async (user: User) => {
+    setPasswordUser(user);
+    setIsPasswordDialogOpen(true);
+  };
+
+  const onResetPasswordSubmit = async (data: { newPassword: string }) => {
+    if (!passwordUser) return;
+
+    try {
+      setIsResettingPassword(true);
+
+      const response = await fetch(`/api/users/${passwordUser.id}/password`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password: data.newPassword }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "✅ Contraseña Actualizada",
+          description:
+            "La contraseña del usuario ha sido actualizada exitosamente.",
+        });
+        setIsPasswordDialogOpen(false);
+        setPasswordUser(null);
+      } else {
+        throw new Error(result.error || "Failed to reset password");
+      }
+    } catch (error) {
+      console.error("Failed to reset password:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Error al restablecer contraseña",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResettingPassword(false);
     }
   };
 
@@ -368,6 +394,7 @@ export function UserManagement() {
             description: "El usuario ha sido eliminado exitosamente.",
           });
           fetchUsers();
+          onUserUpdate?.();
         } else {
           throw new Error(result.error || "Failed to delete user");
         }
@@ -781,6 +808,64 @@ export function UserManagement() {
                 </Form>
               </DialogContent>
             </Dialog>
+
+            {/* Password Reset Dialog */}
+            <Dialog
+              open={isPasswordDialogOpen}
+              onOpenChange={setIsPasswordDialogOpen}
+            >
+              <DialogContent className="sm:max-w-[400px]">
+                <DialogHeader>
+                  <DialogTitle>Restablecer Contraseña</DialogTitle>
+                  <DialogDescription>
+                    Establecer una nueva contraseña para{" "}
+                    <span className="font-semibold">
+                      {passwordUser?.firstName} {passwordUser?.lastName}
+                    </span>
+                  </DialogDescription>
+                </DialogHeader>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    const newPassword = formData.get("newPassword") as string;
+                    onResetPasswordSubmit({ newPassword });
+                  }}
+                  className="space-y-4"
+                >
+                  <div>
+                    <label className="text-sm font-medium">
+                      Nueva Contraseña
+                    </label>
+                    <PasswordInput
+                      name="newPassword"
+                      placeholder="Ingresa la nueva contraseña"
+                      className="mt-1"
+                      required
+                      minLength={8}
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      La contraseña debe tener al menos 8 caracteres
+                    </p>
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsPasswordDialogOpen(false)}
+                      disabled={isResettingPassword}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={isResettingPassword}>
+                      {isResettingPassword
+                        ? "Actualizando..."
+                        : "Actualizar Contraseña"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardHeader>
         <CardContent>
@@ -817,7 +902,6 @@ export function UserManagement() {
                   <TableHead>Role</TableHead>
                   <TableHead>Agency</TableHead>
                   <TableHead>Contact</TableHead>
-                  <TableHead>Status</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -825,7 +909,7 @@ export function UserManagement() {
               <TableBody>
                 {filteredUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8">
+                    <TableCell colSpan={6} className="text-center py-8">
                       No users found
                     </TableCell>
                   </TableRow>
@@ -887,11 +971,6 @@ export function UserManagement() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={user.active ? "default" : "secondary"}>
-                          {user.active ? "Active" : "Inactive"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
                         {new Date(user.createdAt).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
@@ -899,28 +978,19 @@ export function UserManagement() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() =>
-                              toggleUserStatus(user.id, user.active)
-                            }
-                            title={
-                              user.active
-                                ? "Desactivar usuario"
-                                : "Activar usuario"
-                            }
-                          >
-                            {user.active ? (
-                              <EyeOff className="h-4 w-4" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
                             onClick={() => handleEditUser(user)}
                             title="Editar usuario"
                           >
                             <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleResetPassword(user)}
+                            title="Restablecer contraseña"
+                            className="text-blue-600 hover:text-blue-700"
+                          >
+                            <Key className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
