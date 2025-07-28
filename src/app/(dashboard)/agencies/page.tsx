@@ -1,10 +1,69 @@
-import { Suspense } from "react";
+"use client";
+
+import { Suspense, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, MapPin, Building2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AgencyManagement } from "@/components/agency-management/agency-management";
 
+interface AgencyMetrics {
+  totalAgencies: number;
+  totalAgents: number;
+  activeProperties: number;
+  pendingApproval: number;
+}
+
 export default function AgenciesPage() {
+  const [metrics, setMetrics] = useState<AgencyMetrics>({
+    totalAgencies: 0,
+    totalAgents: 0,
+    activeProperties: 0,
+    pendingApproval: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  const fetchAgencyMetrics = async () => {
+    try {
+      const [agenciesResponse, usersResponse, propertiesResponse] =
+        await Promise.all([
+          fetch("/api/agencies"),
+          fetch("/api/users"),
+          fetch("/api/properties"),
+        ]);
+
+      if (agenciesResponse.ok && usersResponse.ok && propertiesResponse.ok) {
+        const agenciesData = await agenciesResponse.json();
+        const usersData = await usersResponse.json();
+        const propertiesData = await propertiesResponse.json();
+
+        const agencies = agenciesData.agencies || [];
+        const users = usersData.users || [];
+        const properties = propertiesData.properties || [];
+
+        const metrics = {
+          totalAgencies: agencies.length,
+          totalAgents: users.filter((user: any) => user.role === "AGENT")
+            .length,
+          activeProperties: properties.filter(
+            (property: any) => property.status === "APPROVED"
+          ).length,
+          pendingApproval: properties.filter(
+            (property: any) => property.status === "PENDING"
+          ).length,
+        };
+
+        setMetrics(metrics);
+      }
+    } catch (error) {
+      console.error("Failed to fetch agency metrics:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAgencyMetrics();
+  }, []);
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -27,7 +86,9 @@ export default function AgenciesPage() {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">
+              {loading ? "..." : metrics.totalAgencies}
+            </div>
             <p className="text-xs text-muted-foreground">Active agencies</p>
           </CardContent>
         </Card>
@@ -38,7 +99,9 @@ export default function AgenciesPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">
+              {loading ? "..." : metrics.totalAgents}
+            </div>
             <p className="text-xs text-muted-foreground">Across all agencies</p>
           </CardContent>
         </Card>
@@ -51,7 +114,9 @@ export default function AgenciesPage() {
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">
+              {loading ? "..." : metrics.activeProperties}
+            </div>
             <p className="text-xs text-muted-foreground">Listed properties</p>
           </CardContent>
         </Card>
@@ -64,14 +129,16 @@ export default function AgenciesPage() {
             <Plus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">
+              {loading ? "..." : metrics.pendingApproval}
+            </div>
             <p className="text-xs text-muted-foreground">Awaiting review</p>
           </CardContent>
         </Card>
       </div>
 
       <Suspense fallback={<div>Loading agencies...</div>}>
-        <AgencyManagement />
+        <AgencyManagement onAgencyUpdate={fetchAgencyMetrics} />
       </Suspense>
     </div>
   );

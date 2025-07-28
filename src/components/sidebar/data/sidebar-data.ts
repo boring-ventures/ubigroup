@@ -97,11 +97,7 @@ export const getRoleBasedSidebarData = (role: UserRole): SidebarData => {
               url: "/agencies",
               icon: Building2,
             },
-            {
-              title: "Agents",
-              url: "/agents",
-              icon: User,
-            },
+            
             {
               title: "All Properties",
               url: "/all-properties",

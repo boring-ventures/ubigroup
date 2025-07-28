@@ -174,17 +174,23 @@ export function validateRequestBody<T>(
   body: any
 ): { data: T | null; error: string | null } {
   try {
+    console.log("Validating request body:", body);
+    console.log("Schema:", schema);
+
     const result = schema.safeParse(body);
 
     if (!result.success) {
+      console.log("Validation failed:", result.error);
       const errors = result.error.errors
         .map((err: any) => `${err.path.join(".")}: ${err.message}`)
         .join(", ");
       return { data: null, error: `Validation error: ${errors}` };
     }
 
+    console.log("Validation successful:", result.data);
     return { data: result.data, error: null };
   } catch (error) {
+    console.error("Validation error:", error);
     return { data: null, error: "Invalid request data" };
   }
 }

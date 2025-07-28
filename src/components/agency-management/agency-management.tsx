@@ -22,6 +22,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,8 +45,13 @@ import {
   Mail,
   MapPin,
   Users,
+  Trash2,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import {
+  createAgencySchema,
+  CreateAgencyInput,
+} from "@/lib/validations/agency";
 
 // Types
 interface Agency {
@@ -47,7 +60,6 @@ interface Agency {
   logoUrl: string | null;
   address: string | null;
   phone: string | null;
-  email: string | null;
   active: boolean;
   createdAt: string;
   _count?: {
@@ -56,25 +68,21 @@ interface Agency {
   };
 }
 
-// Form schemas
-const createAgencySchema = z.object({
-  name: z.string().min(2, "Agency name must be at least 2 characters"),
-  address: z
-    .string()
-    .min(5, "Address must be at least 5 characters")
-    .optional(),
-  phone: z.string().min(10, "Phone must be at least 10 characters").optional(),
-  email: z.string().email("Invalid email address").optional(),
-});
+type CreateAgencyFormData = CreateAgencyInput;
 
-type CreateAgencyFormData = z.infer<typeof createAgencySchema>;
+interface AgencyManagementProps {
+  onAgencyUpdate?: () => void;
+}
 
-export function AgencyManagement() {
+export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingAgency, setEditingAgency] = useState<Agency | null>(null);
 
   const form = useForm<CreateAgencyFormData>({
     resolver: zodResolver(createAgencySchema),
@@ -82,7 +90,15 @@ export function AgencyManagement() {
       name: "",
       address: "",
       phone: "",
-      email: "",
+    },
+  });
+
+  const editForm = useForm<CreateAgencyFormData>({
+    resolver: zodResolver(createAgencySchema),
+    defaultValues: {
+      name: "",
+      address: "",
+      phone: "",
     },
   });
 
@@ -118,20 +134,28 @@ export function AgencyManagement() {
     try {
       setIsCreating(true);
 
+      const requestData = {
+        name: data.name,
+        address: data.address?.trim() || null,
+        phone: data.phone?.trim() || null,
+      };
+
+      console.log("Submitting agency data:", requestData);
+
       const response = await fetch("/api/agencies", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name: data.name,
-          address: data.address || null,
-          phone: data.phone || null,
-          email: data.email || null,
-        }),
+        body: JSON.stringify(requestData),
       });
 
+      console.log("Response status:", response.status);
+      console.log("Response ok:", response.ok);
+
       if (response.ok) {
+        const result = await response.json();
+        console.log("Success response:", result);
         toast({
           title: "Success",
           description: "Agency created successfully",
@@ -139,9 +163,13 @@ export function AgencyManagement() {
         setIsCreateDialogOpen(false);
         form.reset();
         fetchAgencies();
+        onAgencyUpdate?.();
       } else {
         const error = await response.json();
-        throw new Error(error.message || "Failed to create agency");
+        console.log("Error response:", error);
+        throw new Error(
+          error.error || error.message || "Failed to create agency"
+        );
       }
     } catch (error) {
       console.error("Failed to create agency:", error);
@@ -153,6 +181,62 @@ export function AgencyManagement() {
       });
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  // Edit agency
+  const handleEditAgency = (agency: Agency) => {
+    setEditingAgency(agency);
+    editForm.reset({
+      name: agency.name,
+      address: agency.address || "",
+      phone: agency.phone || "",
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const onEditSubmit = async (data: CreateAgencyFormData) => {
+    if (!editingAgency) return;
+
+    try {
+      setIsEditing(true);
+
+      const response = await fetch(`/api/agencies/${editingAgency.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: data.name,
+          address: data.address?.trim() || null,
+          phone: data.phone?.trim() || null,
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Agency updated successfully",
+        });
+        setIsEditDialogOpen(false);
+        setEditingAgency(null);
+        editForm.reset();
+        fetchAgencies();
+        onAgencyUpdate?.();
+      } else {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update agency");
+      }
+    } catch (error) {
+      console.error("Failed to update agency:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Failed to update agency",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEditing(false);
     }
   };
 
@@ -176,6 +260,7 @@ export function AgencyManagement() {
           description: `Agency ${!currentStatus ? "activated" : "deactivated"} successfully`,
         });
         fetchAgencies();
+        onAgencyUpdate?.();
       } else {
         throw new Error("Failed to update agency status");
       }
@@ -252,6 +337,7 @@ export function AgencyManagement() {
                             <Input
                               placeholder="123 Main St, City, State"
                               {...field}
+                              value={field.value || ""}
                             />
                           </FormControl>
                           <FormMessage />
@@ -259,41 +345,101 @@ export function AgencyManagement() {
                       )}
                     />
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone (Optional)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="+1234567890" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email (Optional)</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="contact@agency.com"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="12345678"
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <DialogFooter>
                       <Button type="submit" disabled={isCreating}>
                         {isCreating ? "Creating..." : "Create Agency"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+
+            {/* Edit Agency Dialog */}
+            <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Edit Agency</DialogTitle>
+                  <DialogDescription>
+                    Update agency information and contact details.
+                  </DialogDescription>
+                </DialogHeader>
+                <Form {...editForm}>
+                  <form
+                    onSubmit={editForm.handleSubmit(onEditSubmit)}
+                    className="space-y-4"
+                  >
+                    <FormField
+                      control={editForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Agency Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="ABC Real Estate" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Address (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="123 Main St, City, State"
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={editForm.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone (Optional)</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="12345678"
+                              {...field}
+                              value={field.value || ""}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <DialogFooter>
+                      <Button type="submit" disabled={isEditing}>
+                        {isEditing ? "Updating..." : "Update Agency"}
                       </Button>
                     </DialogFooter>
                   </form>
@@ -316,95 +462,115 @@ export function AgencyManagement() {
             </div>
           </div>
 
-          {/* Agencies Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filteredAgencies.length === 0 ? (
-              <div className="col-span-full text-center py-8">
-                No agencies found
-              </div>
-            ) : (
-              filteredAgencies.map((agency) => (
-                <Card
-                  key={agency.id}
-                  className="hover:shadow-md transition-shadow"
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={agency.logoUrl || undefined} />
-                          <AvatarFallback>
-                            <Building2 className="h-5 w-5" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <CardTitle className="text-lg">
-                            {agency.name}
-                          </CardTitle>
-                          <Badge
-                            variant={agency.active ? "default" : "secondary"}
+          {/* Agencies Table */}
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Agency</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Users</TableHead>
+                  <TableHead>Properties</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAgencies.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8">
+                      No agencies found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredAgencies.map((agency) => (
+                    <TableRow key={agency.id}>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={agency.logoUrl || undefined} />
+                            <AvatarFallback>
+                              <Building2 className="h-4 w-4" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-medium">{agency.name}</div>
+                            {agency.address && (
+                              <div className="text-sm text-muted-foreground">
+                                {agency.address}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          {agency.phone && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Phone className="h-3 w-3" />
+                              {agency.phone}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          {agency._count?.users || 0}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          {agency._count?.properties || 0}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={agency.active ? "default" : "secondary"}
+                        >
+                          {agency.active ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(agency.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              toggleAgencyStatus(agency.id, agency.active)
+                            }
+                            title={
+                              agency.active
+                                ? "Deactivate agency"
+                                : "Activate agency"
+                            }
                           >
-                            {agency.active ? "Active" : "Inactive"}
-                          </Badge>
+                            {agency.active ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditAgency(agency)}
+                            title="Edit agency"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="space-y-2">
-                      {agency.address && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <MapPin className="h-3 w-3" />
-                          {agency.address}
-                        </div>
-                      )}
-                      {agency.phone && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Phone className="h-3 w-3" />
-                          {agency.phone}
-                        </div>
-                      )}
-                      {agency.email && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Mail className="h-3 w-3" />
-                          {agency.email}
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between pt-2 border-t">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Users className="h-3 w-3" />
-                          {agency._count?.users || 0} users
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Building2 className="h-3 w-3" />
-                          {agency._count?.properties || 0} properties
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-end space-x-2 mt-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          toggleAgencyStatus(agency.id, agency.active)
-                        }
-                      >
-                        {agency.active ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>

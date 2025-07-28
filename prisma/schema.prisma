@@ -71,7 +71,6 @@ model Agency {
   logoUrl   String?
   address   String?
   phone     String?
-  email     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   active    Boolean  @default(true)

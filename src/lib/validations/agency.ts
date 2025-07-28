@@ -8,16 +8,26 @@ export const createAgencySchema = z.object({
     .max(100, "Agency name must be less than 100 characters"),
   logoUrl: z.string().url("Invalid logo URL").optional(),
   address: z
-    .string()
-    .min(10, "Address must be at least 10 characters")
-    .max(200, "Address must be less than 200 characters")
+    .union([
+      z
+        .string()
+        .min(5, "Address must be at least 5 characters")
+        .max(200, "Address must be less than 200 characters"),
+      z.literal(""),
+      z.null(),
+    ])
     .optional(),
   phone: z
-    .string()
-    .min(10, "Phone must be at least 10 characters")
-    .max(20, "Phone must be less than 20 characters")
+    .union([
+      z
+        .string()
+        .min(8, "Phone must be at least 8 digits")
+        .max(15, "Phone must be less than 15 digits")
+        .regex(/^\d+$/, "Phone must contain only numbers"),
+      z.literal(""),
+      z.null(),
+    ])
     .optional(),
-  email: z.string().email("Invalid email address").optional(),
 });
 
 // Agency update schema
@@ -25,9 +35,27 @@ export const updateAgencySchema = z.object({
   id: z.string().cuid("Invalid agency ID"),
   name: z.string().min(2).max(100).optional(),
   logoUrl: z.string().url("Invalid logo URL").optional(),
-  address: z.string().min(10).max(200).optional(),
-  phone: z.string().min(10).max(20).optional(),
-  email: z.string().email("Invalid email address").optional(),
+  address: z
+    .union([
+      z
+        .string()
+        .min(5, "Address must be at least 5 characters")
+        .max(200, "Address must be less than 200 characters"),
+      z.literal(""),
+      z.null(),
+    ])
+    .optional(),
+  phone: z
+    .union([
+      z
+        .string()
+        .min(8, "Phone must be at least 8 digits")
+        .max(15, "Phone must be less than 15 digits")
+        .regex(/^\d+$/, "Phone must contain only numbers"),
+      z.literal(""),
+      z.null(),
+    ])
+    .optional(),
   active: z.boolean().optional(),
 });
 

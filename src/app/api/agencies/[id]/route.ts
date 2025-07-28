@@ -33,7 +33,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { active, name, address, phone, email } = body;
+    const { active, name, address, phone } = body;
 
     // Find the agency to update
     const agency = await prisma.agency.findUnique({
@@ -74,10 +74,6 @@ export async function PATCH(
 
     if (phone !== undefined) {
       updateData.phone = phone;
-    }
-
-    if (email !== undefined) {
-      updateData.email = email;
     }
 
     // Update agency
