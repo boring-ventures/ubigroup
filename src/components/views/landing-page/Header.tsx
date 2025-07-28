@@ -15,7 +15,7 @@ export default function Header() {
           <div className="flex items-center space-x-2">
             <Brain className="h-8 w-8 text-primary" />
             <Link href="/" className="text-2xl font-bold text-primary">
-              POSITIVE-Next
+              UbiGroup
             </Link>
           </div>
           <nav className="hidden md:flex space-x-8">
