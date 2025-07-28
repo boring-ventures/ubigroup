@@ -28,9 +28,10 @@ export default async function MyPropertiesPage() {
     <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Properties</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Mis Propiedades</h1>
           <p className="text-muted-foreground">
-            Manage your property listings and track their approval status
+            Gestiona tus listados de propiedades y rastrea su estado de
+            aprobación
           </p>
         </div>
       </div>

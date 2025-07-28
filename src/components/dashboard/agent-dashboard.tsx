@@ -64,9 +64,12 @@ export function AgentDashboard() {
     );
   }
 
-  const properties = metrics?.agentProperties;
-  const approvalRate = properties?.total
-    ? Math.round((properties.approved / properties.total) * 100)
+  // Access the correct data structure for agents
+  const personalStats = metrics?.personalStats;
+  const approvalRate = personalStats?.totalProperties
+    ? Math.round(
+        (personalStats.approvedProperties / personalStats.totalProperties) * 100
+      )
     : 0;
 
   return (
@@ -90,27 +93,27 @@ export function AgentDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricsCard
           title="Total Properties"
-          value={properties?.total || 0}
+          value={personalStats?.totalProperties || 0}
           description="All your listings"
           icon={Home}
         />
         <MetricsCard
           title="Approved"
-          value={properties?.approved || 0}
+          value={personalStats?.approvedProperties || 0}
           description={`${approvalRate}% approval rate`}
           icon={CheckCircle}
         />
         <MetricsCard
           title="Pending Review"
-          value={properties?.pending || 0}
+          value={personalStats?.pendingProperties || 0}
           description="Awaiting approval"
           icon={Clock}
         />
         <MetricsCard
           title="Average Price"
           value={
-            metrics?.averagePropertyPrice
-              ? `$${metrics.averagePropertyPrice.toLocaleString()}`
+            metrics?.performanceInsights?.averagePropertyPrice
+              ? `$${metrics.performanceInsights.averagePropertyPrice.toLocaleString()}`
               : "$0"
           }
           description="Property listing average"
@@ -142,9 +145,9 @@ export function AgentDashboard() {
               <Link href="/properties/pending">
                 <Clock className="mr-2 h-4 w-4" />
                 Pending Properties
-                {(properties?.pending || 0) > 0 && (
+                {(personalStats?.pendingProperties || 0) > 0 && (
                   <Badge variant="secondary" className="ml-auto">
-                    {properties?.pending}
+                    {personalStats?.pendingProperties}
                   </Badge>
                 )}
               </Link>
@@ -164,7 +167,7 @@ export function AgentDashboard() {
                 <span className="text-sm">Approved</span>
               </div>
               <span className="text-sm font-medium">
-                {properties?.approved || 0}
+                {personalStats?.approvedProperties || 0}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -173,7 +176,7 @@ export function AgentDashboard() {
                 <span className="text-sm">Pending</span>
               </div>
               <span className="text-sm font-medium">
-                {properties?.pending || 0}
+                {personalStats?.pendingProperties || 0}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -182,10 +185,10 @@ export function AgentDashboard() {
                 <span className="text-sm">Rejected</span>
               </div>
               <span className="text-sm font-medium">
-                {properties?.rejected || 0}
+                {personalStats?.rejectedProperties || 0}
               </span>
             </div>
-            {(properties?.total || 0) > 0 && (
+            {(personalStats?.totalProperties || 0) > 0 && (
               <div className="pt-2 border-t">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">

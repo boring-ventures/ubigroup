@@ -101,12 +101,12 @@ export function PropertyDetailsModal({
   });
 
   const formatPrice = (price: number, transactionType: string) => {
-    const formatted = new Intl.NumberFormat("pt-BR", {
+    const formatted = new Intl.NumberFormat("es-ES", {
       style: "currency",
-      currency: "BRL",
+      currency: "USD",
     }).format(price);
 
-    return transactionType === "RENT" ? `${formatted}/mês` : formatted;
+    return transactionType === "RENT" ? `${formatted}/mes` : formatted;
   };
 
   const getTransactionBadge = (type: string) => {
@@ -119,7 +119,7 @@ export function PropertyDetailsModal({
             : "bg-green-600 hover:bg-green-700 text-white"
         }`}
       >
-        {type === "SALE" ? "Venda" : "Aluguel"}
+        {type === "SALE" ? "Venta" : "Alquiler"}
       </Badge>
     );
   };
@@ -132,9 +132,9 @@ export function PropertyDetailsModal({
     } as const;
 
     const labels = {
-      PENDING: "Pendente",
-      APPROVED: "Aprovado",
-      REJECTED: "Rejeitado",
+      PENDING: "Pendiente",
+      APPROVED: "Aprobado",
+      REJECTED: "Rechazado",
     };
 
     return (
@@ -151,7 +151,7 @@ export function PropertyDetailsModal({
       case "APARTMENT":
         return "Apartamento";
       case "OFFICE":
-        return "Escritório";
+        return "Oficina";
       case "LAND":
         return "Terreno";
       default:
@@ -162,7 +162,7 @@ export function PropertyDetailsModal({
   const handleContactWhatsApp = () => {
     if (property?.agent.whatsapp) {
       const message = encodeURIComponent(
-        `Olá! Tenho interesse no imóvel "${property.title}" (ID: ${property.id}). Poderia me fornecer mais informações?`
+        `¡Hola! Tengo interés en la propiedad "${property.title}" (ID: ${property.id}). ¿Podrías darme más información?`
       );
       const whatsappUrl = `https://wa.me/${property.agent.whatsapp.replace(/\D/g, "")}?text=${message}`;
       window.open(whatsappUrl, "_blank");
@@ -196,7 +196,7 @@ export function PropertyDetailsModal({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Carregando...</DialogTitle>
+            <DialogTitle>Cargando...</DialogTitle>
           </DialogHeader>
           <div className="flex items-center justify-center p-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -211,17 +211,16 @@ export function PropertyDetailsModal({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Erro</DialogTitle>
+            <DialogTitle>Error</DialogTitle>
           </DialogHeader>
           <div className="flex items-center justify-center p-8">
             <div className="text-center">
               <Home className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">
-                Imóvel não encontrado
+                Propiedad no encontrada
               </h3>
               <p className="text-muted-foreground">
-                O imóvel solicitado não foi encontrado ou não está mais
-                disponível.
+                La propiedad solicitada no fue encontrada o no está disponible.
               </p>
             </div>
           </div>
@@ -237,7 +236,7 @@ export function PropertyDetailsModal({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Eye className="h-5 w-5" />
-              Detalhes do Imóvel
+              Detalles de la Propiedad
             </DialogTitle>
           </DialogHeader>
 
@@ -276,7 +275,7 @@ export function PropertyDetailsModal({
             {/* Image Gallery */}
             {property.images.length > 0 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Imagens</h3>
+                <h3 className="text-lg font-semibold">Imágenes</h3>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {property.images.slice(0, 4).map((image, index) => (
                     <div
@@ -289,7 +288,7 @@ export function PropertyDetailsModal({
                     >
                       <img
                         src={image}
-                        alt={`${property.title} - Imagem ${index + 1}`}
+                        alt={`${property.title} - Imagen ${index + 1}`}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
@@ -301,7 +300,7 @@ export function PropertyDetailsModal({
                     >
                       <img
                         src={property.images[4]}
-                        alt={`${property.title} - Mais imagens`}
+                        alt={`${property.title} - Más imágenes`}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
@@ -341,7 +340,7 @@ export function PropertyDetailsModal({
               {/* Property Information */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Informações do Imóvel</CardTitle>
+                  <CardTitle>Información de la Propiedad</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4 mb-4">
@@ -352,7 +351,7 @@ export function PropertyDetailsModal({
                         </div>
                         <div className="font-semibold">{property.bedrooms}</div>
                         <div className="text-xs text-muted-foreground">
-                          Quartos
+                          Habitaciones
                         </div>
                       </div>
                     )}
@@ -366,7 +365,7 @@ export function PropertyDetailsModal({
                           {property.bathrooms}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Banheiros
+                          Baños
                         </div>
                       </div>
                     )}
@@ -415,7 +414,7 @@ export function PropertyDetailsModal({
               {/* Agent Information */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Informações do Agente</CardTitle>
+                  <CardTitle>Información del Agente</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -449,7 +448,7 @@ export function PropertyDetailsModal({
                           onClick={handleContactPhone}
                         >
                           <Phone className="h-4 w-4 mr-2" />
-                          Ligar
+                          Llamar
                         </Button>
                       )}
                       {property.agent.whatsapp && (
@@ -470,7 +469,7 @@ export function PropertyDetailsModal({
             {/* Description */}
             <Card>
               <CardHeader>
-                <CardTitle>Descrição</CardTitle>
+                <CardTitle>Descripción</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
@@ -484,23 +483,23 @@ export function PropertyDetailsModal({
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <MapPin className="h-5 w-5 mr-2" />
-                  Localização
+                  Ubicación
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   <div>
-                    <strong>Bairro:</strong> {property.locationNeigh}
+                    <strong>Barrio:</strong> {property.locationNeigh}
                   </div>
                   <div>
-                    <strong>Cidade:</strong> {property.locationCity}
+                    <strong>Ciudad:</strong> {property.locationCity}
                   </div>
                   <div>
                     <strong>Estado:</strong> {property.locationState}
                   </div>
                   {property.address && (
                     <div>
-                      <strong>Endereço:</strong> {property.address}
+                      <strong>Dirección:</strong> {property.address}
                     </div>
                   )}
                 </div>
@@ -510,16 +509,18 @@ export function PropertyDetailsModal({
             {/* Property Metadata */}
             <Card>
               <CardHeader>
-                <CardTitle>Informações Técnicas</CardTitle>
+                <CardTitle>Información Técnica</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">ID do Imóvel:</span>
+                    <span className="text-muted-foreground">
+                      ID de la Propiedad:
+                    </span>
                     <span className="font-mono">{property.id}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Status:</span>
+                    <span className="text-muted-foreground">Estado:</span>
                     <span>{getStatusBadge(property.status)}</span>
                   </div>
                   <div className="flex justify-between">
@@ -527,11 +528,11 @@ export function PropertyDetailsModal({
                     <span>{getPropertyTypeLabel(property.type)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Transação:</span>
+                    <span className="text-muted-foreground">Transacción:</span>
                     <span>
                       {property.transactionType === "SALE"
-                        ? "Venda"
-                        : "Aluguel"}
+                        ? "Venta"
+                        : "Alquiler"}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -541,7 +542,7 @@ export function PropertyDetailsModal({
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Agência:</span>
+                    <span className="text-muted-foreground">Agencia:</span>
                     <span>{property.agency.name}</span>
                   </div>
                 </div>
@@ -557,7 +558,7 @@ export function PropertyDetailsModal({
           <div className="relative w-full h-full flex items-center justify-center bg-black">
             <img
               src={property.images[currentImageIndex]}
-              alt={`${property.title} - Imagem ${currentImageIndex + 1}`}
+              alt={`${property.title} - Imagen ${currentImageIndex + 1}`}
               className="max-w-full max-h-full object-contain"
             />
 

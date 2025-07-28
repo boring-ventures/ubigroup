@@ -36,7 +36,6 @@ import { PropertyStatus } from "@prisma/client";
 import { toast } from "@/components/ui/use-toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import Link from "next/link";
-import { PropertyDetailsModal } from "./property-details-modal";
 
 export function AgentPropertiesTable() {
   const [params, setParams] = useState<UseAgentPropertiesParams>({
@@ -46,10 +45,6 @@ export function AgentPropertiesTable() {
   const [search, setSearch] = useState("");
   const [deletePropertyId, setDeletePropertyId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(
-    null
-  );
-  const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
 
   const { data, isLoading, error, refetch } = useAgentProperties(params);
 
@@ -70,16 +65,6 @@ export function AgentPropertiesTable() {
     setParams((prev) => ({ ...prev, page }));
   };
 
-  const handleViewProperty = (propertyId: string) => {
-    setSelectedPropertyId(propertyId);
-    setIsPropertyModalOpen(true);
-  };
-
-  const handleClosePropertyModal = () => {
-    setIsPropertyModalOpen(false);
-    setSelectedPropertyId(null);
-  };
-
   const handleDeleteProperty = async (propertyId: string) => {
     try {
       setIsDeleting(true);
@@ -93,8 +78,8 @@ export function AgentPropertiesTable() {
       }
 
       toast({
-        title: "Success",
-        description: "Property deleted successfully",
+        title: "Éxito",
+        description: "Propiedad eliminada exitosamente",
       });
 
       refetch();
@@ -103,7 +88,9 @@ export function AgentPropertiesTable() {
       toast({
         title: "Error",
         description:
-          error instanceof Error ? error.message : "Failed to delete property",
+          error instanceof Error
+            ? error.message
+            : "Error al eliminar la propiedad",
         variant: "destructive",
       });
     } finally {
@@ -119,9 +106,15 @@ export function AgentPropertiesTable() {
       REJECTED: "destructive",
     } as const;
 
+    const labels = {
+      PENDING: "Pendiente",
+      APPROVED: "Aprobado",
+      REJECTED: "Rechazado",
+    };
+
     return (
       <div className="flex items-center gap-2">
-        <Badge variant={variants[status]}>{status}</Badge>
+        <Badge variant={variants[status]}>{labels[status]}</Badge>
         {status === "REJECTED" && rejectionReason && (
           <AlertCircle className="h-4 w-4 text-destructive cursor-help" />
         )}
@@ -133,7 +126,7 @@ export function AgentPropertiesTable() {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-destructive">Failed to load properties</p>
+          <p className="text-destructive">Error al cargar las propiedades</p>
         </CardContent>
       </Card>
     );
@@ -145,15 +138,15 @@ export function AgentPropertiesTable() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>My Properties</CardTitle>
+              <CardTitle>Mis Propiedades</CardTitle>
               <CardDescription>
-                Manage your property listings and track their status
+                Gestiona tus listados de propiedades y rastrea su estado
               </CardDescription>
             </div>
             <Button asChild>
               <Link href="/properties/create">
                 <Plus className="mr-2 h-4 w-4" />
-                Add Property
+                Agregar Propiedad
               </Link>
             </Button>
           </div>
@@ -164,7 +157,7 @@ export function AgentPropertiesTable() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search properties..."
+                placeholder="Buscar propiedades..."
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-10"
@@ -177,13 +170,13 @@ export function AgentPropertiesTable() {
               }
             >
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder="Filtrar por estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="APPROVED">Approved</SelectItem>
-                <SelectItem value="REJECTED">Rejected</SelectItem>
+                <SelectItem value="all">Todos los Estados</SelectItem>
+                <SelectItem value="PENDING">Pendiente</SelectItem>
+                <SelectItem value="APPROVED">Aprobado</SelectItem>
+                <SelectItem value="REJECTED">Rechazado</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -209,17 +202,19 @@ export function AgentPropertiesTable() {
                   <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
                 </svg>
               </div>
-              <h3 className="mt-4 text-lg font-medium">No properties found</h3>
+              <h3 className="mt-4 text-lg font-medium">
+                No se encontraron propiedades
+              </h3>
               <p className="text-muted-foreground mb-4">
                 {params.status || search
-                  ? "No properties match your current filters"
-                  : "You haven't created any properties yet"}
+                  ? "Ninguna propiedad coincide con tus filtros actuales"
+                  : "Aún no has creado ninguna propiedad"}
               </p>
               {!params.status && !search && (
                 <Button asChild>
                   <Link href="/properties/create">
                     <Plus className="mr-2 h-4 w-4" />
-                    Create Your First Property
+                    Crear tu Primera Propiedad
                   </Link>
                 </Button>
               )}
@@ -230,12 +225,12 @@ export function AgentPropertiesTable() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Property</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Price</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>Propiedad</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Precio</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Creado</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -275,10 +270,12 @@ export function AgentPropertiesTable() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => handleViewProperty(property.id)}
-                              title="View Property Details"
+                              asChild
+                              title="Ver Detalles de la Propiedad"
                             >
-                              <Eye className="h-4 w-4" />
+                              <Link href={`/properties/${property.id}`}>
+                                <Eye className="h-4 w-4" />
+                              </Link>
                             </Button>
                             <Button size="sm" variant="ghost" asChild>
                               <Link href={`/properties/${property.id}/edit`}>
@@ -305,9 +302,9 @@ export function AgentPropertiesTable() {
               {data && data.totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4">
                   <p className="text-sm text-muted-foreground">
-                    Showing {(data.currentPage - 1) * params.limit! + 1} to{" "}
-                    {Math.min(data.currentPage * params.limit!, data.total)} of{" "}
-                    {data.total} properties
+                    Mostrando {(data.currentPage - 1) * params.limit! + 1} a{" "}
+                    {Math.min(data.currentPage * params.limit!, data.total)} de{" "}
+                    {data.total} propiedades
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -316,10 +313,10 @@ export function AgentPropertiesTable() {
                       onClick={() => handlePageChange(data.currentPage - 1)}
                       disabled={data.currentPage <= 1}
                     >
-                      Previous
+                      Anterior
                     </Button>
                     <span className="text-sm">
-                      Page {data.currentPage} of {data.totalPages}
+                      Página {data.currentPage} de {data.totalPages}
                     </span>
                     <Button
                       variant="outline"
@@ -327,7 +324,7 @@ export function AgentPropertiesTable() {
                       onClick={() => handlePageChange(data.currentPage + 1)}
                       disabled={data.currentPage >= data.totalPages}
                     >
-                      Next
+                      Siguiente
                     </Button>
                   </div>
                 </div>
@@ -341,18 +338,11 @@ export function AgentPropertiesTable() {
       <ConfirmDialog
         open={!!deletePropertyId}
         onOpenChange={(open) => !open && setDeletePropertyId(null)}
-        title="Delete Property"
-        description="Are you sure you want to delete this property? This action cannot be undone."
+        title="Eliminar Propiedad"
+        description="¿Estás seguro de que quieres eliminar esta propiedad? Esta acción no se puede deshacer."
         onConfirm={() =>
           deletePropertyId && handleDeleteProperty(deletePropertyId)
         }
-      />
-
-      {/* Property Details Modal */}
-      <PropertyDetailsModal
-        propertyId={selectedPropertyId}
-        isOpen={isPropertyModalOpen}
-        onClose={handleClosePropertyModal}
       />
     </>
   );

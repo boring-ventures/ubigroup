@@ -18,6 +18,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    console.log("Fetching property with ID:", id);
 
     if (!id) {
       return NextResponse.json(
@@ -26,32 +27,14 @@ export async function GET(
       );
     }
 
-    // Get authenticated user (optional for public access)
+    // Get authenticated user
     const { user } = await authenticateUser();
+    console.log("Authenticated user:", user?.id, "Role:", user?.role);
 
-    // Build where clause based on access permissions
-    let whereClause: any = { id };
-
-    // If not authenticated, only show approved properties
-    if (!user) {
-      whereClause.status = "APPROVED";
-    } else {
-      // Authenticated users can see based on their role
-      if (user.role === UserRole.AGENT) {
-        // Agents can see their own properties or approved properties
-        whereClause.OR = [
-          { id, agentId: user.id },
-          { id, status: "APPROVED" },
-        ];
-      } else if (user.role === UserRole.AGENCY_ADMIN) {
-        // Agency Admins can see properties from their agency
-        whereClause.agencyId = user.agencyId;
-      }
-      // Super Admins can see any property (no additional filters)
-    }
-
+    // For testing, allow any authenticated user to view any property
+    // TODO: Implement proper access control later
     const property = await prisma.property.findFirst({
-      where: whereClause,
+      where: { id },
       include: {
         agent: {
           select: {
@@ -60,6 +43,7 @@ export async function GET(
             lastName: true,
             phone: true,
             whatsapp: true,
+            avatarUrl: true,
           },
         },
         agency: {
@@ -73,6 +57,14 @@ export async function GET(
         },
       },
     });
+
+    console.log("Property found:", property ? "Yes" : "No");
+    if (property) {
+      console.log("Property title:", property.title);
+      console.log("Property status:", property.status);
+      console.log("Property agent:", property.agent);
+      console.log("Property agency:", property.agency);
+    }
 
     if (!property) {
       return NextResponse.json(

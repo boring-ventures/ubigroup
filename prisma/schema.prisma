@@ -39,6 +39,11 @@ enum PropertyStatus {
   REJECTED
 }
 
+enum Currency {
+  BOLIVIANOS
+  DOLLARS
+}
+
 model User {
   id        String   @id @default(cuid())
   userId    String   @unique
@@ -92,6 +97,8 @@ model Property {
   locationNeigh   String          @map("location_neighborhood")
   address         String?         // Full address
   price           Float
+  currency        Currency        @default(BOLIVIANOS)
+  exchangeRate    Float?          @map("exchange_rate") // Exchange rate when currency is DOLLARS
   bedrooms        Int
   bathrooms       Int
   garageSpaces    Int             @map("garage_spaces")

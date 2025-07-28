@@ -9,6 +9,21 @@ interface AgentProperties {
   rejected: number;
 }
 
+interface PersonalStats {
+  totalProperties: number;
+  approvedProperties: number;
+  pendingProperties: number;
+  rejectedProperties: number;
+  approvalRate: number;
+  totalViews: number;
+}
+
+interface PerformanceInsights {
+  averageApprovalTime: string;
+  mostPopularPropertyType: string;
+  averagePropertyPrice: number;
+}
+
 interface RecentProperty {
   id: string;
   title: string;
@@ -28,6 +43,8 @@ interface TopAgent {
 interface DashboardMetrics {
   // Agent-specific metrics
   agentProperties?: AgentProperties;
+  personalStats?: PersonalStats;
+  performanceInsights?: PerformanceInsights;
   recentProperties?: RecentProperty[];
   averagePropertyPrice?: number;
 
@@ -71,11 +88,24 @@ export function useDashboardMetrics() {
       // Transform the API response based on user role
       if (profile?.role === "AGENT") {
         return {
-          agentProperties: {
-            total: apiMetrics.personalStats?.totalProperties || 0,
-            approved: apiMetrics.personalStats?.approvedProperties || 0,
-            pending: apiMetrics.personalStats?.pendingProperties || 0,
-            rejected: apiMetrics.personalStats?.rejectedProperties || 0,
+          personalStats: {
+            totalProperties: apiMetrics.personalStats?.totalProperties || 0,
+            approvedProperties:
+              apiMetrics.personalStats?.approvedProperties || 0,
+            pendingProperties: apiMetrics.personalStats?.pendingProperties || 0,
+            rejectedProperties:
+              apiMetrics.personalStats?.rejectedProperties || 0,
+            approvalRate: apiMetrics.personalStats?.approvalRate || 0,
+            totalViews: apiMetrics.personalStats?.totalViews || 0,
+          },
+          performanceInsights: {
+            averageApprovalTime:
+              apiMetrics.performanceInsights?.averageApprovalTime || "0 days",
+            mostPopularPropertyType:
+              apiMetrics.performanceInsights?.mostPopularPropertyType ||
+              "APARTMENT",
+            averagePropertyPrice:
+              apiMetrics.performanceInsights?.averagePropertyPrice || 0,
           },
           recentProperties: apiMetrics.recentProperties || [],
           averagePropertyPrice:
