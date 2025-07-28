@@ -41,7 +41,16 @@ export function SuperAdminDashboard() {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-destructive">Failed to load dashboard metrics</p>
+          <div className="text-center">
+            <p className="text-destructive mb-4">
+              Failed to load dashboard metrics
+            </p>
+            <p className="text-sm text-muted-foreground mb-4">
+              {error.message ||
+                "There was an error loading your dashboard data"}
+            </p>
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -142,9 +151,15 @@ export function SuperAdminDashboard() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                No recent activities
-              </p>
+              <div className="text-center py-6">
+                <Activity className="mx-auto h-12 w-12 text-muted-foreground/40" />
+                <p className="mt-2 text-sm text-muted-foreground">
+                  No recent activities
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Platform activities will appear here
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>

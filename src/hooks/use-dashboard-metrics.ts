@@ -16,6 +16,13 @@ interface RecentProperty {
   price: number;
   transactionType: string;
   createdAt: string;
+  agentName?: string; // For Agency Admin view
+}
+
+interface TopAgent {
+  id: string;
+  name: string;
+  propertyCount: number; // Changed from propertiesCount to match component expectation
 }
 
 interface DashboardMetrics {
@@ -28,41 +35,21 @@ interface DashboardMetrics {
   agencyInfo?: {
     name: string;
     logoUrl?: string;
-  };
-  agentStats?: {
     totalAgents: number;
     activeAgents: number;
   };
-  propertyStats?: {
-    totalProperties: number;
-    approvedProperties: number;
-    pendingProperties: number;
-    rejectedProperties: number;
-    approvalRate: number;
-  };
-  topAgents?: Array<{
-    id: string;
-    name: string;
-    propertiesCount: number;
-    active: boolean;
-  }>;
+  agencyProperties?: AgentProperties; // This is what the component expects
+  topAgents?: TopAgent[];
 
   // Super Admin metrics
-  platformStats?: {
-    totalAgencies: number;
-    activeAgencies: number;
-    totalUsers: number;
-    totalAgents: number;
-    totalAgencyAdmins: number;
-  };
+  totalAgencies?: number;
+  totalUsers?: number;
+  totalProperties?: number;
+  approvalRate?: number;
   recentActivities?: Array<{
-    type: string;
     id: string;
-    title: string;
-    agent: string;
-    agency: string;
-    status: string;
-    createdAt: string;
+    description: string;
+    timestamp: string;
   }>;
 }
 
@@ -79,24 +66,74 @@ export function useDashboardMetrics() {
       }
 
       const data = await response.json();
+      const apiMetrics = data.metrics;
 
       // Transform the API response based on user role
       if (profile?.role === "AGENT") {
         return {
           agentProperties: {
-            total: data.metrics.personalStats?.totalProperties || 0,
-            approved: data.metrics.personalStats?.approvedProperties || 0,
-            pending: data.metrics.personalStats?.pendingProperties || 0,
-            rejected: data.metrics.personalStats?.rejectedProperties || 0,
+            total: apiMetrics.personalStats?.totalProperties || 0,
+            approved: apiMetrics.personalStats?.approvedProperties || 0,
+            pending: apiMetrics.personalStats?.pendingProperties || 0,
+            rejected: apiMetrics.personalStats?.rejectedProperties || 0,
           },
-          recentProperties: data.metrics.recentProperties || [],
+          recentProperties: apiMetrics.recentProperties || [],
           averagePropertyPrice:
-            data.metrics.performanceInsights?.averagePropertyPrice || 0,
+            apiMetrics.performanceInsights?.averagePropertyPrice || 0,
         };
       }
 
-      // Return the metrics as-is for other roles
-      return data.metrics;
+      if (profile?.role === "AGENCY_ADMIN") {
+        return {
+          agencyInfo: {
+            name: apiMetrics.agencyInfo?.name || "Agency",
+            logoUrl: apiMetrics.agencyInfo?.logoUrl,
+            totalAgents: apiMetrics.agentStats?.totalAgents || 0,
+            activeAgents: apiMetrics.agentStats?.activeAgents || 0,
+          },
+          agencyProperties: {
+            total: apiMetrics.propertyStats?.totalProperties || 0,
+            approved: apiMetrics.propertyStats?.approvedProperties || 0,
+            pending: apiMetrics.propertyStats?.pendingProperties || 0,
+            rejected: apiMetrics.propertyStats?.rejectedProperties || 0,
+          },
+          topAgents: (apiMetrics.topAgents || []).map((agent: any) => ({
+            id: agent.id,
+            name: agent.name,
+            propertyCount: agent.propertiesCount || 0,
+          })),
+          recentProperties: (apiMetrics.recentProperties || []).map(
+            (property: any) => ({
+              id: property.id,
+              title: property.title,
+              status: property.status,
+              price: 0, // Not available in agency view
+              transactionType: "SALE", // Default
+              createdAt: property.createdAt,
+              agentName: property.agent,
+            })
+          ),
+        };
+      }
+
+      if (profile?.role === "SUPER_ADMIN") {
+        return {
+          totalAgencies: apiMetrics.platformStats?.totalAgencies || 0,
+          totalUsers: apiMetrics.platformStats?.totalUsers || 0,
+          totalProperties: apiMetrics.propertyStats?.totalProperties || 0,
+          approvalRate: apiMetrics.propertyStats?.approvalRate || 0,
+          recentActivities: (apiMetrics.recentActivities || []).map(
+            (activity: any) => ({
+              id: activity.id,
+              description: `Property "${activity.title}" by ${activity.agent} (${activity.agency}) - ${activity.status}`,
+              timestamp: activity.createdAt,
+            })
+          ),
+        };
+      }
+
+      // Return empty metrics if role is not recognized
+      return {};
     },
     enabled: !!profile?.role,
     staleTime: 5 * 60 * 1000, // 5 minutes

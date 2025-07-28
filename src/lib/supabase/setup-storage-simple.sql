@@ -1,6 +1,3 @@
--- Enable RLS on storage.objects
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-
 -- Create storage buckets for property media (if they don't exist)
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES 
@@ -76,16 +73,4 @@ TO authenticated
 USING (
   bucket_id = 'property-videos' 
   AND auth.uid()::text = (storage.foldername(name))[1]
-);
-
--- Allow bucket creation for authenticated users
-CREATE POLICY "Allow authenticated users to create buckets" 
-ON storage.buckets FOR INSERT 
-TO authenticated
-WITH CHECK (true);
-
--- Allow authenticated users to view buckets
-CREATE POLICY "Allow authenticated users to view buckets" 
-ON storage.buckets FOR SELECT 
-TO authenticated
-USING (true); 
+); 

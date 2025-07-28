@@ -75,7 +75,7 @@ export function PropertyForm({
     defaultValues: {
       title: initialData?.title || "",
       description: initialData?.description || "",
-      price: initialData?.price || undefined,
+      price: initialData?.price || 0,
       propertyType: initialData?.propertyType || PropertyType.APARTMENT,
       transactionType: initialData?.transactionType || TransactionType.SALE,
       address: initialData?.address || "",
@@ -83,7 +83,7 @@ export function PropertyForm({
       state: initialData?.state || "",
       bedrooms: initialData?.bedrooms || 1,
       bathrooms: initialData?.bathrooms || 1,
-      area: initialData?.area || undefined,
+      area: initialData?.area || 0,
       features: initialData?.features || [],
       images: initialData?.images || [],
       videos: initialData?.videos || [],
@@ -154,22 +154,35 @@ export function PropertyForm({
       let imageUrls = [...uploadedImages];
       let videoUrls = [...uploadedVideos];
 
-      if (images.length > 0) {
-        toast({
-          title: "Uploading images...",
-          description: "Please wait while images are being uploaded",
-        });
-        const uploadedImageUrls = await uploadFiles(images, "images");
-        imageUrls = [...imageUrls, ...uploadedImageUrls];
-      }
+      try {
+        if (images.length > 0) {
+          toast({
+            title: "Uploading images...",
+            description: "Please wait while images are being uploaded",
+          });
+          const uploadedImageUrls = await uploadFiles(images, "images");
+          imageUrls = [...imageUrls, ...uploadedImageUrls];
+        }
 
-      if (videos.length > 0) {
+        if (videos.length > 0) {
+          toast({
+            title: "Uploading videos...",
+            description: "Please wait while videos are being uploaded",
+          });
+          const uploadedVideoUrls = await uploadFiles(videos, "videos");
+          videoUrls = [...videoUrls, ...uploadedVideoUrls];
+        }
+      } catch (uploadError) {
+        console.error("Upload failed:", uploadError);
         toast({
-          title: "Uploading videos...",
-          description: "Please wait while videos are being uploaded",
+          title: "Upload Failed",
+          description:
+            uploadError instanceof Error
+              ? uploadError.message
+              : "Failed to upload files",
+          variant: "destructive",
         });
-        const uploadedVideoUrls = await uploadFiles(videos, "videos");
-        videoUrls = [...videoUrls, ...uploadedVideoUrls];
+        return; // Stop the submission if upload fails
       }
 
       // Prepare form data with uploaded URLs
@@ -212,15 +225,25 @@ export function PropertyForm({
           : "Property created successfully and sent for approval",
       });
 
-      if (onSuccess) {
-        onSuccess();
+      // Reset form and states
+      if (!propertyId) {
+        form.reset();
+        setFeatures([]);
+        setImages([]);
+        setVideos([]);
+        setUploadedImages([]);
+        setUploadedVideos([]);
       }
+
+      onSuccess?.();
     } catch (error) {
-      console.error("Error saving property:", error);
+      console.error("Submission error:", error);
       toast({
         title: "Error",
         description:
-          error instanceof Error ? error.message : "Failed to save property",
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred",
         variant: "destructive",
       });
     } finally {
