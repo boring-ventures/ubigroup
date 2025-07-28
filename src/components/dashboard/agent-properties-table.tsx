@@ -36,6 +36,7 @@ import { PropertyStatus } from "@prisma/client";
 import { toast } from "@/components/ui/use-toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import Link from "next/link";
+import { PropertyDetailsModal } from "./property-details-modal";
 
 export function AgentPropertiesTable() {
   const [params, setParams] = useState<UseAgentPropertiesParams>({
@@ -45,6 +46,10 @@ export function AgentPropertiesTable() {
   const [search, setSearch] = useState("");
   const [deletePropertyId, setDeletePropertyId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(
+    null
+  );
+  const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
 
   const { data, isLoading, error, refetch } = useAgentProperties(params);
 
@@ -63,6 +68,16 @@ export function AgentPropertiesTable() {
 
   const handlePageChange = (page: number) => {
     setParams((prev) => ({ ...prev, page }));
+  };
+
+  const handleViewProperty = (propertyId: string) => {
+    setSelectedPropertyId(propertyId);
+    setIsPropertyModalOpen(true);
+  };
+
+  const handleClosePropertyModal = () => {
+    setIsPropertyModalOpen(false);
+    setSelectedPropertyId(null);
   };
 
   const handleDeleteProperty = async (propertyId: string) => {
@@ -108,10 +123,7 @@ export function AgentPropertiesTable() {
       <div className="flex items-center gap-2">
         <Badge variant={variants[status]}>{status}</Badge>
         {status === "REJECTED" && rejectionReason && (
-          <AlertCircle
-            className="h-4 w-4 text-destructive cursor-help"
-            title={rejectionReason}
-          />
+          <AlertCircle className="h-4 w-4 text-destructive cursor-help" />
         )}
       </div>
     );
@@ -128,7 +140,7 @@ export function AgentPropertiesTable() {
   }
 
   return (
-    <div className="space-y-4">
+    <>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -255,21 +267,19 @@ export function AgentPropertiesTable() {
                             property.rejectionReason
                           )}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell>
                           {new Date(property.createdAt).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            {property.status === "APPROVED" && (
-                              <Button size="sm" variant="ghost" asChild>
-                                <Link
-                                  href={`/property/${property.id}`}
-                                  target="_blank"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Link>
-                              </Button>
-                            )}
+                          <div className="flex items-center justify-end space-x-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleViewProperty(property.id)}
+                              title="View Property Details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
                             <Button size="sm" variant="ghost" asChild>
                               <Link href={`/properties/${property.id}/edit`}>
                                 <Edit className="h-4 w-4" />
@@ -293,7 +303,7 @@ export function AgentPropertiesTable() {
 
               {/* Pagination */}
               {data && data.totalPages > 1 && (
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mt-4">
                   <p className="text-sm text-muted-foreground">
                     Showing {(data.currentPage - 1) * params.limit! + 1} to{" "}
                     {Math.min(data.currentPage * params.limit!, data.total)} of{" "}
@@ -333,14 +343,17 @@ export function AgentPropertiesTable() {
         onOpenChange={(open) => !open && setDeletePropertyId(null)}
         title="Delete Property"
         description="Are you sure you want to delete this property? This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
         onConfirm={() =>
           deletePropertyId && handleDeleteProperty(deletePropertyId)
         }
-        isLoading={isDeleting}
-        variant="destructive"
       />
-    </div>
+
+      {/* Property Details Modal */}
+      <PropertyDetailsModal
+        propertyId={selectedPropertyId}
+        isOpen={isPropertyModalOpen}
+        onClose={handleClosePropertyModal}
+      />
+    </>
   );
 }
