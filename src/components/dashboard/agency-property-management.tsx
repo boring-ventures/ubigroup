@@ -42,7 +42,6 @@ import {
 } from "@/hooks/use-agency-properties";
 import { PropertyStatus } from "@prisma/client";
 import Link from "next/link";
-import { PropertyDetailsModal } from "./property-details-modal";
 
 export function AgencyPropertyManagement() {
   const [params, setParams] = useState<UseAgencyPropertiesParams>({
@@ -50,10 +49,6 @@ export function AgencyPropertyManagement() {
     limit: 10,
   });
   const [search, setSearch] = useState("");
-  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(
-    null
-  );
-  const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
 
   const { data, isLoading, error } = useAgencyProperties(params);
 
@@ -72,16 +67,6 @@ export function AgencyPropertyManagement() {
 
   const handlePageChange = (page: number) => {
     setParams((prev) => ({ ...prev, page }));
-  };
-
-  const handleViewProperty = (propertyId: string) => {
-    setSelectedPropertyId(propertyId);
-    setIsPropertyModalOpen(true);
-  };
-
-  const handleClosePropertyModal = () => {
-    setIsPropertyModalOpen(false);
-    setSelectedPropertyId(null);
   };
 
   const getStatusBadge = (status: PropertyStatus, rejectionReason?: string) => {
@@ -106,10 +91,12 @@ export function AgencyPropertyManagement() {
           {status}
         </Badge>
         {status === "REJECTED" && rejectionReason && (
-          <AlertCircle
-            className="h-4 w-4 text-destructive cursor-help"
-            title={rejectionReason}
-          />
+          <div className="relative">
+            <AlertCircle className="h-4 w-4 text-destructive cursor-help" />
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+              {rejectionReason}
+            </div>
+          </div>
         )}
       </div>
     );
@@ -197,7 +184,7 @@ export function AgencyPropertyManagement() {
                 <Filter className="h-4 w-4 text-gray-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{data?.total || 0}</p>
+                <p className="text-2xl font-bold">{data?.totalCount || 0}</p>
                 <p className="text-xs text-muted-foreground">
                   Total Properties
                 </p>
@@ -310,25 +297,28 @@ export function AgencyPropertyManagement() {
                                 {property.title}
                               </div>
                               <div className="text-sm text-muted-foreground">
-                                {property.address}, {property.city},{" "}
-                                {property.state}
+                                {property.address || property.locationNeigh},{" "}
+                                {property.locationCity},{" "}
+                                {property.locationState}
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
                             <div>
                               <div className="font-medium">
-                                {property.agent.firstName}{" "}
-                                {property.agent.lastName}
+                                {property.agent.firstName || ""}{" "}
+                                {property.agent.lastName || ""}
                               </div>
                               <div className="text-sm text-muted-foreground">
-                                {property.agent.email}
+                                {property.agent.phone ||
+                                  property.agent.whatsapp ||
+                                  "Sin contacto"}
                               </div>
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="text-sm">
-                              <div>{property.propertyType}</div>
+                              <div>{property.type}</div>
                               <div className="text-muted-foreground">
                                 {property.transactionType}
                               </div>
@@ -351,10 +341,12 @@ export function AgencyPropertyManagement() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => handleViewProperty(property.id)}
+                                asChild
                                 title="View Property Details"
                               >
-                                <Eye className="h-4 w-4" />
+                                <Link href={`/properties/${property.id}`}>
+                                  <Eye className="h-4 w-4" />
+                                </Link>
                               </Button>
                             </div>
                           </TableCell>
@@ -365,30 +357,41 @@ export function AgencyPropertyManagement() {
                 </div>
 
                 {/* Pagination */}
-                {data && data.totalPages > 1 && (
+                {data && data.pagination.totalPages > 1 && (
                   <div className="flex items-center justify-between mt-4">
                     <p className="text-sm text-muted-foreground">
-                      Showing {(data.currentPage - 1) * params.limit! + 1} to{" "}
-                      {Math.min(data.currentPage * params.limit!, data.total)}{" "}
-                      of {data.total} properties
+                      Showing {(data.pagination.page - 1) * params.limit! + 1}{" "}
+                      to{" "}
+                      {Math.min(
+                        data.pagination.page * params.limit!,
+                        data.totalCount
+                      )}{" "}
+                      of {data.totalCount} properties
                     </p>
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handlePageChange(data.currentPage - 1)}
-                        disabled={data.currentPage <= 1}
+                        onClick={() =>
+                          handlePageChange(data.pagination.page - 1)
+                        }
+                        disabled={data.pagination.page <= 1}
                       >
                         Previous
                       </Button>
                       <span className="text-sm">
-                        Page {data.currentPage} of {data.totalPages}
+                        Page {data.pagination.page} of{" "}
+                        {data.pagination.totalPages}
                       </span>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handlePageChange(data.currentPage + 1)}
-                        disabled={data.currentPage >= data.totalPages}
+                        onClick={() =>
+                          handlePageChange(data.pagination.page + 1)
+                        }
+                        disabled={
+                          data.pagination.page >= data.pagination.totalPages
+                        }
                       >
                         Next
                       </Button>
@@ -400,13 +403,6 @@ export function AgencyPropertyManagement() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Property Details Modal */}
-      <PropertyDetailsModal
-        propertyId={selectedPropertyId}
-        isOpen={isPropertyModalOpen}
-        onClose={handleClosePropertyModal}
-      />
     </>
   );
 }

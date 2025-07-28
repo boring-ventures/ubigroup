@@ -6,23 +6,25 @@ export interface AgencyProperty {
   title: string;
   description: string;
   price: number;
-  propertyType: string;
+  type: string;
   transactionType: string;
-  address: string;
-  city: string;
-  state: string;
+  address: string | null;
+  locationCity: string;
+  locationState: string;
+  locationNeigh: string;
   bedrooms: number;
   bathrooms: number;
-  area: number;
+  squareMeters: number;
   status: PropertyStatus;
   rejectionReason?: string;
   createdAt: string;
   updatedAt: string;
   agent: {
     id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
+    firstName: string | null;
+    lastName: string | null;
+    phone: string | null;
+    whatsapp: string | null;
   };
 }
 
@@ -36,9 +38,14 @@ export interface UseAgencyPropertiesParams {
 
 export interface AgencyPropertiesResponse {
   properties: AgencyProperty[];
-  total: number;
-  totalPages: number;
-  currentPage: number;
+  totalCount: number;
+  hasMore: boolean;
+  pagination: {
+    limit: number;
+    offset: number;
+    page: number;
+    totalPages: number;
+  };
 }
 
 export function useAgencyProperties(params: UseAgencyPropertiesParams = {}) {
