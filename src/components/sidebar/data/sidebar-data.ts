@@ -147,11 +147,7 @@ export const getRoleBasedSidebarData = (role: UserRole): SidebarData => {
               url: "/my-properties",
               icon: Home,
             },
-            {
-              title: "Add Property",
-              url: "/properties/create",
-              icon: Plus,
-            },
+            
             {
               title: "Pending Properties",
               url: "/properties/pending",
@@ -167,16 +163,7 @@ export const getRoleBasedSidebarData = (role: UserRole): SidebarData => {
               url: "/users",
               icon: Users,
             },
-            {
-              title: "Agents",
-              url: "/agents",
-              icon: User,
-            },
-            {
-              title: "Agencies",
-              url: "/agencies",
-              icon: Building2,
-            },
+          
           ],
         },
         {
