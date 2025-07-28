@@ -7,8 +7,8 @@ import {
   canManageProperty,
 } from "@/lib/auth/rbac";
 import {
-  updatePropertySchema,
-  UpdatePropertyInput,
+  createPropertySchema,
+  CreatePropertyInput,
 } from "@/lib/validations/property";
 
 // GET - Fetch single property by ID
@@ -145,17 +145,31 @@ export async function PUT(
     // Validate request body
     const body = await request.json();
     const { data: updateData, error: validationError } =
-      validateRequestBody<UpdatePropertyInput>(updatePropertySchema, {
-        ...body,
-        id,
-      });
+      validateRequestBody<CreatePropertyInput>(createPropertySchema, body);
 
     if (validationError) {
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
-    // Remove id from update data
-    const { id: _, ...propertyUpdateData } = updateData;
+    // Map form fields to database fields
+    const mappedData = {
+      title: updateData.title,
+      description: updateData.description,
+      type: updateData.propertyType, // Map propertyType to type
+      locationState: updateData.state, // Map state to locationState
+      locationCity: updateData.city, // Map city to locationCity
+      locationNeigh: updateData.city, // Use city as neighborhood for now
+      address: updateData.address,
+      price: updateData.price,
+      bedrooms: updateData.bedrooms,
+      bathrooms: updateData.bathrooms,
+      garageSpaces: 0, // Default value
+      squareMeters: updateData.area, // Map area to squareMeters
+      transactionType: updateData.transactionType,
+      images: updateData.images,
+      videos: updateData.videos,
+      features: updateData.features,
+    };
 
     // If agent is updating their property, reset status to PENDING if it was rejected
     if (user.role === UserRole.AGENT) {
@@ -165,14 +179,14 @@ export async function PUT(
       });
 
       if (currentProperty?.status === "REJECTED") {
-        (propertyUpdateData as any).status = "PENDING";
+        (mappedData as any).status = "PENDING";
       }
     }
 
     // Update property
     const updatedProperty = await prisma.property.update({
       where: { id },
-      data: propertyUpdateData,
+      data: mappedData,
       include: {
         agent: {
           select: {

@@ -3,11 +3,11 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import {   CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   MapPin,
   Bed,
@@ -22,6 +22,7 @@ import {
   ChevronRight,
   Home,
   ArrowLeft,
+  Building2,
 } from "lucide-react";
 
 interface Property {
