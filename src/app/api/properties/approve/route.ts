@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
 
     // Validate request body
     const body = await request.json();
+
     const { data: approvalData, error: validationError } =
       validateRequestBody<UpdatePropertyStatusInput>(
         updatePropertyStatusSchema,
@@ -217,8 +218,9 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters
     const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
-    const offset = parseInt(searchParams.get("offset") || "0");
+    const offset = (page - 1) * limit;
 
     // Build where clause
     let whereClause: any = {
@@ -268,15 +270,10 @@ export async function GET(request: NextRequest) {
     ]);
 
     return NextResponse.json({
-      pendingProperties,
-      totalCount,
-      hasMore: offset + limit < totalCount,
-      pagination: {
-        limit,
-        offset,
-        page: Math.floor(offset / limit) + 1,
-        totalPages: Math.ceil(totalCount / limit),
-      },
+      properties: pendingProperties,
+      total: totalCount,
+      totalPages: Math.ceil(totalCount / limit),
+      currentPage: Math.floor(offset / limit) + 1,
     });
   } catch (error) {
     console.error("Error fetching pending properties:", error);

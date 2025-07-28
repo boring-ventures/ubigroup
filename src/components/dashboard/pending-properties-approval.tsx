@@ -175,19 +175,23 @@ export function PendingPropertiesApproval() {
                               <div className="flex items-center space-x-1">
                                 <MapPin className="h-4 w-4" />
                                 <span>
-                                  {property.address}, {property.city},{" "}
-                                  {property.state}
+                                  {property.address || "No address"},{" "}
+                                  {property.city || "N/A"},{" "}
+                                  {property.state || "N/A"}
                                 </span>
                               </div>
                               <Badge variant="secondary">
-                                {property.propertyType} •{" "}
-                                {property.transactionType}
+                                {property.propertyType || "N/A"} •{" "}
+                                {property.transactionType || "N/A"}
                               </Badge>
                             </div>
                           </div>
                           <div className="text-right">
                             <div className="text-2xl font-bold">
-                              ${property.price.toLocaleString()}
+                              $
+                              {property.price
+                                ? property.price.toLocaleString()
+                                : "N/A"}
                             </div>
                             <div className="text-xs text-muted-foreground">
                               Submitted{" "}
@@ -203,28 +207,31 @@ export function PendingPropertiesApproval() {
                           <div className="flex items-center space-x-2">
                             <Bed className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm">
-                              {property.bedrooms} bed
-                              {property.bedrooms !== 1 ? "s" : ""}
+                              {property.bedrooms || 0} bed
+                              {(property.bedrooms || 0) !== 1 ? "s" : ""}
                             </span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Bath className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm">
-                              {property.bathrooms} bath
-                              {property.bathrooms !== 1 ? "s" : ""}
+                              {property.bathrooms || 0} bath
+                              {(property.bathrooms || 0) !== 1 ? "s" : ""}
                             </span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Home className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm">
-                              {property.area.toLocaleString()} sq ft
+                              {property.area
+                                ? property.area.toLocaleString()
+                                : "N/A"}{" "}
+                              sq ft
                             </span>
                           </div>
                           <div className="text-sm">
                             <span className="text-muted-foreground">by </span>
                             <span className="font-medium">
-                              {property.agent.firstName}{" "}
-                              {property.agent.lastName}
+                              {property.agent?.firstName || "Unknown"}{" "}
+                              {property.agent?.lastName || ""}
                             </span>
                           </div>
                         </div>
@@ -232,12 +239,12 @@ export function PendingPropertiesApproval() {
                         {/* Description */}
                         <div>
                           <p className="text-sm text-gray-600 line-clamp-2">
-                            {property.description}
+                            {property.description || "No description available"}
                           </p>
                         </div>
 
                         {/* Features */}
-                        {property.features.length > 0 && (
+                        {property.features && property.features.length > 0 && (
                           <div>
                             <div className="flex flex-wrap gap-2">
                               {property.features

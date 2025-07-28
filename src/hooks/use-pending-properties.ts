@@ -87,7 +87,7 @@ export function useUpdatePropertyStatus() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          propertyId,
+          id: propertyId,
           status,
           rejectionReason,
         }),
