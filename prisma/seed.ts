@@ -23,7 +23,6 @@ async function main() {
       logoUrl: "/logos/futureworks.svg",
       address: "Rua das Palmeiras, 123, São Paulo, SP",
       phone: "+55 11 9999-1234",
-      email: "contact@futureworks.com",
     },
   });
 
@@ -33,7 +32,6 @@ async function main() {
       logoUrl: "/logos/innovatelabs.svg",
       address: "Av. Paulista, 456, São Paulo, SP",
       phone: "+55 11 8888-5678",
-      email: "info@innovatelabs.com",
     },
   });
 
@@ -43,7 +41,6 @@ async function main() {
       logoUrl: "/logos/zenithhealth.svg",
       address: "Rua da Consolação, 789, São Paulo, SP",
       phone: "+55 11 7777-9012",
-      email: "hello@zenithhealth.com",
     },
   });
 

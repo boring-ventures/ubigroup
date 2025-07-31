@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
+import { authenticateUser } from "@/lib/auth/server-auth";
 import {
-  authenticateUser,
   validateRequestBody,
   validateQueryParams,
+  canAccessAgency,
 } from "@/lib/auth/rbac";
 import {
   createAgencySchema,

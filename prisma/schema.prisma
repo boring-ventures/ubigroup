@@ -31,6 +31,7 @@ enum PropertyType {
 enum TransactionType {
   SALE
   RENT
+  ANTICRÉTICO
 }
 
 enum PropertyStatus {
@@ -89,13 +90,18 @@ model Agency {
 
 model Property {
   id              String          @id @default(cuid())
+  customId        String?         @unique @map("custom_id") // Auto-generated ID like ANT001, VEN001, etc.
   title           String
   description     String
   type            PropertyType
   locationState   String          @map("location_state")
   locationCity    String          @map("location_city")
   locationNeigh   String          @map("location_neighborhood")
+  municipality    String?         // New field for municipality
   address         String?         // Full address
+  googleMapsUrl   String?         @map("google_maps_url") // Google Maps URL
+  latitude        Float?          // Latitude for map pin
+  longitude       Float?          // Longitude for map pin
   price           Float
   currency        Currency        @default(BOLIVIANOS)
   exchangeRate    Float?          @map("exchange_rate") // Exchange rate when currency is DOLLARS
@@ -125,5 +131,6 @@ model Property {
   @@index([locationState, locationCity])
   @@index([agentId])
   @@index([agencyId])
+  @@index([customId])
   @@map("properties")
 }

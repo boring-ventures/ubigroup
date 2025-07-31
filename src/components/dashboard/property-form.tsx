@@ -33,7 +33,21 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import { Loader } from "@/components/ui/loader";
-import { X, Plus } from "lucide-react";
+import {
+  X,
+  Plus,
+  Home,
+  MapPin,
+  DollarSign,
+  Bed,
+  Bath,
+  Ruler,
+  Star,
+  Image,
+  Video,
+  CheckCircle,
+  Circle,
+} from "lucide-react";
 import {
   createPropertySchema,
   type CreatePropertyInput,
@@ -95,6 +109,10 @@ export function PropertyForm({
       address: initialData?.address || "",
       city: initialData?.city || "",
       state: initialData?.state || "",
+      municipality: initialData?.municipality || "",
+      googleMapsUrl: initialData?.googleMapsUrl || "",
+      latitude: initialData?.latitude || undefined,
+      longitude: initialData?.longitude || undefined,
       bedrooms: initialData?.bedrooms || 1,
       bathrooms: initialData?.bathrooms || 1,
       area: initialData?.area || 0,
@@ -268,49 +286,79 @@ export function PropertyForm({
   };
 
   return (
-    <Card className="w-full max-w-4xl">
-      <CardHeader>
-        <CardTitle>
-          {propertyId ? "Edit Property" : "Create New Property"}
-        </CardTitle>
-        <CardDescription>
-          {propertyId
-            ? "Update your property listing details"
-            : "Add a new property listing for approval"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(
-              (data) => {
-                console.log("Form validation passed, data:", data);
-                onSubmit(data);
-              },
-              (errors) => {
-                console.error("Form validation failed:", errors);
-                toast({
-                  title: "Validation Error",
-                  description: "Please check all required fields",
-                  variant: "destructive",
-                });
-              }
-            )}
-            className="space-y-6"
-          >
-            {/* Basic Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Basic Information</h3>
+    <div className="max-w-6xl mx-auto p-6">
+      {/* Header with Progress Steps */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <span className="text-sm text-gray-600">Basic Info</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Circle className="h-5 w-5 text-gray-300" />
+              <span className="text-sm text-gray-600">Location</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Circle className="h-5 w-5 text-gray-300" />
+              <span className="text-sm text-gray-600">Details</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Circle className="h-5 w-5 text-gray-300" />
+              <span className="text-sm text-gray-600">Media</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(
+            (data) => {
+              console.log("Form validation passed, data:", data);
+              onSubmit(data);
+            },
+            (errors) => {
+              console.error("Form validation failed:", errors);
+              toast({
+                title: "Validation Error",
+                description: "Please check all required fields",
+                variant: "destructive",
+              });
+            }
+          )}
+          className="space-y-8"
+        >
+          {/* Section 1: Basic Information */}
+          <Card className="border-2 border-blue-100 bg-blue-50/30">
+            <CardHeader className="bg-blue-50 border-b border-blue-200">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Home className="h-6 w-6 text-blue-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-blue-900">
+                    Basic Information
+                  </CardTitle>
+                  <CardDescription className="text-blue-700">
+                    Tell us about your property
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
               <FormField
                 control={form.control}
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Property Title *</FormLabel>
+                    <FormLabel className="text-base font-semibold">
+                      Property Title *
+                    </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="e.g., Modern 2BR Apartment in Downtown"
+                        className="h-12 text-lg"
                         {...field}
                       />
                     </FormControl>
@@ -324,11 +372,14 @@ export function PropertyForm({
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description *</FormLabel>
+                    <FormLabel className="text-base font-semibold">
+                      Description *
+                    </FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Detailed description of the property..."
-                        rows={4}
+                        placeholder="Describe your property in detail. Include key features, amenities, and what makes this property special..."
+                        rows={5}
+                        className="text-base"
                         {...field}
                       />
                     </FormControl>
@@ -337,34 +388,36 @@ export function PropertyForm({
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="propertyType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Property Type *</FormLabel>
+                      <FormLabel className="text-base font-semibold">
+                        Property Type *
+                      </FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="h-12 text-base">
                             <SelectValue placeholder="Select property type" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value={PropertyType.APARTMENT}>
-                            Apartment
+                            🏢 Apartment
                           </SelectItem>
                           <SelectItem value={PropertyType.HOUSE}>
-                            House
+                            🏠 House
                           </SelectItem>
                           <SelectItem value={PropertyType.OFFICE}>
-                            Office
+                            🏢 Office
                           </SelectItem>
                           <SelectItem value={PropertyType.LAND}>
-                            Land
+                            🌱 Land
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -378,22 +431,27 @@ export function PropertyForm({
                   name="transactionType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Transaction Type *</FormLabel>
+                      <FormLabel className="text-base font-semibold">
+                        Transaction Type *
+                      </FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="h-12 text-base">
                             <SelectValue placeholder="Select transaction type" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value={TransactionType.SALE}>
-                            For Sale
+                            💰 For Sale
                           </SelectItem>
                           <SelectItem value={TransactionType.RENT}>
-                            For Rent
+                            📋 For Rent
+                          </SelectItem>
+                          <SelectItem value={TransactionType.ANTICRÉTICO}>
+                            🔄 Anticrético
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -402,10 +460,33 @@ export function PropertyForm({
                   )}
                 />
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
+          {/* Section 2: Pricing */}
+          <Card className="border-2 border-green-100 bg-green-50/30">
+            <CardHeader className="bg-green-50 border-b border-green-200">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <DollarSign className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-green-900">
+                    Pricing Information
+                  </CardTitle>
+                  <CardDescription className="text-green-700">
+                    Set your property's price
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
+              <div className="bg-white p-6 rounded-lg border border-green-200">
+                <h4 className="text-lg font-semibold mb-4 text-gray-800">
+                  Currency Selection
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-3 p-4 border-2 border-green-200 rounded-lg bg-green-50">
                     <input
                       type="radio"
                       id="currency-bolivianos"
@@ -413,13 +494,16 @@ export function PropertyForm({
                       value={Currency.BOLIVIANOS}
                       checked={currency === Currency.BOLIVIANOS}
                       onChange={(e) => setCurrency(e.target.value as Currency)}
-                      className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
+                      className="h-5 w-5 text-green-600 border-green-300 focus:ring-green-500"
                     />
-                    <Label htmlFor="currency-bolivianos">
-                      Price in Bolivianos (Bs)
+                    <Label
+                      htmlFor="currency-bolivianos"
+                      className="text-lg font-medium cursor-pointer"
+                    >
+                      🇧🇴 Bolivianos (Bs)
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3 p-4 border-2 border-gray-200 rounded-lg bg-gray-50">
                     <input
                       type="radio"
                       id="currency-dollars"
@@ -427,32 +511,45 @@ export function PropertyForm({
                       value={Currency.DOLLARS}
                       checked={currency === Currency.DOLLARS}
                       onChange={(e) => setCurrency(e.target.value as Currency)}
-                      className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
+                      className="h-5 w-5 text-green-600 border-gray-300 focus:ring-green-500"
                     />
-                    <Label htmlFor="currency-dollars">
-                      Price in US Dollars ($)
+                    <Label
+                      htmlFor="currency-dollars"
+                      className="text-lg font-medium cursor-pointer"
+                    >
+                      🇺🇸 US Dollars ($)
                     </Label>
                   </div>
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Price *</FormLabel>
+                      <FormLabel className="text-base font-semibold">
+                        Price *
+                      </FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) => {
-                            const value = parseFloat(e.target.value);
-                            field.onChange(isNaN(value) ? undefined : value);
-                          }}
-                        />
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">
+                            {currency === Currency.BOLIVIANOS ? "Bs" : "$"}
+                          </span>
+                          <Input
+                            type="number"
+                            placeholder="0"
+                            className="h-12 text-lg pl-12"
+                            {...field}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value);
+                              field.onChange(isNaN(value) ? undefined : value);
+                            }}
+                          />
+                        </div>
                       </FormControl>
-                      <FormDescription>
+                      <FormDescription className="text-sm">
                         Enter the price in{" "}
                         {currency === Currency.BOLIVIANOS
                           ? "Bolivianos (Bs)"
@@ -469,12 +566,15 @@ export function PropertyForm({
                     name="exchangeRate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Exchange Rate (Bs/$) *</FormLabel>
+                        <FormLabel className="text-base font-semibold">
+                          Exchange Rate (Bs/$) *
+                        </FormLabel>
                         <FormControl>
                           <Input
                             type="number"
                             step="0.01"
                             placeholder="6.96"
+                            className="h-12 text-lg"
                             value={exchangeRate || ""}
                             onChange={(e) => {
                               const value = parseFloat(e.target.value);
@@ -482,7 +582,7 @@ export function PropertyForm({
                             }}
                           />
                         </FormControl>
-                        <FormDescription>
+                        <FormDescription className="text-sm">
                           Current exchange rate from US Dollars to Bolivianos
                         </FormDescription>
                         <FormMessage />
@@ -491,35 +591,62 @@ export function PropertyForm({
                   />
                 )}
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Location */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Location</h3>
-
+          {/* Section 3: Location */}
+          <Card className="border-2 border-purple-100 bg-purple-50/30">
+            <CardHeader className="bg-purple-50 border-b border-purple-200">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <MapPin className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-purple-900">
+                    Location Details
+                  </CardTitle>
+                  <CardDescription className="text-purple-700">
+                    Where is your property located?
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
               <FormField
                 control={form.control}
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Street Address *</FormLabel>
+                    <FormLabel className="text-base font-semibold">
+                      Street Address *
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., 123 Main Street" {...field} />
+                      <Input
+                        placeholder="e.g., 123 Main Street, Downtown"
+                        className="h-12 text-lg"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField
                   control={form.control}
                   name="city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>City *</FormLabel>
+                      <FormLabel className="text-base font-semibold">
+                        City *
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., New York" {...field} />
+                        <Input
+                          placeholder="e.g., La Paz"
+                          className="h-12 text-lg"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -531,33 +658,170 @@ export function PropertyForm({
                   name="state"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>State *</FormLabel>
+                      <FormLabel className="text-base font-semibold">
+                        State *
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., NY" {...field} />
+                        <Input
+                          placeholder="e.g., La Paz"
+                          className="h-12 text-lg"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="municipality"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base font-semibold">
+                        Municipality *
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., Centro"
+                          className="h-12 text-lg"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-            </div>
 
-            {/* Property Details */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Property Details</h3>
+              <div className="bg-white p-6 rounded-lg border border-purple-200">
+                <h4 className="text-lg font-semibold mb-4 text-gray-800">
+                  📍 Map Location (Optional)
+                </h4>
+                <p className="text-sm text-gray-600 mb-4">
+                  Add coordinates to display your property on the map
+                </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="googleMapsUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base font-semibold">
+                        Google Maps URL
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="https://maps.google.com/..."
+                          className="h-12 text-lg"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription className="text-sm">
+                        Paste the Google Maps URL for this property location
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                  <FormField
+                    control={form.control}
+                    name="latitude"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-semibold">
+                          Latitude
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="any"
+                            placeholder="40.7128"
+                            className="h-12 text-lg"
+                            value={field.value || ""}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value);
+                              field.onChange(isNaN(value) ? undefined : value);
+                            }}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-sm">
+                          Latitude coordinate for map pin placement
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="longitude"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-base font-semibold">
+                          Longitude
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="any"
+                            placeholder="-74.0060"
+                            className="h-12 text-lg"
+                            value={field.value || ""}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value);
+                              field.onChange(isNaN(value) ? undefined : value);
+                            }}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-sm">
+                          Longitude coordinate for map pin placement
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Section 4: Property Details */}
+          <Card className="border-2 border-orange-100 bg-orange-50/30">
+            <CardHeader className="bg-orange-50 border-b border-orange-200">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Ruler className="h-6 w-6 text-orange-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-orange-900">
+                    Property Details
+                  </CardTitle>
+                  <CardDescription className="text-orange-700">
+                    Key specifications of your property
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField
                   control={form.control}
                   name="bedrooms"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Bedrooms *</FormLabel>
+                      <FormLabel className="text-base font-semibold flex items-center space-x-2">
+                        <Bed className="h-5 w-5" />
+                        <span>Bedrooms *</span>
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min="0"
                           placeholder="1"
+                          className="h-12 text-lg"
                           {...field}
                           onChange={(e) => {
                             const value = parseInt(e.target.value);
@@ -575,13 +839,17 @@ export function PropertyForm({
                   name="bathrooms"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Bathrooms *</FormLabel>
+                      <FormLabel className="text-base font-semibold flex items-center space-x-2">
+                        <Bath className="h-5 w-5" />
+                        <span>Bathrooms *</span>
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min="0"
                           step="0.5"
                           placeholder="1"
+                          className="h-12 text-lg"
                           {...field}
                           onChange={(e) => {
                             const value = parseFloat(e.target.value);
@@ -599,12 +867,16 @@ export function PropertyForm({
                   name="area"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Area (sq ft) *</FormLabel>
+                      <FormLabel className="text-base font-semibold flex items-center space-x-2">
+                        <Ruler className="h-5 w-5" />
+                        <span>Area (sq ft) *</span>
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min="0"
                           placeholder="1000"
+                          className="h-12 text-lg"
                           {...field}
                           onChange={(e) => {
                             const value = parseInt(e.target.value);
@@ -617,74 +889,128 @@ export function PropertyForm({
                   )}
                 />
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Features */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Features</h3>
+          {/* Section 5: Features */}
+          <Card className="border-2 border-yellow-100 bg-yellow-50/30">
+            <CardHeader className="bg-yellow-50 border-b border-yellow-200">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <Star className="h-6 w-6 text-yellow-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-yellow-900">
+                    Features & Amenities
+                  </CardTitle>
+                  <CardDescription className="text-yellow-700">
+                    What makes your property special?
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6 space-y-6">
+              <div className="bg-white p-6 rounded-lg border border-yellow-200">
+                <h4 className="text-lg font-semibold mb-4 text-gray-800">
+                  Current Features
+                </h4>
+                <div className="flex flex-wrap gap-3 mb-6">
+                  {features.length === 0 ? (
+                    <p className="text-gray-500 italic">
+                      No features added yet
+                    </p>
+                  ) : (
+                    features.map((feature) => (
+                      <Badge
+                        key={feature}
+                        variant="secondary"
+                        className="px-4 py-2 text-sm bg-yellow-100 text-yellow-800 border-yellow-200"
+                      >
+                        {feature}
+                        <button
+                          type="button"
+                          onClick={() => removeFeature(feature)}
+                          className="ml-2 text-yellow-600 hover:text-yellow-800 transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </Badge>
+                    ))
+                  )}
+                </div>
 
-              <div className="flex flex-wrap gap-2 mb-4">
-                {features.map((feature) => (
-                  <Badge
-                    key={feature}
-                    variant="secondary"
-                    className="px-3 py-1"
+                <div className="flex gap-3">
+                  <Input
+                    placeholder="Add a feature (e.g., Swimming Pool, Garage, Balcony)"
+                    value={newFeature}
+                    onChange={(e) => setNewFeature(e.target.value)}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && (e.preventDefault(), addFeature())
+                    }
+                    className="flex-1 h-12 text-lg"
+                  />
+                  <Button
+                    type="button"
+                    onClick={addFeature}
+                    variant="outline"
+                    className="h-12 px-6 border-yellow-300 text-yellow-700 hover:bg-yellow-50"
                   >
-                    {feature}
-                    <button
-                      type="button"
-                      onClick={() => removeFeature(feature)}
-                      className="ml-2 text-muted-foreground hover:text-destructive"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
+                    <Plus className="h-5 w-5 mr-2" />
+                    Add
+                  </Button>
+                </div>
               </div>
+            </CardContent>
+          </Card>
 
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add a feature (e.g., Swimming Pool, Garage)"
-                  value={newFeature}
-                  onChange={(e) => setNewFeature(e.target.value)}
-                  onKeyPress={(e) =>
-                    e.key === "Enter" && (e.preventDefault(), addFeature())
-                  }
-                />
-                <Button type="button" onClick={addFeature} variant="outline">
-                  <Plus className="h-4 w-4" />
-                </Button>
+          {/* Section 6: Media Upload */}
+          <Card className="border-2 border-indigo-100 bg-indigo-50/30">
+            <CardHeader className="bg-indigo-50 border-b border-indigo-200">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-indigo-100 rounded-lg">
+                  <Image className="h-6 w-6 text-indigo-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-indigo-900">
+                    Images & Videos
+                  </CardTitle>
+                  <CardDescription className="text-indigo-700">
+                    Show your property in the best light
+                  </CardDescription>
+                </div>
               </div>
-            </div>
-
-            {/* Media Upload */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">Images and Videos</h3>
-
+            </CardHeader>
+            <CardContent className="pt-6 space-y-8">
               {/* Images Section */}
-              <div className="space-y-3">
-                <h4 className="text-md font-medium">Images</h4>
-                <p className="text-sm text-muted-foreground">
-                  Maximum file size: 50MB per file
+              <div className="bg-white p-6 rounded-lg border border-indigo-200">
+                <div className="flex items-center space-x-2 mb-4">
+                  <Image className="h-5 w-5 text-indigo-600" />
+                  <h4 className="text-lg font-semibold text-gray-800">
+                    Images
+                  </h4>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Maximum file size: 50MB per file. Supported formats: JPG, PNG,
+                  GIF
                 </p>
 
                 {/* Existing uploaded images */}
                 {uploadedImages.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
                     {uploadedImages.map((imageUrl, index) => (
                       <div
                         key={`uploaded-${index}`}
-                        className="relative group border rounded-lg p-2 bg-muted"
+                        className="relative group border-2 border-gray-200 rounded-lg p-2 bg-gray-50 hover:border-indigo-300 transition-colors"
                       >
                         <img
                           src={imageUrl}
                           alt={`Uploaded image ${index + 1}`}
-                          className="w-20 h-20 object-cover rounded"
+                          className="w-full h-24 object-cover rounded"
                         />
                         <button
                           type="button"
                           onClick={() => removeUploadedImage(index)}
-                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -695,21 +1021,21 @@ export function PropertyForm({
 
                 {/* New image files */}
                 {images.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
                     {images.map((file, index) => (
                       <div
                         key={`new-${index}`}
-                        className="relative group border rounded-lg p-2 bg-muted"
+                        className="relative group border-2 border-indigo-200 rounded-lg p-2 bg-indigo-50 hover:border-indigo-300 transition-colors"
                       >
                         <img
                           src={URL.createObjectURL(file)}
                           alt={`New image ${index + 1}`}
-                          className="w-20 h-20 object-cover rounded"
+                          className="w-full h-24 object-cover rounded"
                         />
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -718,42 +1044,48 @@ export function PropertyForm({
                   </div>
                 )}
 
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <Input
                     type="file"
                     accept="image/*"
                     multiple
                     onChange={handleImageUpload}
-                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/80"
+                    className="flex-1 h-12 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600"
                   />
                 </div>
               </div>
 
               {/* Videos Section */}
-              <div className="space-y-3">
-                <h4 className="text-md font-medium">Videos</h4>
-                <p className="text-sm text-muted-foreground">
-                  Maximum file size: 50MB per file
+              <div className="bg-white p-6 rounded-lg border border-indigo-200">
+                <div className="flex items-center space-x-2 mb-4">
+                  <Video className="h-5 w-5 text-indigo-600" />
+                  <h4 className="text-lg font-semibold text-gray-800">
+                    Videos
+                  </h4>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Maximum file size: 50MB per file. Supported formats: MP4, AVI,
+                  MOV
                 </p>
 
                 {/* Existing uploaded videos */}
                 {uploadedVideos.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
                     {uploadedVideos.map((videoUrl, index) => (
                       <div
                         key={`uploaded-video-${index}`}
-                        className="relative group border rounded-lg p-2 bg-muted"
+                        className="relative group border-2 border-gray-200 rounded-lg p-2 bg-gray-50 hover:border-indigo-300 transition-colors"
                       >
                         <video
                           src={videoUrl}
-                          className="w-20 h-20 object-cover rounded"
+                          className="w-full h-24 object-cover rounded"
                           controls={false}
                           muted
                         />
                         <button
                           type="button"
                           onClick={() => removeUploadedVideo(index)}
-                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -764,22 +1096,22 @@ export function PropertyForm({
 
                 {/* New video files */}
                 {videos.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
                     {videos.map((file, index) => (
                       <div
                         key={`new-video-${index}`}
-                        className="relative group border rounded-lg p-2 bg-muted"
+                        className="relative group border-2 border-indigo-200 rounded-lg p-2 bg-indigo-50 hover:border-indigo-300 transition-colors"
                       >
                         <video
                           src={URL.createObjectURL(file)}
-                          className="w-20 h-20 object-cover rounded"
+                          className="w-full h-24 object-cover rounded"
                           controls={false}
                           muted
                         />
                         <button
                           type="button"
                           onClick={() => removeVideo(index)}
-                          className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -788,33 +1120,51 @@ export function PropertyForm({
                   </div>
                 )}
 
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                   <Input
                     type="file"
                     accept="video/*"
                     multiple
                     onChange={handleVideoUpload}
-                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/80"
+                    className="flex-1 h-12 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600"
                   />
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Form Actions */}
-            <div className="flex gap-4 pt-6">
-              <Button type="submit" disabled={isSubmitting} className="flex-1">
-                {isSubmitting && <Loader className="mr-2 h-4 w-4" />}
+          {/* Form Actions */}
+          <div className="bg-white p-6 rounded-lg border-2 border-gray-200 shadow-lg">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                {isSubmitting && (
+                  <Loader className="mr-3 h-5 w-5 animate-spin" />
+                )}
                 {propertyId ? "Update Property" : "Create Property"}
               </Button>
               {onCancel && (
-                <Button type="button" variant="outline" onClick={onCancel}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onCancel}
+                  className="h-14 px-8 text-lg font-semibold border-2 border-gray-300 hover:bg-gray-50"
+                >
                   Cancel
                 </Button>
               )}
             </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+            <p className="text-sm text-gray-600 mt-4 text-center">
+              {propertyId
+                ? "Your changes will be saved immediately"
+                : "Your property will be submitted for approval after creation"}
+            </p>
+          </div>
+        </form>
+      </Form>
+    </div>
   );
 }

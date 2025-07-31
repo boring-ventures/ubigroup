@@ -155,7 +155,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       if (data.user) {
         await fetchProfile(data.user.id);
+        // Get the user profile to determine the redirect URL
+        try {
+          const response = await fetch(`/api/profile`);
+          if (response.ok) {
+            const profile = await response.json();
+            // For now, all roles redirect to dashboard since the dashboard page handles role-specific rendering
+            router.push("/dashboard");
+            return;
+          }
+        } catch (profileError) {
+          console.error("Error fetching profile for redirect:", profileError);
+        }
       }
+      // Fallback to dashboard if profile fetch fails
       router.push("/dashboard");
     },
     [supabase, fetchProfile, router]

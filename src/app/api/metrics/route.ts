@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { UserRole, PropertyStatus } from "@prisma/client";
-import { authenticateUser } from "@/lib/auth/rbac";
+import { authenticateUser } from "@/lib/auth/server-auth";
 
 // GET - Fetch dashboard metrics based on user role
 export async function GET(request: NextRequest) {

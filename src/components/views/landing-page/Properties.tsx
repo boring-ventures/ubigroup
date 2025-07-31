@@ -34,24 +34,33 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { PropertyMap } from "@/components/public/property-map";
 
 interface Property {
   id: string;
+  customId?: string;
   title: string;
   description: string;
   type: "HOUSE" | "APARTMENT" | "OFFICE" | "LAND";
   locationState: string;
   locationCity: string;
   locationNeigh: string;
+  municipality?: string;
   address?: string;
+  googleMapsUrl?: string;
+  latitude?: number;
+  longitude?: number;
   price: number;
+  currency: string;
+  exchangeRate?: number;
   bedrooms: number;
   bathrooms: number;
   garageSpaces: number;
   squareMeters: number;
-  transactionType: "SALE" | "RENT";
+  transactionType: "SALE" | "RENT" | "ANTICRÉTICO";
   status: "PENDING" | "APPROVED" | "REJECTED";
   images: string[];
+  videos: string[];
   features: string[];
   agent: {
     firstName?: string;
@@ -240,12 +249,9 @@ export default function Properties() {
     router.push(`/property/${propertyId}`);
   };
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-    }).format(price);
+  const formatPrice = (price: number, currency: string = "USD") => {
+    const currencySymbol = currency === "DOLLARS" ? "$" : "Bs.";
+    return `${currencySymbol} ${price.toLocaleString()}`;
   };
 
   const getPropertyTypeIcon = (type: string) => {
@@ -279,7 +285,16 @@ export default function Properties() {
   };
 
   const getTransactionTypeLabel = (type: string) => {
-    return type === "SALE" ? "Venta" : "Alquiler";
+    switch (type) {
+      case "SALE":
+        return "Venta";
+      case "RENT":
+        return "Alquiler";
+      case "ANTICRÉTICO":
+        return "Anticrético";
+      default:
+        return type;
+    }
   };
 
   const handleContactAgent = (phone?: string, whatsapp?: string) => {
@@ -381,6 +396,7 @@ export default function Properties() {
                   <SelectItem value="ALL">Todos</SelectItem>
                   <SelectItem value="SALE">Venta</SelectItem>
                   <SelectItem value="RENT">Alquiler</SelectItem>
+                  <SelectItem value="ANTICRÉTICO">Anticrético</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -504,6 +520,16 @@ export default function Properties() {
           </CardContent>
         </Card>
 
+        {/* Property Map */}
+        {properties.length > 0 && (
+          <div className="mb-8">
+            <PropertyMap
+              properties={properties.filter((p) => p.latitude && p.longitude)}
+              className="w-full"
+            />
+          </div>
+        )}
+
         {/* Results Count */}
         <div className="mb-6">
           <p className="text-gray-600">
@@ -587,7 +613,7 @@ export default function Properties() {
                     {/* Price */}
                     <div className="mb-4">
                       <p className="text-2xl font-bold text-primary">
-                        {formatPrice(property.price)}
+                        {formatPrice(property.price, property.currency)}
                       </p>
                     </div>
 

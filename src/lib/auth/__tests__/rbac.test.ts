@@ -1,10 +1,13 @@
 import { UserRole } from "@prisma/client";
 import {
-  authenticateUser,
+  hasRole,
+  belongsToAgency,
+  canAccessAgency,
+  canManageUsers,
+  canManageProperty,
   validateRequestBody,
   validateQueryParams,
-  canManageProperty,
-  belongsToAgency,
+  type AuthenticatedUser,
 } from "../rbac";
 
 // Mock Next.js cookies
@@ -38,103 +41,6 @@ const mockPrismaUser = prisma.user as jest.Mocked<typeof prisma.user>;
 describe("RBAC Utility Functions", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe("authenticateUser", () => {
-    const mockSupabaseClient = {
-      auth: {
-        getUser: jest.fn(),
-      },
-    };
-
-    beforeEach(() => {
-      mockCookies.mockResolvedValue({} as any);
-      mockCreateRouteHandlerClient.mockReturnValue(mockSupabaseClient as any);
-    });
-
-    it("returns user when authentication is successful", async () => {
-      const mockSupabaseUser = {
-        id: "supabase-user-123",
-        email: "test@example.com",
-      };
-
-      const mockDbUser = {
-        id: "db-user-123",
-        userId: "supabase-user-123",
-        email: "test@example.com",
-        role: UserRole.AGENT,
-        firstName: "John",
-        lastName: "Doe",
-        agencyId: "agency-123",
-      };
-
-      mockSupabaseClient.auth.getUser.mockResolvedValue({
-        data: { user: mockSupabaseUser },
-        error: null,
-      });
-
-      mockPrismaUser.findUnique.mockResolvedValue(mockDbUser);
-
-      const result = await authenticateUser();
-
-      expect(result.user).toEqual(mockDbUser);
-      expect(result.error).toBeNull();
-      expect(mockPrismaUser.findUnique).toHaveBeenCalledWith({
-        where: { userId: "supabase-user-123" },
-        include: { agency: true },
-      });
-    });
-
-    it("returns error when Supabase authentication fails", async () => {
-      mockSupabaseClient.auth.getUser.mockResolvedValue({
-        data: { user: null },
-        error: { message: "Invalid token" },
-      });
-
-      const result = await authenticateUser();
-
-      expect(result.user).toBeNull();
-      expect(result.error).toBe("Invalid token");
-      expect(mockPrismaUser.findUnique).not.toHaveBeenCalled();
-    });
-
-    it("returns error when user not found in database", async () => {
-      const mockSupabaseUser = {
-        id: "supabase-user-123",
-        email: "test@example.com",
-      };
-
-      mockSupabaseClient.auth.getUser.mockResolvedValue({
-        data: { user: mockSupabaseUser },
-        error: null,
-      });
-
-      mockPrismaUser.findUnique.mockResolvedValue(null);
-
-      const result = await authenticateUser();
-
-      expect(result.user).toBeNull();
-      expect(result.error).toBe("User not found");
-    });
-
-    it("handles database errors gracefully", async () => {
-      const mockSupabaseUser = {
-        id: "supabase-user-123",
-        email: "test@example.com",
-      };
-
-      mockSupabaseClient.auth.getUser.mockResolvedValue({
-        data: { user: mockSupabaseUser },
-        error: null,
-      });
-
-      mockPrismaUser.findUnique.mockRejectedValue(new Error("Database error"));
-
-      const result = await authenticateUser();
-
-      expect(result.user).toBeNull();
-      expect(result.error).toBe("Authentication failed");
-    });
   });
 
   describe("validateRequestBody", () => {

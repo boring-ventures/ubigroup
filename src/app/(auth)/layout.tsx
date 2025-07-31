@@ -14,6 +14,7 @@ export default async function AuthLayout({
   } = await supabase.auth.getUser();
 
   if (user) {
+    // Redirect to dashboard - the dashboard page will handle role-specific rendering
     redirect("/dashboard");
   }
 

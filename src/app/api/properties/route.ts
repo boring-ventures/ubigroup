@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { UserRole, PropertyStatus } from "@prisma/client";
+import { authenticateUser } from "@/lib/auth/server-auth";
 import {
-  authenticateUser,
   validateRequestBody,
   validateQueryParams,
   canManageProperty,
@@ -13,6 +13,7 @@ import {
   CreatePropertyInput,
   PropertyQueryInput,
 } from "@/lib/validations/property";
+import { generateCustomPropertyId } from "@/lib/utils";
 
 // GET - Fetch properties with filtering
 export async function GET(request: NextRequest) {
@@ -237,26 +238,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
+    // Generate custom ID
+    const customId = generateCustomPropertyId(propertyData!.transactionType);
+
     // Map form fields to database fields
     const mappedData = {
-      title: propertyData.title,
-      description: propertyData.description,
-      type: propertyData.propertyType, // Map propertyType to type
-      locationState: propertyData.state, // Map state to locationState
-      locationCity: propertyData.city, // Map city to locationCity
-      locationNeigh: propertyData.city, // Use city as neighborhood for now
-      address: propertyData.address,
-      price: propertyData.price,
-      currency: propertyData.currency,
-      exchangeRate: propertyData.exchangeRate,
-      bedrooms: propertyData.bedrooms,
-      bathrooms: propertyData.bathrooms,
+      customId,
+      title: propertyData!.title,
+      description: propertyData!.description,
+      type: propertyData!.propertyType, // Map propertyType to type
+      locationState: propertyData!.state, // Map state to locationState
+      locationCity: propertyData!.city, // Map city to locationCity
+      locationNeigh: propertyData!.city, // Use city as neighborhood for now
+      municipality: propertyData!.municipality,
+      address: propertyData!.address,
+      googleMapsUrl: propertyData!.googleMapsUrl,
+      latitude: propertyData!.latitude,
+      longitude: propertyData!.longitude,
+      price: propertyData!.price,
+      currency: propertyData!.currency,
+      exchangeRate: propertyData!.exchangeRate,
+      bedrooms: propertyData!.bedrooms,
+      bathrooms: propertyData!.bathrooms,
       garageSpaces: 0, // Default value
-      squareMeters: propertyData.area, // Map area to squareMeters
-      transactionType: propertyData.transactionType,
-      images: propertyData.images,
-      videos: propertyData.videos,
-      features: propertyData.features,
+      squareMeters: propertyData!.area, // Map area to squareMeters
+      transactionType: propertyData!.transactionType,
+      images: propertyData!.images,
+      videos: propertyData!.videos,
+      features: propertyData!.features,
     };
 
     console.log("Mapped data for database:", mappedData);

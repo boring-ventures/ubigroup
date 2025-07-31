@@ -15,6 +15,13 @@ export const createPropertySchema = z.object({
   address: z.string().min(1, "Address is required").max(500),
   city: z.string().min(1, "City is required").max(100),
   state: z.string().min(1, "State is required").max(100),
+  municipality: z.string().min(1, "Municipality is required").max(100),
+  googleMapsUrl: z
+    .string()
+    .url("Please enter a valid Google Maps URL")
+    .optional(),
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
   bedrooms: z.number().int().min(0, "Bedrooms must be a non-negative integer"),
   bathrooms: z
     .number()

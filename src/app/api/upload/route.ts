@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
-import { authenticateUser } from "@/lib/auth/rbac";
+import { authenticateUser } from "@/lib/auth/server-auth";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 

@@ -42,7 +42,7 @@ export default function SignInPageClient() {
         title: "Éxito",
         description: "Has iniciado sesión correctamente.",
       });
-      router.push("/dashboard");
+      // Remove hardcoded redirect - auth provider handles role-based redirection
     } catch (error) {
       toast({
         title: "Error",

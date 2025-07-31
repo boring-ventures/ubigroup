@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { UserRole, PropertyStatus } from "@prisma/client";
-import {
-  authenticateUser,
-  validateRequestBody,
-  belongsToAgency,
-} from "@/lib/auth/rbac";
+import { PropertyStatus } from "@prisma/client";
+import { authenticateUser } from "@/lib/auth/server-auth";
+import { validateRequestBody, canManageProperty } from "@/lib/auth/rbac";
 import {
   updatePropertyStatusSchema,
   UpdatePropertyStatusInput,

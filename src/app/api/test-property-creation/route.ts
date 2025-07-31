@@ -1,114 +1,63 @@
-import { NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { generateCustomPropertyId } from "@/lib/utils";
+import {
+  PropertyStatus,
+  TransactionType,
+  PropertyType,
+  Currency,
+} from "@prisma/client";
 
-// Test endpoint to verify property creation functionality
-export async function GET() {
+export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    console.log("Testing property creation with new fields...");
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json(
-        {
-          error: "Not authenticated",
-          userError: userError?.message,
-        },
-        { status: 401 }
-      );
-    }
-
-    const userId = user.id;
-
-    // Check if user exists and is an agent
-    const userProfile = await prisma.user.findUnique({
-      where: { userId },
-      include: {
-        agency: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+    // Create a test property with all new fields
+    const testProperty = await prisma.property.create({
+      data: {
+        customId: generateCustomPropertyId(TransactionType.SALE),
+        title: "Test Property with New Fields",
+        description:
+          "This is a test property to verify the new fields work correctly",
+        type: PropertyType.APARTMENT,
+        locationState: "La Paz",
+        locationCity: "La Paz",
+        locationNeigh: "Centro",
+        municipality: "La Paz",
+        address: "Av. 16 de Julio 1234",
+        googleMapsUrl: "https://maps.google.com/?q=-16.5,-68.1",
+        latitude: -16.5,
+        longitude: -68.1,
+        price: 150000,
+        currency: Currency.BOLIVIANOS,
+        exchangeRate: undefined,
+        bedrooms: 2,
+        bathrooms: 1,
+        garageSpaces: 1,
+        squareMeters: 80,
+        transactionType: TransactionType.SALE,
+        status: PropertyStatus.APPROVED,
+        images: ["/test-image-1.jpg"],
+        videos: [],
+        features: ["Balcón", "Vista a la ciudad"],
+        agentId: "test-agent-id", // This will need to be a real agent ID
+        agencyId: "test-agency-id", // This will need to be a real agency ID
       },
     });
 
-    if (!userProfile) {
-      return NextResponse.json(
-        {
-          error: "User profile not found",
-          userId,
-          userEmail: user.email,
-        },
-        { status: 404 }
-      );
-    }
-
-    if (userProfile.role !== "AGENT") {
-      return NextResponse.json(
-        {
-          error: "User is not an agent",
-          userId,
-          userEmail: user.email,
-          role: userProfile.role,
-        },
-        { status: 403 }
-      );
-    }
-
-    // Check if user has an agency
-    if (!userProfile.agencyId) {
-      return NextResponse.json(
-        {
-          error: "Agent must belong to an agency",
-          userId,
-          userEmail: user.email,
-          role: userProfile.role,
-        },
-        { status: 400 }
-      );
-    }
-
-    // Test property creation with sample data
-    const testPropertyData = {
-      title: "Test Property",
-      description: "This is a test property for debugging purposes",
-      propertyType: "APARTMENT",
-      transactionType: "SALE",
-      address: "123 Test Street",
-      city: "Test City",
-      state: "Test State",
-      zipCode: "12345",
-      price: 100000,
-      bedrooms: 2,
-      bathrooms: 2,
-      area: 1000,
-      images: [],
-      features: ["Test Feature"],
-    };
+    console.log("Test property created successfully:", testProperty);
 
     return NextResponse.json({
-      authenticated: true,
-      userId,
-      userEmail: user.email,
-      role: userProfile.role,
-      agencyId: userProfile.agencyId,
-      agencyName: userProfile.agency?.name,
-      canCreateProperties: true,
-      testData: testPropertyData,
+      success: true,
+      property: testProperty,
+      message: "Test property created with new fields successfully",
     });
   } catch (error) {
-    console.error("Test property creation error:", error);
+    console.error("Error creating test property:", error);
     return NextResponse.json(
       {
-        error: "Test failed",
-        details: error instanceof Error ? error.message : String(error),
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

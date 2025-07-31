@@ -29,6 +29,8 @@ export async function middleware(req: NextRequest) {
     (req.nextUrl.pathname.startsWith("/sign-in") ||
       req.nextUrl.pathname.startsWith("/sign-up"))
   ) {
+    // For middleware, we'll redirect to dashboard and let the dashboard page handle role-based rendering
+    // This is simpler than trying to fetch user profile in middleware
     const redirectUrl = req.nextUrl.clone();
     redirectUrl.pathname = "/dashboard";
     return NextResponse.redirect(redirectUrl);
