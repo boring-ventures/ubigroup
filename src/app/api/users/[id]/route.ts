@@ -10,7 +10,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     // Use getUser() instead of getSession() for better security
@@ -23,12 +23,20 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get current user to check if they're a SUPER_ADMIN
+    // Get current user to check their role and agency
     const currentUser = await prisma.user.findUnique({
       where: { userId: user.id },
+      include: {
+        agency: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
-    if (!currentUser || currentUser.role !== "SUPER_ADMIN") {
+    if (!currentUser) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -51,6 +59,22 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Agency Admin can only view users from their agency
+    if (currentUser.role === "AGENCY_ADMIN") {
+      if (!currentUser.agencyId) {
+        return NextResponse.json(
+          { error: "Agency Admin must be assigned to an agency" },
+          { status: 403 }
+        );
+      }
+      if (userData.agencyId !== currentUser.agencyId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    } else if (currentUser.role !== "SUPER_ADMIN") {
+      // Only SUPER_ADMIN and AGENCY_ADMIN can access this endpoint
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     return NextResponse.json({ user: userData });
   } catch (error) {
     console.error("Failed to fetch user:", error);
@@ -67,7 +91,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     // Use getUser() instead of getSession() for better security
@@ -80,27 +104,88 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get current user to check if they're a SUPER_ADMIN
+    // Get current user to check their role and agency
     const currentUser = await prisma.user.findUnique({
       where: { userId: user.id },
+      include: {
+        agency: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
-    if (!currentUser || currentUser.role !== "SUPER_ADMIN") {
+    if (!currentUser) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Only SUPER_ADMIN and AGENCY_ADMIN can update users
+    if (
+      currentUser.role !== "SUPER_ADMIN" &&
+      currentUser.role !== "AGENCY_ADMIN"
+    ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const { id } = params;
     const body = await request.json();
-    const { firstName, lastName, role, phone, whatsapp, agencyId, active } =
+    let { firstName, lastName, role, phone, whatsapp, agencyId, active } =
       body;
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
       where: { id },
+      include: {
+        agency: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
     if (!existingUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Agency Admin restrictions
+    if (currentUser.role === "AGENCY_ADMIN") {
+      // Agency Admin can only update users from their agency
+      if (existingUser.agencyId !== currentUser.agencyId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      // Agency Admin cannot update users to SUPER_ADMIN role
+      if (role === "SUPER_ADMIN") {
+        return NextResponse.json(
+          { error: "Agency Admins cannot update users to Super Admin role" },
+          { status: 403 }
+        );
+      }
+
+      // Agency Admin can only update users to AGENT and AGENCY_ADMIN roles
+      if (role && !["AGENCY_ADMIN", "AGENT"].includes(role)) {
+        return NextResponse.json(
+          { error: "Agency Admins can only update users to Agent and Agency Admin roles" },
+          { status: 403 }
+        );
+      }
+
+      // Agency Admin can only assign users to their own agency
+      if (role && role !== "SUPER_ADMIN" && agencyId && agencyId !== currentUser.agencyId) {
+        return NextResponse.json(
+          { error: "Agency Admins can only assign users to their own agency" },
+          { status: 403 }
+        );
+      }
+
+      // Automatically assign to the same agency if not provided
+      if (role && role !== "SUPER_ADMIN" && !agencyId) {
+        agencyId = currentUser.agencyId;
+      }
     }
 
     // Validate role if provided
@@ -130,19 +215,17 @@ export async function PATCH(
       }
     }
 
-    // Update user in database
+    // Update user
     const updatedUser = await prisma.user.update({
       where: { id },
       data: {
-        ...(firstName !== undefined && { firstName }),
-        ...(lastName !== undefined && { lastName }),
-        ...(role !== undefined && { role }),
-        ...(phone !== undefined && { phone }),
-        ...(whatsapp !== undefined && { whatsapp }),
-        ...(agencyId !== undefined && {
-          agencyId: role === "SUPER_ADMIN" ? null : agencyId,
-        }),
-        ...(active !== undefined && { active }),
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
+        role: role || undefined,
+        phone: phone !== undefined ? phone : undefined,
+        whatsapp: whatsapp !== undefined ? whatsapp : undefined,
+        agencyId: role === "SUPER_ADMIN" ? null : agencyId || undefined,
+        active: active !== undefined ? active : undefined,
       },
       include: {
         agency: {
@@ -153,26 +236,6 @@ export async function PATCH(
         },
       },
     });
-
-    // Try to update user metadata in Supabase Auth if possible
-    try {
-      if (existingUser.userId && existingUser.userId !== existingUser.id) {
-        // User has a real Supabase auth ID
-        await supabaseAdmin.auth.admin.updateUserById(existingUser.userId, {
-          user_metadata: {
-            firstName: updatedUser.firstName,
-            lastName: updatedUser.lastName,
-            role: updatedUser.role,
-          },
-        });
-      }
-    } catch (authUpdateError) {
-      console.warn(
-        "Failed to update user metadata in Supabase Auth:",
-        authUpdateError
-      );
-      // Continue anyway - database update was successful
-    }
 
     return NextResponse.json({ user: updatedUser });
   } catch (error) {
@@ -190,7 +253,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     // Use getUser() instead of getSession() for better security
@@ -203,12 +266,28 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get current user to check if they're a SUPER_ADMIN
+    // Get current user to check their role and agency
     const currentUser = await prisma.user.findUnique({
       where: { userId: user.id },
+      include: {
+        agency: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
-    if (!currentUser || currentUser.role !== "SUPER_ADMIN") {
+    if (!currentUser) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Only SUPER_ADMIN and AGENCY_ADMIN can delete users
+    if (
+      currentUser.role !== "SUPER_ADMIN" &&
+      currentUser.role !== "AGENCY_ADMIN"
+    ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -217,10 +296,42 @@ export async function DELETE(
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
       where: { id },
+      include: {
+        agency: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
     if (!existingUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Agency Admin restrictions
+    if (currentUser.role === "AGENCY_ADMIN") {
+      // Agency Admin can only delete users from their agency
+      if (existingUser.agencyId !== currentUser.agencyId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      // Agency Admin cannot delete SUPER_ADMIN users
+      if (existingUser.role === "SUPER_ADMIN") {
+        return NextResponse.json(
+          { error: "Agency Admins cannot delete Super Admin users" },
+          { status: 403 }
+        );
+      }
+
+      // Agency Admin cannot delete other AGENCY_ADMIN users
+      if (existingUser.role === "AGENCY_ADMIN") {
+        return NextResponse.json(
+          { error: "Agency Admins cannot delete other Agency Admin users" },
+          { status: 403 }
+        );
+      }
     }
 
     // Prevent deleting yourself
@@ -231,7 +342,7 @@ export async function DELETE(
       );
     }
 
-    // Delete user from database first
+    // Delete user from database
     await prisma.user.delete({
       where: { id },
     });
@@ -250,10 +361,7 @@ export async function DELETE(
       // Continue anyway - database deletion was successful
     }
 
-    return NextResponse.json({
-      message: "User deleted successfully",
-      deletedUserId: id,
-    });
+    return NextResponse.json({ message: "User deleted successfully" });
   } catch (error) {
     console.error("Failed to delete user:", error);
     return NextResponse.json(
