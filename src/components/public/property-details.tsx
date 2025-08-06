@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { PropertyPdfDownload } from "./property-pdf-download";
+import { PropertySingleMap } from "./property-single-map";
 import {
   MapPin,
   Bed,
@@ -242,6 +244,9 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                 <Share2 className="h-4 w-4 mr-2" />
                 Compartilhar
               </Button>
+              {property && (
+                <PropertyPdfDownload property={property} variant="header" />
+              )}
             </div>
           </div>
 
@@ -493,15 +498,8 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                   )}
                 </div>
 
-                {/* Map Placeholder */}
-                <div className="aspect-[16/9] bg-muted rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Mapa em desenvolvimento
-                    </p>
-                  </div>
-                </div>
+                {/* Map */}
+                <PropertySingleMap property={property} />
               </CardContent>
             </Card>
           </div>
@@ -598,6 +596,11 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                   <span className="font-medium">
                     {new Date(property.createdAt).toLocaleDateString()}
                   </span>
+                </div>
+
+                {/* PDF Download Button */}
+                <div className="pt-3 border-t">
+                  <PropertyPdfDownload property={property} variant="sidebar" />
                 </div>
               </CardContent>
             </Card>
