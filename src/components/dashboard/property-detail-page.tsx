@@ -47,6 +47,7 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { UserRole, Currency } from "@prisma/client";
 import Link from "next/link";
+import { PropertySingleMap } from "./property-single-map";
 
 interface Property {
   id: string;
@@ -695,6 +696,9 @@ export function PropertyDetailPage({
                 )}
               </CardContent>
             </Card>
+
+            {/* Property Map */}
+            <PropertySingleMap property={property} />
 
             {/* Features */}
             {property.features && property.features.length > 0 && (
