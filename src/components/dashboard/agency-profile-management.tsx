@@ -23,15 +23,7 @@ import {
   useAgencyProfile,
   useUpdateAgencyProfile,
 } from "@/hooks/use-agency-profile";
-import {
-  Building2,
-  MapPin,
-  Phone,
-  Mail,
-  Camera,
-  Save,
-  Loader2,
-} from "lucide-react";
+import { Building2, MapPin, Phone, Save, Loader2 } from "lucide-react";
 import { LogoUpload } from "./logo-upload";
 
 const agencyProfileSchema = z.object({

@@ -131,8 +131,18 @@ export async function PATCH(
 
     const { id } = params;
     const body = await request.json();
-    let { firstName, lastName, role, phone, whatsapp, agencyId, active } =
-      body;
+    const {
+      firstName,
+      lastName,
+      role,
+      phone,
+      whatsapp,
+      agencyId: initialAgencyId,
+      active,
+    } = body;
+
+    // Initialize agencyId variable for potential reassignment
+    let agencyId = initialAgencyId;
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
@@ -169,13 +179,21 @@ export async function PATCH(
       // Agency Admin can only update users to AGENT and AGENCY_ADMIN roles
       if (role && !["AGENCY_ADMIN", "AGENT"].includes(role)) {
         return NextResponse.json(
-          { error: "Agency Admins can only update users to Agent and Agency Admin roles" },
+          {
+            error:
+              "Agency Admins can only update users to Agent and Agency Admin roles",
+          },
           { status: 403 }
         );
       }
 
       // Agency Admin can only assign users to their own agency
-      if (role && role !== "SUPER_ADMIN" && agencyId && agencyId !== currentUser.agencyId) {
+      if (
+        role &&
+        role !== "SUPER_ADMIN" &&
+        agencyId &&
+        agencyId !== currentUser.agencyId
+      ) {
         return NextResponse.json(
           { error: "Agency Admins can only assign users to their own agency" },
           { status: 403 }

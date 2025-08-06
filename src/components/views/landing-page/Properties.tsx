@@ -37,10 +37,10 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { PropertyMap } from "@/components/public/property-map";
 import { usePropertyLocations } from "@/hooks/use-property-search";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import Image from "next/image";
 
 interface Property {
   id: string;
@@ -241,7 +241,7 @@ export default function Properties() {
       console.log("Properties from API:", data.properties);
       console.log(
         "Properties with coordinates:",
-        data.properties?.filter((p: any) => p.latitude && p.longitude)
+        data.properties?.filter((p: Property) => p.latitude && p.longitude)
       );
       setProperties(data.properties || []);
       setPagination({
@@ -264,7 +264,7 @@ export default function Properties() {
   // Initial load
   useEffect(() => {
     fetchProperties(filters);
-  }, []);
+  }, [filters]);
 
   // Handle search button click
   const handleSearch = () => {
@@ -503,11 +503,13 @@ export default function Properties() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">Todas las ciudades</SelectItem>
-                  {locations?.cities?.map((city: any) => (
-                    <SelectItem key={city.value} value={city.value}>
-                      {city.label}
-                    </SelectItem>
-                  ))}
+                  {locations?.cities?.map(
+                    (city: { value: string; label: string }) => (
+                      <SelectItem key={city.value} value={city.value}>
+                        {city.label}
+                      </SelectItem>
+                    )
+                  )}
                 </SelectContent>
               </Select>
 
@@ -690,9 +692,11 @@ export default function Properties() {
                     {/* Property Image */}
                     <div className="relative h-48 bg-gray-200">
                       {property.images && property.images.length > 0 ? (
-                        <img
+                        <Image
                           src={property.images[0]}
                           alt={property.title}
+                          width={400}
+                          height={192}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -850,9 +854,11 @@ export default function Properties() {
                       {/* Property Image */}
                       <div className="relative w-full lg:w-64 h-48 lg:h-auto bg-gray-200">
                         {property.images && property.images.length > 0 ? (
-                          <img
+                          <Image
                             src={property.images[0]}
                             alt={property.title}
+                            width={256}
+                            height={192}
                             className="w-full h-full object-cover"
                           />
                         ) : (

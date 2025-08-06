@@ -12,14 +12,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  
-  
+  Card,
+  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Collapsible,
   CollapsibleContent,
@@ -40,8 +39,21 @@ import {
   Home,
   Square,
   Settings2,
+  DollarSign,
 } from "lucide-react";
 import { usePropertyLocations } from "@/hooks/use-property-search";
+
+interface LocationCity {
+  value: string;
+  label: string;
+  state: string;
+}
+
+interface LocationNeighborhood {
+  value: string;
+  label: string;
+  city: string;
+}
 
 interface PropertyFilters {
   transactionType?: "SALE" | "RENT" | "";
@@ -99,7 +111,10 @@ export function PropertyFilters({
   const { data: locationData, isLoading: locationsLoading } =
     usePropertyLocations();
 
-  const updateFilter = (key: keyof PropertyFilters, value: any) => {
+  const updateFilter = (
+    key: keyof PropertyFilters,
+    value: string | number | string[] | undefined
+  ) => {
     onFiltersChange({
       ...filters,
       [key]: value === "" ? undefined : value,
@@ -217,11 +232,11 @@ export function PropertyFilters({
               ) : (
                 locationData?.cities
                   ?.filter(
-                    (city: any) =>
+                    (city: LocationCity) =>
                       !filters.locationState ||
                       city.state === filters.locationState
                   )
-                  ?.map((city: any) => (
+                  ?.map((city: LocationCity) => (
                     <SelectItem key={city.value} value={city.value}>
                       {city.label}
                     </SelectItem>
@@ -246,11 +261,11 @@ export function PropertyFilters({
               ) : (
                 locationData?.neighborhoods
                   ?.filter(
-                    (neigh: any) =>
+                    (neigh: LocationNeighborhood) =>
                       !filters.locationCity ||
                       neigh.city.includes(filters.locationCity)
                   )
-                  ?.map((neigh: any) => (
+                  ?.map((neigh: LocationNeighborhood) => (
                     <SelectItem key={neigh.value} value={neigh.value}>
                       {neigh.label}
                     </SelectItem>
@@ -396,10 +411,11 @@ export function PropertyFilters({
             <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
               {FEATURES_OPTIONS.map((feature) => (
                 <div key={feature} className="flex items-center space-x-2">
-                  <Checkbox
+                  <input
+                    type="checkbox"
                     id={feature}
                     checked={filters.features?.includes(feature) || false}
-                    onCheckedChange={() => toggleFeature(feature)}
+                    onChange={() => toggleFeature(feature)}
                   />
                   <Label htmlFor={feature} className="text-sm cursor-pointer">
                     {feature}

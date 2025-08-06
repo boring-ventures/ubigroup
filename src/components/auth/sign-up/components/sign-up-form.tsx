@@ -23,7 +23,6 @@ import { toast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import { uploadAvatar } from "@/lib/supabase/upload-avatar";
 import { useRouter } from "next/navigation";
-import { saltAndHashPassword } from "@/lib/auth/password-crypto";
 
 export function SignUpForm({ className, ...props }: SignUpFormProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -69,10 +68,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
       setIsLoading(true);
 
       // Send raw password to Supabase - it handles hashing automatically
-      const { success, user, session, error } = await signUp(
-        data.email,
-        data.password
-      );
+      const { success, user, error } = await signUp(data.email, data.password);
 
       if (!success || error) {
         throw error || new Error("Failed to sign up");

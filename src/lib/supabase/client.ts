@@ -1,11 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { applyPasswordHashMiddleware } from "./password-hash-middleware";
-import type { User, Session } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-let supabase: any;
+let supabase: SupabaseClient;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn(
@@ -24,27 +23,24 @@ if (!supabaseUrl || !supabaseAnonKey) {
       },
     });
 
-    // Override auth methods to prevent errors
-    mockClient.auth.getUser = async () =>
-      ({
-        data: { user: null },
-        error: null,
-      }) as any;
-    mockClient.auth.getSession = async () =>
-      ({
-        data: { session: null },
-        error: null,
-      }) as any;
-    mockClient.auth.onAuthStateChange = () =>
-      ({
-        data: {
-          subscription: {
-            id: "mock",
-            callback: () => {},
-            unsubscribe: () => {},
-          },
+    // Override auth methods to prevent errors (using any for mock client)
+    (mockClient.auth as any).getUser = async () => ({
+      data: { user: null },
+      error: null,
+    });
+    (mockClient.auth as any).getSession = async () => ({
+      data: { session: null },
+      error: null,
+    });
+    (mockClient.auth as any).onAuthStateChange = () => ({
+      data: {
+        subscription: {
+          id: "mock",
+          callback: () => {},
+          unsubscribe: () => {},
         },
-      }) as any;
+      },
+    });
 
     // Override the _getUser method to prevent AuthSessionMissingError
     (mockClient.auth as any)._getUser = async () => ({

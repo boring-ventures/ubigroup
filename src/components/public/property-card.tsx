@@ -18,6 +18,7 @@ import {
   Car,
   Building2,
 } from "lucide-react";
+import Image from "next/image";
 
 interface PropertyCardProps {
   property: {
@@ -61,7 +62,6 @@ interface PropertyCardProps {
 export function PropertyCard({
   property,
   onViewDetails,
-  onContactAgent,
   className = "",
 }: PropertyCardProps) {
   const formatPrice = (
@@ -171,10 +171,11 @@ export function PropertyCard({
         <div className="relative aspect-[4/3] overflow-hidden">
           {getTransactionBadge(property.transactionType)}
 
-          <img
+          <Image
             src={property.images[0] || "/placeholder-property.jpg"}
             alt={property.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
 
           {/* Image Navigation Dots */}

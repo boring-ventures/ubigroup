@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 
@@ -8,8 +8,8 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerComponentClient({
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({
       cookies: () => cookieStore,
     });
 
@@ -45,7 +45,12 @@ export async function PATCH(
     }
 
     // Prepare update data
-    const updateData: any = {};
+    const updateData: {
+      active?: boolean;
+      name?: string;
+      address?: string;
+      phone?: string;
+    } = {};
 
     if (typeof active === "boolean") {
       updateData.active = active;
@@ -105,8 +110,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerComponentClient({
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient({
       cookies: () => cookieStore,
     });
 

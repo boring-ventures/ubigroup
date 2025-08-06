@@ -17,13 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   MapPin,
   Bed,
@@ -36,7 +30,6 @@ import {
   ChevronRight,
   Home,
   Building2,
-  Eye,
   Edit,
   Save,
   X,
@@ -45,8 +38,9 @@ import {
   Coins,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { UserRole, Currency } from "@prisma/client";
+import { UserRole, Currency, TransactionType } from "@prisma/client";
 import Link from "next/link";
+import Image from "next/image";
 import { PropertySingleMap } from "./property-single-map";
 
 interface Property {
@@ -57,7 +51,7 @@ interface Property {
   locationState: string;
   locationCity: string;
   locationNeigh: string;
-  address: string | null;
+  address?: string;
   price: number;
   currency: Currency;
   exchangeRate: number | null;
@@ -65,7 +59,7 @@ interface Property {
   bathrooms: number;
   garageSpaces: number;
   squareMeters: number;
-  transactionType: string;
+  transactionType: TransactionType;
   status: string;
   images: string[];
   videos: string[];
@@ -833,10 +827,11 @@ export function PropertyDetailPage({
                       setShowImageGallery(true);
                     }}
                   >
-                    <img
+                    <Image
                       src={image}
                       alt={`${property.title} - Imagen ${index + 1}`}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
                 ))}
@@ -875,10 +870,11 @@ export function PropertyDetailPage({
       <Dialog open={showImageGallery} onOpenChange={setShowImageGallery}>
         <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
           <div className="relative w-full h-full flex items-center justify-center bg-black">
-            <img
+            <Image
               src={property.images[currentImageIndex]}
               alt={`${property.title} - Imagen ${currentImageIndex + 1}`}
-              className="max-w-full max-h-full object-contain"
+              fill
+              className="object-contain"
             />
 
             {/* Navigation */}

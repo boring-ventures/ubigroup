@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Download, FileText } from "lucide-react";
+import { Download } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -331,12 +331,6 @@ export function PropertyPdfDownload({
                                      property.locationCity,
                                      property.locationNeigh
                                    );
-
-                                   // Generate OpenStreetMap URL
-                                   const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${coords.lat},${coords.lng}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7C${coords.lat},${coords.lng}&key=YOUR_API_KEY`;
-
-                                   // Fallback to OpenStreetMap if no API key
-                                   const fallbackMapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${coords.lng - 0.01},${coords.lat - 0.01},${coords.lng + 0.01},${coords.lat + 0.01}&layer=mapnik&marker=${coords.lat},${coords.lng}`;
 
                                    return `
                      <div style="

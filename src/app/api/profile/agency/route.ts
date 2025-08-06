@@ -27,9 +27,9 @@ const agencyProfileUpdateSchema = z.object({
 });
 
 // GET - Fetch agency profile for the current Agency Admin
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     const {
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
 // PUT - Update agency profile for the current Agency Admin
 export async function PUT(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     const {
@@ -146,7 +146,12 @@ export async function PUT(request: NextRequest) {
     }
 
     // Prepare update data (only include defined fields)
-    const updateData: any = {};
+    const updateData: {
+      name?: string;
+      logoUrl?: string | null;
+      address?: string | null;
+      phone?: string | null;
+    } = {};
 
     if (name !== undefined) updateData.name = name;
     if (logoUrl !== undefined) updateData.logoUrl = logoUrl;

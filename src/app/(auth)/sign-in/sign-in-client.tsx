@@ -49,6 +49,7 @@ export default function SignInPageClient() {
         description: "Correo electrónico o contraseña inválidos.",
         variant: "destructive",
       });
+      console.log(error);
     }
   };
 

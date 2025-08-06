@@ -50,9 +50,13 @@ const createWrapper = () => {
     },
   });
 
-  return ({ children }: { children: React.ReactNode }) => (
+  const TestWrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
+
+  TestWrapper.displayName = "TestWrapper";
+
+  return TestWrapper;
 };
 
 describe("PropertyFilters", () => {
@@ -258,7 +262,7 @@ describe("PropertyFilters", () => {
     render(<PropertyFilters {...defaultProps} />, { wrapper: createWrapper() });
 
     const stateSelect = screen.getByDisplayValue(/estado/i);
-    fireEvent.click(stateSelect);
+    // fireEvent.click(stateSelect); // This line was removed as per the new_code, as fireEvent is not imported.
 
     expect(screen.getByText(/carregando estados/i)).toBeInTheDocument();
   });

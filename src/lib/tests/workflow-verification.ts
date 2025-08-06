@@ -9,11 +9,53 @@
  * 5. Rejected properties do not appear in public portal
  */
 
+interface Property {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  locationState: string;
+  locationCity: string;
+  locationNeigh: string;
+  address: string;
+  price: number;
+  bedrooms: number;
+  bathrooms: number;
+  garageSpaces: number;
+  squareMeters: number;
+  transactionType: string;
+  images: string[];
+  features: string[];
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface PropertyResponse {
+  property: Property;
+}
+
+interface PendingPropertiesResponse {
+  pendingProperties: Property[];
+}
+
+interface PropertiesListResponse {
+  properties: Property[];
+}
+
+interface ApprovalResponse {
+  property: Property;
+  previousStatus: string;
+  newStatus: string;
+  approvedBy: string;
+  rejectionReason?: string;
+}
+
 interface WorkflowTestResult {
   step: string;
   status: "PASS" | "FAIL";
   message: string;
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 export class PropertyApprovalWorkflowVerification {
@@ -131,7 +173,7 @@ export class PropertyApprovalWorkflowVerification {
         throw new Error(`Failed to create property: ${errorData.error}`);
       }
 
-      const data = await response.json();
+      const data: PropertyResponse = await response.json();
       this.testPropertyId = data.property.id;
 
       if (data.property.status !== "PENDING") {
@@ -172,9 +214,9 @@ export class PropertyApprovalWorkflowVerification {
         throw new Error("Failed to fetch pending properties");
       }
 
-      const data = await response.json();
+      const data: PendingPropertiesResponse = await response.json();
       const foundProperty = data.pendingProperties.find(
-        (p: any) => p.id === this.testPropertyId
+        (p: Property) => p.id === this.testPropertyId
       );
 
       if (!foundProperty) {
@@ -210,9 +252,9 @@ export class PropertyApprovalWorkflowVerification {
         throw new Error("Failed to fetch public properties");
       }
 
-      const data = await response.json();
+      const data: PropertiesListResponse = await response.json();
       const foundProperty = data.properties.find(
-        (p: any) => p.id === this.testPropertyId
+        (p: Property) => p.id === this.testPropertyId
       );
 
       if (foundProperty) {
@@ -253,7 +295,7 @@ export class PropertyApprovalWorkflowVerification {
         throw new Error(`Failed to approve property: ${errorData.error}`);
       }
 
-      const data = await response.json();
+      const data: ApprovalResponse = await response.json();
 
       if (data.property.status !== "APPROVED") {
         throw new Error(
@@ -294,9 +336,9 @@ export class PropertyApprovalWorkflowVerification {
         throw new Error("Failed to fetch public properties");
       }
 
-      const data = await response.json();
+      const data: PropertiesListResponse = await response.json();
       const foundProperty = data.properties.find(
-        (p: any) => p.id === this.testPropertyId
+        (p: Property) => p.id === this.testPropertyId
       );
 
       if (!foundProperty) {
@@ -364,7 +406,7 @@ export class PropertyApprovalWorkflowVerification {
         throw new Error("Failed to create property for rejection test");
       }
 
-      const createData = await createResponse.json();
+      const createData: PropertyResponse = await createResponse.json();
       const rejectPropertyId = createData.property.id;
 
       // Reject the property
@@ -389,7 +431,7 @@ export class PropertyApprovalWorkflowVerification {
         throw new Error("Failed to reject property");
       }
 
-      const rejectData = await rejectResponse.json();
+      const rejectData: ApprovalResponse = await rejectResponse.json();
 
       if (rejectData.property.status !== "REJECTED") {
         throw new Error(
@@ -403,9 +445,9 @@ export class PropertyApprovalWorkflowVerification {
       const publicResponse = await fetch(
         `${this.baseUrl}/api/properties?status=APPROVED`
       );
-      const publicData = await publicResponse.json();
+      const publicData: PropertiesListResponse = await publicResponse.json();
       const foundRejectedProperty = publicData.properties.find(
-        (p: any) => p.id === rejectPropertyId
+        (p: Property) => p.id === rejectPropertyId
       );
 
       if (foundRejectedProperty) {
@@ -435,7 +477,7 @@ export class PropertyApprovalWorkflowVerification {
     step: string,
     status: "PASS" | "FAIL",
     message: string,
-    data?: any
+    data?: Record<string, unknown>
   ) {
     this.results.push({ step, status, message, data });
     const emoji = status === "PASS" ? "✅" : "❌";

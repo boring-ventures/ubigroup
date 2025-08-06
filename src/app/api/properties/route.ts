@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { UserRole, PropertyStatus } from "@prisma/client";
-import { authenticateUser } from "@/lib/auth/server-auth";
 import {
-  validateRequestBody,
-  validateQueryParams,
-  canManageProperty,
-} from "@/lib/auth/rbac";
+  UserRole,
+  PropertyStatus,
+  PropertyType,
+  TransactionType,
+} from "@prisma/client";
+import { authenticateUser } from "@/lib/auth/server-auth";
+import { validateRequestBody } from "@/lib/auth/rbac";
 import {
   createPropertySchema,
-  propertyQuerySchema,
   CreatePropertyInput,
-  PropertyQueryInput,
 } from "@/lib/validations/property";
 import { generateCustomPropertyId } from "@/lib/utils";
 
@@ -57,11 +56,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Try to authenticate user
-    const { user, error: authError } = await authenticateUser();
+    const { user } = await authenticateUser();
     const isAuthenticated = !!user;
 
     // Build where clause
-    let whereClause: any = {};
+    const whereClause: any = {};
 
     // Handle status filter and user-specific filtering based on authentication
     if (isAuthenticated) {
@@ -106,12 +105,12 @@ export async function GET(request: NextRequest) {
     // Apply other filters
     const type = searchParams.get("type");
     if (type) {
-      whereClause.type = type;
+      whereClause.type = type as PropertyType;
     }
 
     const transactionType = searchParams.get("transactionType");
     if (transactionType) {
-      whereClause.transactionType = transactionType;
+      whereClause.transactionType = transactionType as TransactionType;
     }
 
     const locationState = searchParams.get("locationState");

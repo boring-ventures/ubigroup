@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPropertyPinColor } from "@/lib/utils";
 import { TransactionType } from "@prisma/client";
+import type { Map, Marker } from "leaflet";
 
 interface Property {
   id: string;
@@ -50,8 +51,8 @@ interface PropertyMapProps {
 
 export function PropertyMap({ properties, className }: PropertyMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
+  const mapInstanceRef = useRef<Map>(null);
+  const markersRef = useRef<Marker[]>([]);
   const isInitializedRef = useRef(false);
 
   useEffect(() => {
@@ -81,7 +82,10 @@ export function PropertyMap({ properties, className }: PropertyMapProps) {
         }
 
         // Check if container is already initialized
-        if ((mapRef.current as any)._leaflet_id) {
+        if (
+          (mapRef.current as HTMLDivElement & { _leaflet_id?: number })
+            ._leaflet_id
+        ) {
           console.warn("Map container already initialized, skipping...");
           return;
         }

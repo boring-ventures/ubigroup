@@ -41,7 +41,6 @@ export function AgentPropertiesTable() {
   });
   const [filters, setFilters] = useState<PropertyFiltersType>({});
   const [deletePropertyId, setDeletePropertyId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // Merge filters with params
   const queryParams = {
@@ -62,7 +61,6 @@ export function AgentPropertiesTable() {
 
   const handleDeleteProperty = async (propertyId: string) => {
     try {
-      setIsDeleting(true);
       const response = await fetch(`/api/properties/${propertyId}`, {
         method: "DELETE",
       });
@@ -89,7 +87,6 @@ export function AgentPropertiesTable() {
         variant: "destructive",
       });
     } finally {
-      setIsDeleting(false);
       setDeletePropertyId(null);
     }
   };

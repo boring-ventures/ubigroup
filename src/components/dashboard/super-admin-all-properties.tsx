@@ -32,9 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Home,
-  Users,
   Search,
-  Filter,
   CheckCircle,
   Clock,
   MapPin,
@@ -43,6 +41,7 @@ import {
   Building2,
 } from "lucide-react";
 import { PropertyDetailsModal } from "./property-details-modal";
+import Image from "next/image";
 
 interface Property {
   id: string;
@@ -84,8 +83,13 @@ interface PropertyStats {
   averagePrice: number;
 }
 
+interface Agency {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+}
+
 export function SuperAdminAllProperties() {
-  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -344,7 +348,7 @@ export function SuperAdminAllProperties() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Agencies</SelectItem>
-                  {agencies.map((agency: any) => (
+                  {agencies.map((agency: Agency) => (
                     <SelectItem key={agency.id} value={agency.id}>
                       {agency.name}
                     </SelectItem>
@@ -392,9 +396,11 @@ export function SuperAdminAllProperties() {
                           <div className="flex items-center space-x-3">
                             <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center">
                               {property.images.length > 0 ? (
-                                <img
+                                <Image
                                   src={property.images[0]}
                                   alt={property.title}
+                                  width={24}
+                                  height={24}
                                   className="w-full h-full object-cover rounded-md"
                                 />
                               ) : (

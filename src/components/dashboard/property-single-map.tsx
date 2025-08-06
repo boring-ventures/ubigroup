@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 import { TransactionType } from "@prisma/client";
+import type { Map, Marker } from "leaflet";
 
 interface Property {
   id: string;
@@ -27,10 +28,13 @@ interface PropertySingleMapProps {
   className?: string;
 }
 
-export function PropertySingleMap({ property, className }: PropertySingleMapProps) {
+export function PropertySingleMap({
+  property,
+  className,
+}: PropertySingleMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const markerRef = useRef<any>(null);
+  const mapInstanceRef = useRef<Map | null>(null);
+  const markerRef = useRef<Marker | null>(null);
   const isInitializedRef = useRef(false);
 
   useEffect(() => {
@@ -62,7 +66,10 @@ export function PropertySingleMap({ property, className }: PropertySingleMapProp
         }
 
         // Check if container is already initialized
-        if ((mapRef.current as any)._leaflet_id) {
+        if (
+          (mapRef.current as HTMLDivElement & { _leaflet_id?: number })
+            ._leaflet_id
+        ) {
           console.warn("Map container already initialized, skipping...");
           return;
         }
@@ -255,7 +262,8 @@ export function PropertySingleMap({ property, className }: PropertySingleMapProp
             <div className="text-center">
               <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">
-                No se han configurado las coordenadas de ubicación para esta propiedad.
+                No se han configurado las coordenadas de ubicación para esta
+                propiedad.
               </p>
               <p className="text-sm text-muted-foreground mt-2">
                 {property.address && `Dirección: ${property.address}`}
@@ -301,4 +309,4 @@ export function PropertySingleMap({ property, className }: PropertySingleMapProp
       </CardContent>
     </Card>
   );
-} 
+}

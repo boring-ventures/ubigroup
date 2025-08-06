@@ -1,13 +1,9 @@
 import { UserRole } from "@prisma/client";
 import {
-  hasRole,
   belongsToAgency,
-  canAccessAgency,
-  canManageUsers,
   canManageProperty,
   validateRequestBody,
   validateQueryParams,
-  type AuthenticatedUser,
 } from "../rbac";
 
 // Mock Next.js cookies
@@ -17,7 +13,7 @@ jest.mock("next/headers", () => ({
 
 // Mock Supabase client
 jest.mock("@/lib/supabase/client", () => ({
-  createRouteHandlerClient: jest.fn(),
+  createClientComponentClient: jest.fn(),
 }));
 
 // Mock Prisma client
@@ -28,15 +24,39 @@ jest.mock("@/lib/prisma", () => ({
 }));
 
 import { cookies } from "next/headers";
-import { createRouteHandlerClient } from "@/lib/supabase/client";
 import prisma from "@/lib/prisma";
 
+// Mock functions (keeping them for potential future use)
 const mockCookies = cookies as jest.MockedFunction<typeof cookies>;
-const mockCreateRouteHandlerClient =
-  createRouteHandlerClient as jest.MockedFunction<
-    typeof createRouteHandlerClient
-  >;
 const mockPrismaUser = prisma.user as jest.Mocked<typeof prisma.user>;
+
+// Test interfaces
+interface TestUser {
+  id: string;
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  role: UserRole;
+  agencyId: string | null;
+  active: boolean;
+}
+
+interface TestProperty {
+  id: string;
+  agentId: string;
+  agencyId: string;
+  status: string;
+}
+
+interface MockSchema {
+  safeParse: jest.MockedFunction<
+    (data: unknown) => {
+      success: boolean;
+      data?: unknown;
+      error?: { errors: Array<{ message: string }> };
+    }
+  >;
+}
 
 describe("RBAC Utility Functions", () => {
   beforeEach(() => {
@@ -44,7 +64,7 @@ describe("RBAC Utility Functions", () => {
   });
 
   describe("validateRequestBody", () => {
-    const mockSchema = {
+    const mockSchema: MockSchema = {
       safeParse: jest.fn(),
     };
 
@@ -57,7 +77,7 @@ describe("RBAC Utility Functions", () => {
         data: parsedData,
       });
 
-      const result = validateRequestBody(mockSchema as any, inputData);
+      const result = validateRequestBody(mockSchema, inputData);
 
       expect(result.data).toEqual(parsedData);
       expect(result.error).toBeNull();
@@ -67,10 +87,10 @@ describe("RBAC Utility Functions", () => {
     it("returns error when validation fails", () => {
       const inputData = { title: "", price: -1000 };
       const validationError = {
-        format: () => ({
-          title: { _errors: ["Title is required"] },
-          price: { _errors: ["Price must be positive"] },
-        }),
+        errors: [
+          { message: "Title is required" },
+          { message: "Price must be positive" },
+        ],
       };
 
       mockSchema.safeParse.mockReturnValue({
@@ -78,17 +98,15 @@ describe("RBAC Utility Functions", () => {
         error: validationError,
       });
 
-      const result = validateRequestBody(mockSchema as any, inputData);
+      const result = validateRequestBody(mockSchema, inputData);
 
       expect(result.data).toBeNull();
-      expect(result.error).toEqual(
-        'Validation failed: {"title":{"_errors":["Title is required"]},"price":{"_errors":["Price must be positive"]}}'
-      );
+      expect(result.error).toEqual("Title is required, Price must be positive");
     });
   });
 
   describe("validateQueryParams", () => {
-    const mockSchema = {
+    const mockSchema: MockSchema = {
       safeParse: jest.fn(),
     };
 
@@ -110,13 +128,16 @@ describe("RBAC Utility Functions", () => {
         data: expectedParsedData,
       });
 
-      const result = validateQueryParams(mockSchema as any, searchParams);
+      const result = validateQueryParams(mockSchema, searchParams);
 
       expect(result.data).toEqual(expectedParsedData);
       expect(result.error).toBeNull();
 
       // Verify the parsed object structure
-      const calledWith = mockSchema.safeParse.mock.calls[0][0];
+      const calledWith = mockSchema.safeParse.mock.calls[0][0] as Record<
+        string,
+        unknown
+      >;
       expect(calledWith.type).toBe("HOUSE");
       expect(calledWith.minPrice).toBe("200000");
       expect(calledWith.features).toEqual(["Piscina", "Jardim"]);
@@ -130,7 +151,7 @@ describe("RBAC Utility Functions", () => {
         data: {},
       });
 
-      const result = validateQueryParams(mockSchema as any, searchParams);
+      const result = validateQueryParams(mockSchema, searchParams);
 
       expect(result.data).toEqual({});
       expect(result.error).toBeNull();
@@ -138,7 +159,7 @@ describe("RBAC Utility Functions", () => {
   });
 
   describe("canManageProperty", () => {
-    const mockProperty = {
+    const mockProperty: TestProperty = {
       id: "property-123",
       agentId: "agent-456",
       agencyId: "agency-789",
@@ -146,103 +167,159 @@ describe("RBAC Utility Functions", () => {
     };
 
     it("allows SUPER_ADMIN to manage any property", () => {
-      const superAdmin = {
+      const superAdmin: TestUser = {
         id: "super-admin-123",
+        userId: "super-admin-123",
+        firstName: "Super",
+        lastName: "Admin",
         role: UserRole.SUPER_ADMIN,
         agencyId: "different-agency",
+        active: true,
       };
 
-      const result = canManageProperty(superAdmin as any, mockProperty as any);
+      const result = canManageProperty(
+        superAdmin,
+        mockProperty.agencyId,
+        mockProperty.agentId
+      );
       expect(result).toBe(true);
     });
 
     it("allows AGENCY_ADMIN to manage properties from their agency", () => {
-      const agencyAdmin = {
+      const agencyAdmin: TestUser = {
         id: "agency-admin-123",
+        userId: "agency-admin-123",
+        firstName: "Agency",
+        lastName: "Admin",
         role: UserRole.AGENCY_ADMIN,
         agencyId: "agency-789",
+        active: true,
       };
 
-      const result = canManageProperty(agencyAdmin as any, mockProperty as any);
+      const result = canManageProperty(
+        agencyAdmin,
+        mockProperty.agencyId,
+        mockProperty.agentId
+      );
       expect(result).toBe(true);
     });
 
     it("denies AGENCY_ADMIN from managing properties from other agencies", () => {
-      const agencyAdmin = {
+      const agencyAdmin: TestUser = {
         id: "agency-admin-123",
+        userId: "agency-admin-123",
+        firstName: "Agency",
+        lastName: "Admin",
         role: UserRole.AGENCY_ADMIN,
         agencyId: "different-agency",
+        active: true,
       };
 
-      const result = canManageProperty(agencyAdmin as any, mockProperty as any);
+      const result = canManageProperty(
+        agencyAdmin,
+        mockProperty.agencyId,
+        mockProperty.agentId
+      );
       expect(result).toBe(false);
     });
 
     it("allows AGENT to manage their own properties", () => {
-      const agent = {
+      const agent: TestUser = {
         id: "agent-456",
+        userId: "agent-456",
+        firstName: "Test",
+        lastName: "Agent",
         role: UserRole.AGENT,
         agencyId: "agency-789",
+        active: true,
       };
 
-      const result = canManageProperty(agent as any, mockProperty as any);
+      const result = canManageProperty(
+        agent,
+        mockProperty.agencyId,
+        mockProperty.agentId
+      );
       expect(result).toBe(true);
     });
 
     it("denies AGENT from managing other agents properties", () => {
-      const agent = {
+      const agent: TestUser = {
         id: "different-agent",
+        userId: "different-agent",
+        firstName: "Different",
+        lastName: "Agent",
         role: UserRole.AGENT,
         agencyId: "agency-789",
+        active: true,
       };
 
-      const result = canManageProperty(agent as any, mockProperty as any);
+      const result = canManageProperty(
+        agent,
+        mockProperty.agencyId,
+        mockProperty.agentId
+      );
       expect(result).toBe(false);
     });
   });
 
   describe("belongsToAgency", () => {
     it("returns true when user belongs to the specified agency", () => {
-      const user = {
+      const user: TestUser = {
         id: "user-123",
-        agencyId: "agency-456",
+        userId: "user-123",
+        firstName: "Test",
+        lastName: "User",
         role: UserRole.AGENT,
+        agencyId: "agency-456",
+        active: true,
       };
 
-      const result = belongsToAgency(user as any, "agency-456");
+      const result = belongsToAgency(user, "agency-456");
       expect(result).toBe(true);
     });
 
     it("returns false when user belongs to a different agency", () => {
-      const user = {
+      const user: TestUser = {
         id: "user-123",
-        agencyId: "agency-456",
+        userId: "user-123",
+        firstName: "Test",
+        lastName: "User",
         role: UserRole.AGENT,
+        agencyId: "agency-456",
+        active: true,
       };
 
-      const result = belongsToAgency(user as any, "different-agency");
+      const result = belongsToAgency(user, "different-agency");
       expect(result).toBe(false);
     });
 
     it("returns false when user has no agency", () => {
-      const user = {
+      const user: TestUser = {
         id: "user-123",
-        agencyId: null,
+        userId: "user-123",
+        firstName: "Test",
+        lastName: "User",
         role: UserRole.SUPER_ADMIN,
+        agencyId: null,
+        active: true,
       };
 
-      const result = belongsToAgency(user as any, "agency-456");
+      const result = belongsToAgency(user, "agency-456");
       expect(result).toBe(false);
     });
 
     it("returns false when agencyId is null", () => {
-      const user = {
+      const user: TestUser = {
         id: "user-123",
-        agencyId: "agency-456",
+        userId: "user-123",
+        firstName: "Test",
+        lastName: "User",
         role: UserRole.AGENT,
+        agencyId: "agency-456",
+        active: true,
       };
 
-      const result = belongsToAgency(user as any, null);
+      const result = belongsToAgency(user, "");
       expect(result).toBe(false);
     });
   });

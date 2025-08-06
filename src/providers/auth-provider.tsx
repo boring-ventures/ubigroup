@@ -210,7 +210,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           const response = await fetch(`/api/profile`);
           if (response.ok) {
-            const profile = await response.json();
             // For now, all roles redirect to dashboard since the dashboard page handles role-specific rendering
             router.push("/dashboard");
             return;

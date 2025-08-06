@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,10 +11,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
   Select,
   SelectContent,
@@ -30,31 +32,35 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
-import { Loader } from "@/components/ui/loader";
-import {
-  X,
-  Plus,
-  Home,
-  MapPin,
-  DollarSign,
-  Bed,
-  Bath,
-  Ruler,
-  Star,
-  Image,
-  Video,
-  CheckCircle,
-  Circle,
-} from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import {
   createPropertySchema,
   type CreatePropertyInput,
 } from "@/lib/validations/property";
 import { PropertyType, TransactionType } from "@prisma/client";
-import { useAuth } from "@/providers/auth-provider";
+import {
+  MapPin,
+  Home,
+  DollarSign,
+  Image as ImageIcon,
+  Video,
+  X,
+  Plus,
+  Trash2,
+  Upload,
+  FileImage,
+  FileVideo,
+  CheckCircle,
+  Circle,
+  Ruler,
+  Bed,
+  Bath,
+  Star,
+} from "lucide-react";
+import Image from "next/image";
 import { uploadFiles, validateFile } from "@/lib/upload";
+import { Loader } from "@/components/ui/loader";
 
 // Define currency enum locally since it's not exported from Prisma client
 enum Currency {
@@ -94,7 +100,7 @@ export function PropertyForm({
   const [exchangeRate, setExchangeRate] = useState<number | undefined>(
     initialData?.exchangeRate
   );
-  const { user, session, profile } = useAuth();
+  const {} = useAuth();
 
   const form = useForm<CreatePropertyInput>({
     resolver: zodResolver(createPropertySchema),
@@ -475,7 +481,7 @@ export function PropertyForm({
                     Pricing Information
                   </CardTitle>
                   <CardDescription className="text-green-700">
-                    Set your property's price
+                    Set your property&apos;s price
                   </CardDescription>
                 </div>
               </div>
@@ -564,7 +570,7 @@ export function PropertyForm({
                   <FormField
                     control={form.control}
                     name="exchangeRate"
-                    render={({ field }) => (
+                    render={() => (
                       <FormItem>
                         <FormLabel className="text-base font-semibold">
                           Exchange Rate (Bs/$) *
@@ -968,7 +974,7 @@ export function PropertyForm({
             <CardHeader className="bg-indigo-50 border-b border-indigo-200">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-indigo-100 rounded-lg">
-                  <Image className="h-6 w-6 text-indigo-600" />
+                  <ImageIcon className="h-6 w-6 text-indigo-600" />
                 </div>
                 <div>
                   <CardTitle className="text-xl text-indigo-900">
@@ -984,7 +990,7 @@ export function PropertyForm({
               {/* Images Section */}
               <div className="bg-white p-6 rounded-lg border border-indigo-200">
                 <div className="flex items-center space-x-2 mb-4">
-                  <Image className="h-5 w-5 text-indigo-600" />
+                  <ImageIcon className="h-5 w-5 text-indigo-600" />
                   <h4 className="text-lg font-semibold text-gray-800">
                     Images
                   </h4>
@@ -1002,10 +1008,11 @@ export function PropertyForm({
                         key={`uploaded-${index}`}
                         className="relative group border-2 border-gray-200 rounded-lg p-2 bg-gray-50 hover:border-indigo-300 transition-colors"
                       >
-                        <img
+                        <Image
                           src={imageUrl}
                           alt={`Uploaded image ${index + 1}`}
-                          className="w-full h-24 object-cover rounded"
+                          fill
+                          className="object-cover rounded"
                         />
                         <button
                           type="button"
@@ -1027,10 +1034,11 @@ export function PropertyForm({
                         key={`new-${index}`}
                         className="relative group border-2 border-indigo-200 rounded-lg p-2 bg-indigo-50 hover:border-indigo-300 transition-colors"
                       >
-                        <img
+                        <Image
                           src={URL.createObjectURL(file)}
                           alt={`New image ${index + 1}`}
-                          className="w-full h-24 object-cover rounded"
+                          fill
+                          className="object-cover rounded"
                         />
                         <button
                           type="button"

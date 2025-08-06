@@ -143,7 +143,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { id: propertyId, status, rejectionReason } = body;
+    const { id: propertyId, status } = body;
 
     if (!propertyId || !status) {
       return NextResponse.json(

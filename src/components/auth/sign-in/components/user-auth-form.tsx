@@ -22,7 +22,6 @@ import type { SignInFormData, UserAuthFormProps } from "@/types/auth/sign-in";
 import { signInFormSchema } from "@/types/auth/sign-in";
 import { toast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
-import { saltAndHashPassword } from "@/lib/auth/password-crypto";
 
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);

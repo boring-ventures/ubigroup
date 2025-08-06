@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {  CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Command,
@@ -17,13 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Search,
-  MapPin,
-  Home,
-  TrendingUp,
-  Clock,
-} from "lucide-react";
+import { Search, MapPin, Home, TrendingUp, Clock, X } from "lucide-react";
 import { usePropertySearchSuggestions } from "@/hooks/use-property-search";
 
 interface SearchSuggestion {
@@ -53,7 +46,7 @@ export function PropertySearchBar({
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Use React Query hook for search suggestions
   const { data: apiSuggestions = [], isLoading } = usePropertySearchSuggestions(

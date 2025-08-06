@@ -1,20 +1,13 @@
 import {
-  BarChart3,
   Building2,
   Home,
   LayoutDashboard,
   Users,
-  CheckCircle,
   Clock,
   Settings,
   UserCog,
-  Plus,
-  FileText,
-  UserPlus,
   Building,
-  User,
   Shield,
-  Cog,
 } from "lucide-react";
 import type { UserRole } from "@prisma/client";
 import type { SidebarData } from "../types";

@@ -40,6 +40,29 @@ interface TopAgent {
   propertyCount: number; // Changed from propertiesCount to match component expectation
 }
 
+interface ApiAgent {
+  id: string;
+  name: string;
+  propertiesCount: number;
+}
+
+interface ApiProperty {
+  id: string;
+  title: string;
+  status: string;
+  createdAt: string;
+  agent: string;
+}
+
+interface ApiActivity {
+  id: string;
+  title: string;
+  agent: string;
+  agency: string;
+  status: string;
+  createdAt: string;
+}
+
 interface DashboardMetrics {
   // Agent-specific metrics
   agentProperties?: AgentProperties;
@@ -127,13 +150,13 @@ export function useDashboardMetrics() {
             pending: apiMetrics.propertyStats?.pendingProperties || 0,
             rejected: apiMetrics.propertyStats?.rejectedProperties || 0,
           },
-          topAgents: (apiMetrics.topAgents || []).map((agent: any) => ({
+          topAgents: (apiMetrics.topAgents || []).map((agent: ApiAgent) => ({
             id: agent.id,
             name: agent.name,
             propertyCount: agent.propertiesCount || 0,
           })),
           recentProperties: (apiMetrics.recentProperties || []).map(
-            (property: any) => ({
+            (property: ApiProperty) => ({
               id: property.id,
               title: property.title,
               status: property.status,
@@ -153,7 +176,7 @@ export function useDashboardMetrics() {
           totalProperties: apiMetrics.propertyStats?.totalProperties || 0,
           approvalRate: apiMetrics.propertyStats?.approvalRate || 0,
           recentActivities: (apiMetrics.recentActivities || []).map(
-            (activity: any) => ({
+            (activity: ApiActivity) => ({
               id: activity.id,
               description: `Property "${activity.title}" by ${activity.agent} (${activity.agency}) - ${activity.status}`,
               timestamp: activity.createdAt,

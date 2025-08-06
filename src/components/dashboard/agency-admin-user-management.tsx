@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +34,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -37,7 +44,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Search, UserX, UserCheck } from "lucide-react";
+import { Search, UserX, UserCheck, UserPlus, Mail } from "lucide-react";
 import {
   useAgencyAgents,
   useCreateAgent,
@@ -60,7 +67,7 @@ export function AgencyAdminUserManagement() {
   const [search, setSearch] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  const { data, isLoading, error, refetch } = useAgencyAgents(params);
+  const { data, isLoading, error } = useAgencyAgents(params);
   const createAgentMutation = useCreateAgent();
   const updateAgentMutation = useUpdateAgent();
 

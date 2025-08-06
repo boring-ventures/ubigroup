@@ -5,8 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  
-  
+  Card,
+  CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
@@ -24,11 +24,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import {
-  
   Save,
   Loader2,
   Globe,
@@ -84,7 +82,7 @@ export function SuperAdminSystemConfig() {
     },
   });
 
-  const onSubmit = async (data: SystemConfigFormData) => {
+  const onSubmit = async () => {
     try {
       setIsLoading(true);
 
@@ -97,7 +95,7 @@ export function SuperAdminSystemConfig() {
       });
 
       setLastSaved(new Date());
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Failed to save system configuration. Please try again.",

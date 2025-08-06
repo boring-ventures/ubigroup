@@ -37,7 +37,7 @@ export async function GET() {
     }
 
     // Build where clause based on user role
-    let whereClause: any = {};
+    const whereClause: { agencyId?: string } = {};
 
     // Agency Admin can only see users from their agency
     if (currentUser.role === "AGENCY_ADMIN") {
@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    let {
+    const {
       email,
       password,
       firstName,
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
       role,
       phone,
       whatsapp,
-      agencyId,
+      agencyId: initialAgencyId,
     } = body;
 
     // Validate required fields
@@ -144,6 +144,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
+    // Initialize agencyId variable
+    let agencyId = initialAgencyId;
+
     // Agency Admin restrictions
     if (currentUser.role === "AGENCY_ADMIN") {
       // Agency Admin cannot create SUPER_ADMIN users
@@ -157,13 +160,15 @@ export async function POST(request: NextRequest) {
       // Agency Admin can only create AGENT and AGENCY_ADMIN users
       if (!["AGENT", "AGENCY_ADMIN"].includes(role)) {
         return NextResponse.json(
-          { error: "Agency Admins can only create Agent and Agency Admin users" },
+          {
+            error: "Agency Admins can only create Agent and Agency Admin users",
+          },
           { status: 403 }
         );
       }
 
       // Agency Admin can only create users for their own agency
-      if (agencyId && agencyId !== currentUser.agencyId) {
+      if (initialAgencyId && initialAgencyId !== currentUser.agencyId) {
         return NextResponse.json(
           { error: "Agency Admins can only create users for their own agency" },
           { status: 403 }

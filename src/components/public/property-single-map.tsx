@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
+import type { Map, Marker } from "leaflet";
 import { getPropertyPinColor } from "@/lib/utils";
 import { TransactionType } from "@prisma/client";
 
@@ -52,8 +53,8 @@ export function PropertySingleMap({
   className,
 }: PropertySingleMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const markerRef = useRef<any>(null);
+  const mapInstanceRef = useRef<Map | null>(null);
+  const markerRef = useRef<Marker | null>(null);
   const isInitializedRef = useRef(false);
 
   // Generate mock coordinates if not available
@@ -98,7 +99,10 @@ export function PropertySingleMap({
         }
 
         // Check if container is already initialized
-        if ((mapRef.current as any)._leaflet_id) {
+        if (
+          (mapRef.current as HTMLDivElement & { _leaflet_id?: number })
+            ._leaflet_id
+        ) {
           console.warn("Map container already initialized, skipping...");
           return;
         }
@@ -265,7 +269,7 @@ export function PropertySingleMap({
         isInitializedRef.current = false;
       }
     };
-  }, [property]);
+  }, [property, getLocationCoordinates]);
 
   return (
     <div className={className}>

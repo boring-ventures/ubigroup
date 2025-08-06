@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,7 +10,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   Search,
   X,
@@ -45,17 +42,13 @@ export interface PropertyFilters {
 interface PropertyFiltersProps {
   filters: PropertyFilters;
   onFiltersChange: (filters: PropertyFilters) => void;
-  onReset?: () => void;
   showStatusFilter?: boolean;
-  showAgentFilter?: boolean;
 }
 
 export function PropertyFilters({
   filters,
   onFiltersChange,
-  onReset,
   showStatusFilter = true,
-  showAgentFilter = false,
 }: PropertyFiltersProps) {
   const getActiveFiltersCount = () => {
     return Object.values(filters).filter(

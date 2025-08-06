@@ -8,7 +8,7 @@ import {
   Currency,
 } from "@prisma/client";
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     console.log("Testing property creation with new fields...");
 

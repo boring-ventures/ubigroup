@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PropertyForm } from "../property-form";
 import { PropertyType, TransactionType } from "@prisma/client";
+import "@testing-library/jest-dom";
 
 // Mock the usePropertyCreate hook
 jest.mock("@/hooks/use-agent-properties", () => ({
@@ -27,9 +28,13 @@ const createWrapper = () => {
     },
   });
 
-  return ({ children }: { children: React.ReactNode }) => (
+  const TestWrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
+
+  TestWrapper.displayName = "TestWrapper";
+
+  return TestWrapper;
 };
 
 describe("PropertyForm", () => {
