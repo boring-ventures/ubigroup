@@ -109,11 +109,6 @@ export const getRoleBasedSidebarData = (role: UserRole): SidebarData => {
           title: "System",
           items: [
             {
-              title: "System Config",
-              url: "/system-config",
-              icon: Cog,
-            },
-            {
               title: "Settings",
               url: "/settings",
               icon: Settings,

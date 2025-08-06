@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
   MapPin,
@@ -15,6 +15,9 @@ import {
   Building2,
   ChevronLeft,
   ChevronRight,
+  AlertCircle,
+  Grid3X3,
+  List,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +37,10 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { PropertyMap } from "@/components/public/property-map";
+import { usePropertyLocations } from "@/hooks/use-property-search";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface Property {
   id: string;
@@ -80,6 +86,7 @@ interface SearchFilters {
   transactionType: string;
   locationState: string;
   locationCity: string;
+  municipality: string;
   minPrice: string;
   maxPrice: string;
   minBedrooms: string;
@@ -99,9 +106,12 @@ interface PaginationInfo {
 
 export default function Properties() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
   const [pagination, setPagination] = useState<PaginationInfo>({
     limit: 9,
     offset: 0,
@@ -110,24 +120,52 @@ export default function Properties() {
     totalCount: 0,
     hasMore: false,
   });
-  const [filters, setFilters] = useState<SearchFilters>({
-    searchTerm: "",
-    propertyType: "ALL",
-    transactionType: "ALL",
-    locationState: "ALL",
-    locationCity: "ALL",
-    minPrice: "",
-    maxPrice: "",
-    minBedrooms: "",
-    maxBedrooms: "",
-    minBathrooms: "",
-    maxBathrooms: "",
-  });
+
+  // Get dynamic locations
+  const { data: locations, isLoading: locationsLoading } =
+    usePropertyLocations();
+
+  // Initialize filters from URL params or defaults
+  const getInitialFilters = (): SearchFilters => {
+    return {
+      searchTerm: searchParams.get("search") || "",
+      propertyType: searchParams.get("type") || "ALL",
+      transactionType: searchParams.get("transactionType") || "ALL",
+      locationState: searchParams.get("locationState") || "ALL",
+      locationCity: searchParams.get("locationCity") || "ALL",
+      municipality: searchParams.get("municipality") || "ALL",
+      minPrice: searchParams.get("minPrice") || "",
+      maxPrice: searchParams.get("maxPrice") || "",
+      minBedrooms: searchParams.get("minBedrooms") || "",
+      maxBedrooms: searchParams.get("maxBedrooms") || "",
+      minBathrooms: searchParams.get("minBathrooms") || "",
+      maxBathrooms: searchParams.get("maxBathrooms") || "",
+    };
+  };
+
+  const [filters, setFilters] = useState<SearchFilters>(getInitialFilters());
+
+  // Update URL with current filters
+  const updateURL = (newFilters: SearchFilters) => {
+    const params = new URLSearchParams();
+
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (value && value !== "ALL") {
+        params.set(key, value);
+      }
+    });
+
+    const newURL = params.toString()
+      ? `?${params.toString()}`
+      : window.location.pathname;
+    router.replace(newURL, { scroll: false });
+  };
 
   // Fetch properties from API with search and pagination
   const fetchProperties = async (searchFilters?: SearchFilters, page = 1) => {
     try {
       setSearchLoading(true);
+      setError(null);
       const params = new URLSearchParams();
 
       // Add pagination params
@@ -167,6 +205,12 @@ export default function Properties() {
         ) {
           params.append("locationCity", searchFilters.locationCity);
         }
+        if (
+          searchFilters.municipality &&
+          searchFilters.municipality !== "ALL"
+        ) {
+          params.append("municipality", searchFilters.municipality);
+        }
         if (searchFilters.minPrice) {
           params.append("minPrice", searchFilters.minPrice);
         }
@@ -188,20 +232,29 @@ export default function Properties() {
       }
 
       const response = await fetch(`/api/properties?${params.toString()}`);
-      if (response.ok) {
-        const data = await response.json();
-        setProperties(data.properties || []);
-        setPagination({
-          limit: data.pagination.limit,
-          offset: data.pagination.offset,
-          page: data.pagination.page,
-          totalPages: data.pagination.totalPages,
-          totalCount: data.totalCount,
-          hasMore: data.hasMore,
-        });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      const data = await response.json();
+      console.log("API Response:", data);
+      console.log("Properties from API:", data.properties);
+      console.log(
+        "Properties with coordinates:",
+        data.properties?.filter((p: any) => p.latitude && p.longitude)
+      );
+      setProperties(data.properties || []);
+      setPagination({
+        limit: data.pagination.limit,
+        offset: data.pagination.offset,
+        page: data.pagination.page,
+        totalPages: data.pagination.totalPages,
+        totalCount: data.totalCount,
+        hasMore: data.hasMore,
+      });
     } catch (error) {
       console.error("Error fetching properties:", error);
+      setError("Error al cargar las propiedades. Por favor, intenta de nuevo.");
     } finally {
       setLoading(false);
       setSearchLoading(false);
@@ -210,11 +263,12 @@ export default function Properties() {
 
   // Initial load
   useEffect(() => {
-    fetchProperties();
+    fetchProperties(filters);
   }, []);
 
   // Handle search button click
   const handleSearch = () => {
+    updateURL(filters);
     fetchProperties(filters, 1);
   };
 
@@ -224,7 +278,8 @@ export default function Properties() {
   };
 
   const handleFilterChange = (key: keyof SearchFilters, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
   };
 
   const clearFilters = () => {
@@ -234,6 +289,7 @@ export default function Properties() {
       transactionType: "ALL",
       locationState: "ALL",
       locationCity: "ALL",
+      municipality: "ALL",
       minPrice: "",
       maxPrice: "",
       minBedrooms: "",
@@ -242,6 +298,7 @@ export default function Properties() {
       maxBathrooms: "",
     };
     setFilters(clearedFilters);
+    updateURL(clearedFilters);
     fetchProperties(clearedFilters, 1);
   };
 
@@ -333,6 +390,14 @@ export default function Properties() {
           </p>
         </div>
 
+        {/* Error Alert */}
+        {error && (
+          <Alert className="mb-6" variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
         {/* Search Filters */}
         <Card className="mb-8">
           <CardHeader>
@@ -406,16 +471,20 @@ export default function Properties() {
                 onValueChange={(value) =>
                   handleFilterChange("locationState", value)
                 }
+                disabled={locationsLoading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Estado" />
+                  <SelectValue
+                    placeholder={locationsLoading ? "Cargando..." : "Estado"}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">Todos los estados</SelectItem>
-                  <SelectItem value="Caracas">Caracas</SelectItem>
-                  <SelectItem value="Valencia">Valencia</SelectItem>
-                  <SelectItem value="Maracaibo">Maracaibo</SelectItem>
-                  <SelectItem value="Barquisimeto">Barquisimeto</SelectItem>
+                  {locations?.states?.map((state: string) => (
+                    <SelectItem key={state} value={state}>
+                      {state}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
@@ -425,16 +494,43 @@ export default function Properties() {
                 onValueChange={(value) =>
                   handleFilterChange("locationCity", value)
                 }
+                disabled={locationsLoading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Ciudad" />
+                  <SelectValue
+                    placeholder={locationsLoading ? "Cargando..." : "Ciudad"}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">Todas las ciudades</SelectItem>
-                  <SelectItem value="Caracas">Caracas</SelectItem>
-                  <SelectItem value="Valencia">Valencia</SelectItem>
-                  <SelectItem value="Maracaibo">Maracaibo</SelectItem>
-                  <SelectItem value="Barquisimeto">Barquisimeto</SelectItem>
+                  {locations?.cities?.map((city: any) => (
+                    <SelectItem key={city.value} value={city.value}>
+                      {city.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Municipality */}
+              <Select
+                value={filters.municipality}
+                onValueChange={(value) =>
+                  handleFilterChange("municipality", value)
+                }
+                disabled={locationsLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={locationsLoading ? "Cargando..." : "Municipio"}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Todos los municipios</SelectItem>
+                  {locations?.municipalities?.map((municipality: string) => (
+                    <SelectItem key={municipality} value={municipality}>
+                      {municipality}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
@@ -530,8 +626,8 @@ export default function Properties() {
           </div>
         )}
 
-        {/* Results Count */}
-        <div className="mb-6">
+        {/* Results Count and View Toggle */}
+        <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <p className="text-gray-600">
             {pagination.totalCount} propiedad
             {pagination.totalCount !== 1 ? "es" : ""} encontrada
@@ -542,9 +638,34 @@ export default function Properties() {
               </span>
             )}
           </p>
+
+          {/* View Toggle */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-600">Vista:</span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === "cards" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("cards")}
+                className="flex items-center gap-1"
+              >
+                <Grid3X3 className="h-4 w-4" />
+                Tarjetas
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+                className="flex items-center gap-1"
+              >
+                <List className="h-4 w-4" />
+                Lista
+              </Button>
+            </div>
+          </div>
         </div>
 
-        {/* Properties Grid */}
+        {/* Properties Display */}
         {properties.length === 0 ? (
           <div className="text-center py-12">
             <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -557,163 +678,333 @@ export default function Properties() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {properties.map((property) => (
-                <Card
-                  key={property.id}
-                  className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => handlePropertyClick(property.id)}
-                >
-                  {/* Property Image */}
-                  <div className="relative h-48 bg-gray-200">
-                    {property.images && property.images.length > 0 ? (
-                      <img
-                        src={property.images[0]}
-                        alt={property.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                        <Home className="h-12 w-12 text-gray-400" />
-                      </div>
-                    )}
+            {viewMode === "cards" ? (
+              /* Card View */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {properties.map((property) => (
+                  <Card
+                    key={property.id}
+                    className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => handlePropertyClick(property.id)}
+                  >
+                    {/* Property Image */}
+                    <div className="relative h-48 bg-gray-200">
+                      {property.images && property.images.length > 0 ? (
+                        <img
+                          src={property.images[0]}
+                          alt={property.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                          <Home className="h-12 w-12 text-gray-400" />
+                        </div>
+                      )}
 
-                    {/* Badges */}
-                    <div className="absolute top-2 left-2 flex gap-2">
-                      <Badge
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
-                        {getPropertyTypeIcon(property.type)}
-                        {getPropertyTypeLabel(property.type)}
-                      </Badge>
-                      <Badge
-                        variant={
-                          property.transactionType === "SALE"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {getTransactionTypeLabel(property.transactionType)}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-lg line-clamp-2">
-                      {property.title}
-                    </CardTitle>
-                    <CardDescription className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      {property.locationCity}, {property.locationState}
-                    </CardDescription>
-                  </CardHeader>
-
-                  <CardContent className="pt-0">
-                    {/* Price */}
-                    <div className="mb-4">
-                      <p className="text-2xl font-bold text-primary">
-                        {formatPrice(property.price, property.currency)}
-                      </p>
-                    </div>
-
-                    {/* Property Details */}
-                    <div className="grid grid-cols-3 gap-4 mb-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <Bed className="h-4 w-4" />
-                        <span>{property.bedrooms} hab.</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Bath className="h-4 w-4" />
-                        <span>{property.bathrooms} baños</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Car className="h-4 w-4" />
-                        <span>{property.garageSpaces} gar.</span>
+                      {/* Badges */}
+                      <div className="absolute top-2 left-2 flex gap-2">
+                        <Badge
+                          variant="secondary"
+                          className="flex items-center gap-1"
+                        >
+                          {getPropertyTypeIcon(property.type)}
+                          {getPropertyTypeLabel(property.type)}
+                        </Badge>
+                        <Badge
+                          variant={
+                            property.transactionType === "SALE"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {getTransactionTypeLabel(property.transactionType)}
+                        </Badge>
                       </div>
                     </div>
 
-                    {/* Square Meters */}
-                    <div className="mb-4 text-sm text-gray-600">
-                      <span>{property.squareMeters} m²</span>
-                    </div>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg line-clamp-2">
+                        {property.title}
+                      </CardTitle>
+                      <CardDescription className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        {property.locationCity}, {property.locationState}
+                      </CardDescription>
+                    </CardHeader>
 
-                    {/* Features */}
-                    {property.features && property.features.length > 0 && (
+                    <CardContent className="pt-0">
+                      {/* Price */}
                       <div className="mb-4">
-                        <div className="flex flex-wrap gap-1">
-                          {property.features
-                            .slice(0, 3)
-                            .map((feature, index) => (
-                              <Badge
-                                key={index}
-                                variant="outline"
-                                className="text-xs"
-                              >
-                                {feature}
-                              </Badge>
-                            ))}
-                          {property.features.length > 3 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{property.features.length - 3} más
-                            </Badge>
-                          )}
+                        <p className="text-2xl font-bold text-primary">
+                          {formatPrice(property.price, property.currency)}
+                        </p>
+                      </div>
+
+                      {/* Property Details */}
+                      <div className="grid grid-cols-3 gap-4 mb-4 text-sm text-gray-600">
+                        <div className="flex items-center gap-1">
+                          <Bed className="h-4 w-4" />
+                          <span>{property.bedrooms} hab.</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Bath className="h-4 w-4" />
+                          <span>{property.bathrooms} baños</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Car className="h-4 w-4" />
+                          <span>{property.garageSpaces} gar.</span>
                         </div>
                       </div>
-                    )}
 
-                    <Separator className="my-4" />
-
-                    {/* Agent Info */}
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Users className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm font-medium">
-                          {property.agent.firstName} {property.agent.lastName}
-                        </span>
+                      {/* Square Meters */}
+                      <div className="mb-4 text-sm text-gray-600">
+                        <span>{property.squareMeters} m²</span>
                       </div>
-                      <p className="text-xs text-gray-500">
-                        {property.agency.name}
-                      </p>
-                    </div>
 
-                    {/* Contact Buttons */}
-                    <div className="flex gap-2">
-                      {property.agent.phone && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleContactAgent(property.agent.phone);
-                          }}
-                        >
-                          <Phone className="h-4 w-4 mr-1" />
-                          Llamar
-                        </Button>
+                      {/* Features */}
+                      {property.features && property.features.length > 0 && (
+                        <div className="mb-4">
+                          <div className="flex flex-wrap gap-1">
+                            {property.features
+                              .slice(0, 3)
+                              .map((feature, index) => (
+                                <Badge
+                                  key={index}
+                                  variant="outline"
+                                  className="text-xs"
+                                >
+                                  {feature}
+                                </Badge>
+                              ))}
+                            {property.features.length > 3 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{property.features.length - 3} más
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
                       )}
-                      {property.agent.whatsapp && (
-                        <Button
-                          size="sm"
-                          className="flex-1"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleContactAgent(
-                              undefined,
-                              property.agent.whatsapp
-                            );
-                          }}
-                        >
-                          <MessageCircle className="h-4 w-4 mr-1" />
-                          WhatsApp
-                        </Button>
-                      )}
+
+                      <Separator className="my-4" />
+
+                      {/* Agent Info */}
+                      <div className="mb-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Users className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm font-medium">
+                            {property.agent.firstName} {property.agent.lastName}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          {property.agency.name}
+                        </p>
+                      </div>
+
+                      {/* Contact Buttons */}
+                      <div className="flex gap-2">
+                        {property.agent.phone && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleContactAgent(property.agent.phone);
+                            }}
+                          >
+                            <Phone className="h-4 w-4 mr-1" />
+                            Llamar
+                          </Button>
+                        )}
+                        {property.agent.whatsapp && (
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleContactAgent(
+                                undefined,
+                                property.agent.whatsapp
+                              );
+                            }}
+                          >
+                            <MessageCircle className="h-4 w-4 mr-1" />
+                            WhatsApp
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              /* List View */
+              <div className="space-y-4">
+                {properties.map((property) => (
+                  <Card
+                    key={property.id}
+                    className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                    onClick={() => handlePropertyClick(property.id)}
+                  >
+                    <div className="flex flex-col lg:flex-row">
+                      {/* Property Image */}
+                      <div className="relative w-full lg:w-64 h-48 lg:h-auto bg-gray-200">
+                        {property.images && property.images.length > 0 ? (
+                          <img
+                            src={property.images[0]}
+                            alt={property.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                            <Home className="h-12 w-12 text-gray-400" />
+                          </div>
+                        )}
+
+                        {/* Badges */}
+                        <div className="absolute top-2 left-2 flex gap-2">
+                          <Badge
+                            variant="secondary"
+                            className="flex items-center gap-1"
+                          >
+                            {getPropertyTypeIcon(property.type)}
+                            {getPropertyTypeLabel(property.type)}
+                          </Badge>
+                          <Badge
+                            variant={
+                              property.transactionType === "SALE"
+                                ? "default"
+                                : "secondary"
+                            }
+                          >
+                            {getTransactionTypeLabel(property.transactionType)}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      {/* Property Content */}
+                      <div className="flex-1 p-6">
+                        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                          {/* Left Column - Property Info */}
+                          <div className="flex-1">
+                            <div className="mb-4">
+                              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                                {property.title}
+                              </h3>
+                              <p className="text-gray-600 flex items-center gap-1 mb-2">
+                                <MapPin className="h-4 w-4" />
+                                {property.locationCity},{" "}
+                                {property.locationState}
+                              </p>
+                              <p className="text-2xl font-bold text-primary">
+                                {formatPrice(property.price, property.currency)}
+                              </p>
+                            </div>
+
+                            {/* Property Details */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4 text-sm text-gray-600">
+                              <div className="flex items-center gap-1">
+                                <Bed className="h-4 w-4" />
+                                <span>{property.bedrooms} habitaciones</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Bath className="h-4 w-4" />
+                                <span>{property.bathrooms} baños</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Car className="h-4 w-4" />
+                                <span>{property.garageSpaces} garajes</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="font-medium">
+                                  {property.squareMeters} m²
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Features */}
+                            {property.features &&
+                              property.features.length > 0 && (
+                                <div className="mb-4">
+                                  <div className="flex flex-wrap gap-1">
+                                    {property.features
+                                      .slice(0, 5)
+                                      .map((feature, index) => (
+                                        <Badge
+                                          key={index}
+                                          variant="outline"
+                                          className="text-xs"
+                                        >
+                                          {feature}
+                                        </Badge>
+                                      ))}
+                                    {property.features.length > 5 && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs"
+                                      >
+                                        +{property.features.length - 5} más
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                          </div>
+
+                          {/* Right Column - Agent Info and Actions */}
+                          <div className="lg:w-48">
+                            <div className="mb-4">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Users className="h-4 w-4 text-gray-500" />
+                                <span className="text-sm font-medium">
+                                  {property.agent.firstName}{" "}
+                                  {property.agent.lastName}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 mb-4">
+                                {property.agency.name}
+                              </p>
+                            </div>
+
+                            {/* Contact Buttons */}
+                            <div className="flex flex-col gap-2">
+                              {property.agent.phone && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleContactAgent(property.agent.phone);
+                                  }}
+                                >
+                                  <Phone className="h-4 w-4 mr-1" />
+                                  Llamar
+                                </Button>
+                              )}
+                              {property.agent.whatsapp && (
+                                <Button
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleContactAgent(
+                                      undefined,
+                                      property.agent.whatsapp
+                                    );
+                                  }}
+                                >
+                                  <MessageCircle className="h-4 w-4 mr-1" />
+                                  WhatsApp
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                  </Card>
+                ))}
+              </div>
+            )}
 
             {/* Pagination */}
             {pagination.totalPages > 1 && (
