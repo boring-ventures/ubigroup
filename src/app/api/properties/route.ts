@@ -19,132 +19,169 @@ import { generateCustomPropertyId } from "@/lib/utils";
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const { data: queryParams, error: validationError } =
-      validateQueryParams<PropertyQueryInput>(
-        propertyQuerySchema,
-        searchParams
-      );
 
-    if (validationError) {
-      return NextResponse.json({ error: validationError }, { status: 400 });
+    // Set default values
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const page = parseInt(searchParams.get("page") || "1");
+    const offset = parseInt(
+      searchParams.get("offset") || ((page - 1) * limit).toString()
+    );
+    const sortBy = searchParams.get("sortBy") || "createdAt";
+    const sortOrder = searchParams.get("sortOrder") || "desc";
+    const status = searchParams.get("status");
+
+    // Validate basic parameters
+    if (limit < 1 || limit > 100) {
+      return NextResponse.json(
+        { error: "Invalid limit parameter" },
+        { status: 400 }
+      );
+    }
+    if (offset < 0) {
+      return NextResponse.json(
+        { error: "Invalid offset parameter" },
+        { status: 400 }
+      );
+    }
+    if (!["createdAt", "updatedAt", "price", "title"].includes(sortBy)) {
+      return NextResponse.json(
+        { error: "Invalid sortBy parameter" },
+        { status: 400 }
+      );
+    }
+    if (!["asc", "desc"].includes(sortOrder)) {
+      return NextResponse.json(
+        { error: "Invalid sortOrder parameter" },
+        { status: 400 }
+      );
     }
 
-    // For public access, only show approved properties
-    // For authenticated users, show based on their role and permissions
-    const { user } = await authenticateUser();
+    // Try to authenticate user
+    const { user, error: authError } = await authenticateUser();
+    const isAuthenticated = !!user;
 
+    // Build where clause
     let whereClause: any = {};
 
-    // Build where clause based on user role and filters
-    if (!user) {
-      // Public access - only approved properties
-      whereClause.status = PropertyStatus.APPROVED;
-    } else {
-      // Authenticated access - apply role-based filters
+    // Handle status filter and user-specific filtering based on authentication
+    if (isAuthenticated) {
+      // Authenticated users can see all statuses or filter by specific status
+      if (status && status !== "all") {
+        whereClause.status = status;
+      }
+
+      // Filter by user role and permissions
       if (user.role === UserRole.AGENT) {
-        // Agents can see their own properties (all statuses) + public approved properties
-        if (queryParams.status || queryParams.agentId) {
-          // If specific filters are applied, respect them
-          if (queryParams.agentId === user.id) {
-            // Agent viewing their own properties - all statuses
-            whereClause.agentId = user.id;
-          } else {
-            // Agent viewing other properties - only approved
-            whereClause.status = PropertyStatus.APPROVED;
-          }
-        } else {
-          // Default for agents - their own properties
-          whereClause.agentId = user.id;
-        }
+        // Agents can only see their own properties
+        whereClause.agentId = user.id;
       } else if (user.role === UserRole.AGENCY_ADMIN) {
-        // Agency Admins can see all properties from their agency
+        // Agency admins can see all properties from their agency
         whereClause.agencyId = user.agencyId;
       }
-      // Super Admins can see all properties (no additional filters)
+      // Super admins can see all properties (no additional filter needed)
+    } else {
+      // Public access only shows approved properties
+      whereClause.status = "APPROVED";
     }
 
-    // Apply query filters
-    if (queryParams.status) {
-      whereClause.status = queryParams.status;
-    }
-    if (queryParams.type) {
-      whereClause.type = queryParams.type;
-    }
-    if (queryParams.transactionType) {
-      whereClause.transactionType = queryParams.transactionType;
-    }
-    if (queryParams.locationState) {
-      whereClause.locationState = {
-        contains: queryParams.locationState,
-        mode: "insensitive",
-      };
-    }
-    if (queryParams.locationCity) {
-      whereClause.locationCity = {
-        contains: queryParams.locationCity,
-        mode: "insensitive",
-      };
-    }
-    if (queryParams.locationNeigh) {
-      whereClause.locationNeigh = {
-        contains: queryParams.locationNeigh,
-        mode: "insensitive",
-      };
-    }
-    if (queryParams.minPrice || queryParams.maxPrice) {
-      whereClause.price = {};
-      if (queryParams.minPrice) whereClause.price.gte = queryParams.minPrice;
-      if (queryParams.maxPrice) whereClause.price.lte = queryParams.maxPrice;
-    }
-    if (queryParams.minBedrooms || queryParams.maxBedrooms) {
-      whereClause.bedrooms = {};
-      if (queryParams.minBedrooms)
-        whereClause.bedrooms.gte = queryParams.minBedrooms;
-      if (queryParams.maxBedrooms)
-        whereClause.bedrooms.lte = queryParams.maxBedrooms;
-    }
-    if (queryParams.minBathrooms || queryParams.maxBathrooms) {
-      whereClause.bathrooms = {};
-      if (queryParams.minBathrooms)
-        whereClause.bathrooms.gte = queryParams.minBathrooms;
-      if (queryParams.maxBathrooms)
-        whereClause.bathrooms.lte = queryParams.maxBathrooms;
-    }
-    if (queryParams.minSquareMeters || queryParams.maxSquareMeters) {
-      whereClause.squareMeters = {};
-      if (queryParams.minSquareMeters)
-        whereClause.squareMeters.gte = queryParams.minSquareMeters;
-      if (queryParams.maxSquareMeters)
-        whereClause.squareMeters.lte = queryParams.maxSquareMeters;
-    }
-    if (queryParams.features && queryParams.features.length > 0) {
-      whereClause.features = {
-        hasSome: queryParams.features,
-      };
-    }
-    if (queryParams.search) {
+    // Apply search filter if provided
+    const search = searchParams.get("search");
+    if (search) {
       whereClause.OR = [
         {
           title: {
-            contains: queryParams.search,
+            contains: search,
             mode: "insensitive",
           },
         },
         {
           description: {
-            contains: queryParams.search,
+            contains: search,
             mode: "insensitive",
           },
         },
       ];
     }
 
-    // Apply admin filters
-    if (queryParams.agentId) {
-      whereClause.agentId = queryParams.agentId;
+    // Apply other filters
+    const type = searchParams.get("type");
+    if (type) {
+      whereClause.type = type;
     }
-    if (queryParams.agencyId) {
-      whereClause.agencyId = queryParams.agencyId;
+
+    const transactionType = searchParams.get("transactionType");
+    if (transactionType) {
+      whereClause.transactionType = transactionType;
+    }
+
+    const locationState = searchParams.get("locationState");
+    if (locationState) {
+      whereClause.locationState = {
+        contains: locationState,
+        mode: "insensitive",
+      };
+    }
+
+    const locationCity = searchParams.get("locationCity");
+    if (locationCity) {
+      whereClause.locationCity = {
+        contains: locationCity,
+        mode: "insensitive",
+      };
+    }
+
+    const municipality = searchParams.get("municipality");
+    if (municipality) {
+      whereClause.municipality = {
+        contains: municipality,
+        mode: "insensitive",
+      };
+    }
+
+    // Price range filters
+    const minPrice = searchParams.get("minPrice");
+    const maxPrice = searchParams.get("maxPrice");
+    if (minPrice || maxPrice) {
+      whereClause.price = {};
+      if (minPrice) whereClause.price.gte = parseFloat(minPrice);
+      if (maxPrice) whereClause.price.lte = parseFloat(maxPrice);
+    }
+
+    // Bedrooms range filters
+    const minBedrooms = searchParams.get("minBedrooms");
+    const maxBedrooms = searchParams.get("maxBedrooms");
+    if (minBedrooms || maxBedrooms) {
+      whereClause.bedrooms = {};
+      if (minBedrooms) whereClause.bedrooms.gte = parseInt(minBedrooms);
+      if (maxBedrooms) whereClause.bedrooms.lte = parseInt(maxBedrooms);
+    }
+
+    // Bathrooms range filters
+    const minBathrooms = searchParams.get("minBathrooms");
+    const maxBathrooms = searchParams.get("maxBathrooms");
+    if (minBathrooms || maxBathrooms) {
+      whereClause.bathrooms = {};
+      if (minBathrooms) whereClause.bathrooms.gte = parseInt(minBathrooms);
+      if (maxBathrooms) whereClause.bathrooms.lte = parseInt(maxBathrooms);
+    }
+
+    // Square meters range filters
+    const minSquareMeters = searchParams.get("minSquareMeters");
+    const maxSquareMeters = searchParams.get("maxSquareMeters");
+    if (minSquareMeters || maxSquareMeters) {
+      whereClause.squareMeters = {};
+      if (minSquareMeters)
+        whereClause.squareMeters.gte = parseFloat(minSquareMeters);
+      if (maxSquareMeters)
+        whereClause.squareMeters.lte = parseFloat(maxSquareMeters);
+    }
+
+    // Features filter
+    const features = searchParams.getAll("features");
+    if (features.length > 0) {
+      whereClause.features = {
+        hasSome: features,
+      };
     }
 
     // Fetch properties with pagination
@@ -170,23 +207,73 @@ export async function GET(request: NextRequest) {
           },
         },
         orderBy: {
-          [queryParams.sortBy]: queryParams.sortOrder,
+          [sortBy]: sortOrder,
         },
-        take: queryParams.limit,
-        skip: queryParams.offset,
+        take: limit,
+        skip: offset,
       }),
       prisma.property.count({ where: whereClause }),
     ]);
 
+    // Transform properties to match expected format
+    const transformedProperties = properties.map((property) => ({
+      id: property.id,
+      customId: property.customId,
+      title: property.title,
+      description: property.description,
+      type: property.type,
+      locationState: property.locationState,
+      locationCity: property.locationCity,
+      locationNeigh: property.locationNeigh,
+      municipality: property.municipality,
+      address: property.address,
+      googleMapsUrl: property.googleMapsUrl,
+      latitude: property.latitude,
+      longitude: property.longitude,
+      price: property.price,
+      currency: property.currency,
+      exchangeRate: property.exchangeRate,
+      bedrooms: property.bedrooms,
+      bathrooms: property.bathrooms,
+      garageSpaces: property.garageSpaces,
+      squareMeters: property.squareMeters,
+      transactionType: property.transactionType,
+      status: property.status,
+      images: property.images,
+      videos: property.videos,
+      features: property.features,
+      agent: property.agent
+        ? {
+            firstName: property.agent.firstName,
+            lastName: property.agent.lastName,
+            phone: property.agent.phone,
+            whatsapp: property.agent.whatsapp,
+          }
+        : {},
+      agency: property.agency
+        ? {
+            name: property.agency.name,
+            logoUrl: property.agency.logoUrl,
+          }
+        : {},
+      createdAt: property.createdAt.toISOString(),
+      updatedAt: property.updatedAt.toISOString(),
+    }));
+
+    const currentPage = Math.floor(offset / limit) + 1;
+    const totalPages = Math.ceil(totalCount / limit);
+
     return NextResponse.json({
-      properties,
-      totalCount,
-      hasMore: queryParams.offset + queryParams.limit < totalCount,
+      properties: transformedProperties,
+      total: totalCount,
+      totalPages,
+      currentPage,
+      hasMore: offset + limit < totalCount,
       pagination: {
-        limit: queryParams.limit,
-        offset: queryParams.offset,
-        page: Math.floor(queryParams.offset / queryParams.limit) + 1,
-        totalPages: Math.ceil(totalCount / queryParams.limit),
+        limit,
+        offset,
+        page: currentPage,
+        totalPages,
       },
     });
   } catch (error) {
