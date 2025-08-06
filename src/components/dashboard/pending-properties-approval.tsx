@@ -115,17 +115,7 @@ export function PendingPropertiesApproval() {
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Pending Property Approvals
-          </CardTitle>
-          <CardDescription>
-            Review and approve or reject property listings submitted by your
-            agents
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           {isLoading ? (
             <div className="space-y-6">
               {Array.from({ length: 3 }).map((_, i) => (
