@@ -3,69 +3,75 @@ import prisma from "@/lib/prisma";
 
 export async function GET() {
   try {
-    // Get unique locations from approved properties
-    const locations = await prisma.property.findMany({
+    // Get all unique locations from all properties (not just approved ones)
+    // This ensures we have all possible filter options available
+    
+    // Get unique states
+    const states = await prisma.property.findMany({
       where: {
-        status: "APPROVED",
+        locationState: {
+          not: "",
+        },
       },
       select: {
         locationState: true,
-        locationCity: true,
-        locationNeigh: true,
       },
-      distinct: ["locationState", "locationCity", "locationNeigh"],
+      distinct: ["locationState"],
+      orderBy: {
+        locationState: "asc",
+      },
     });
 
-    // Process and organize locations
-    const statesMap = new Map<string, Set<string>>();
-    const citiesMap = new Map<string, Set<string>>();
-
-    locations.forEach((location) => {
-      if (location.locationState && location.locationCity) {
-        // Track states and their cities
-        if (!statesMap.has(location.locationState)) {
-          statesMap.set(location.locationState, new Set());
-        }
-        statesMap.get(location.locationState)!.add(location.locationCity);
-
-        // Track cities and their neighborhoods
-        if (location.locationNeigh) {
-          const cityKey = `${location.locationCity}, ${location.locationState}`;
-          if (!citiesMap.has(cityKey)) {
-            citiesMap.set(cityKey, new Set());
-          }
-          citiesMap.get(cityKey)!.add(location.locationNeigh);
-        }
-      }
+    // Get unique cities with their states
+    const cities = await prisma.property.findMany({
+      where: {
+        locationCity: {
+          not: "",
+        },
+        locationState: {
+          not: "",
+        },
+      },
+      select: {
+        locationCity: true,
+        locationState: true,
+      },
+      distinct: ["locationCity", "locationState"],
+      orderBy: [
+        { locationState: "asc" },
+        { locationCity: "asc" },
+      ],
     });
 
-    // Convert to arrays and sort
-    const states = Array.from(statesMap.keys()).sort();
+    // Get unique municipalities
+    const municipalities = await prisma.property.findMany({
+      where: {
+        municipality: {
+          not: "",
+        },
+      },
+      select: {
+        municipality: true,
+      },
+      distinct: ["municipality"],
+      orderBy: {
+        municipality: "asc",
+      },
+    });
 
-    const cities = Array.from(statesMap.entries())
-      .flatMap(([state, citySet]) =>
-        Array.from(citySet).map((city) => ({
-          value: city,
-          label: `${city}, ${state}`,
-          state,
-        }))
-      )
-      .sort((a, b) => a.label.localeCompare(b.label));
-
-    const neighborhoods = Array.from(citiesMap.entries())
-      .flatMap(([cityKey, neighSet]) =>
-        Array.from(neighSet).map((neigh) => ({
-          value: neigh,
-          label: `${neigh}, ${cityKey}`,
-          city: cityKey,
-        }))
-      )
-      .sort((a, b) => a.label.localeCompare(b.label));
+    // Process the results
+    const statesList = states.map(s => s.locationState).filter(Boolean);
+    const citiesList = cities.map(c => ({
+      value: c.locationCity,
+      label: `${c.locationCity}, ${c.locationState}`,
+      state: c.locationState,
+    })).filter(c => c.value && c.state);
+    const municipalitiesList = municipalities.map(m => m.municipality).filter(Boolean);
 
     return NextResponse.json({
-      states,
-      cities,
-      neighborhoods,
+      states: statesList,
+      cities: citiesList,
+      municipalities: municipalitiesList,
     });
   } catch (error) {
     console.error("Error fetching property locations:", error);
