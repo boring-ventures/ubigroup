@@ -57,26 +57,27 @@ export function PropertySingleMap({
   const markerRef = useRef<Marker | null>(null);
   const isInitializedRef = useRef(false);
 
-  // Generate mock coordinates if not available
-  const getLocationCoordinates = (city: string, neighborhood: string) => {
-    if (property.latitude && property.longitude) {
-      return { lat: property.latitude, lng: property.longitude };
-    }
-
-    // Generate mock coordinates based on location (for demonstration)
-    const cityHash = city.split("").reduce((a, b) => a + b.charCodeAt(0), 0);
-    const neighHash = neighborhood
-      .split("")
-      .reduce((a, b) => a + b.charCodeAt(0), 0);
-
-    // Generate consistent coordinates based on city and neighborhood
-    const lat = -16.5 + (cityHash % 100) / 1000; // Bolivia latitude range
-    const lng = -68.1 + (neighHash % 100) / 1000; // Bolivia longitude range
-
-    return { lat, lng };
-  };
-
   useEffect(() => {
+    // Generate mock coordinates if not available
+    const getLocationCoordinates = (city: string, neighborhood: string) => {
+      if (property.latitude && property.longitude) {
+        return { lat: property.latitude, lng: property.longitude };
+      }
+
+      // Generate mock coordinates based on location (for demonstration)
+      const cityHash = city.split("").reduce((a, b) => a + b.charCodeAt(0), 0);
+      const neighHash = neighborhood
+        .split("")
+        .reduce((a, b) => a + b.charCodeAt(0), 0);
+
+      // Generate consistent coordinates based on city and neighborhood
+      const lat = -16.5 + (cityHash % 100) / 1000; // Bolivia latitude range
+      const lng = -68.1 + (neighHash % 100) / 1000; // Bolivia longitude range
+
+      return { lat, lng };
+    };
+
+    // Only load Leaflet on client side
     // Only load Leaflet on client side
     const loadMap = async () => {
       if (typeof window === "undefined" || !mapRef.current) return;
@@ -269,7 +270,7 @@ export function PropertySingleMap({
         isInitializedRef.current = false;
       }
     };
-  }, [property, getLocationCoordinates]);
+  }, [property]);
 
   return (
     <div className={className}>

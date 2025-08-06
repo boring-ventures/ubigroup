@@ -7,9 +7,10 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 // PATCH: Reset user password
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
@@ -47,8 +48,6 @@ export async function PATCH(
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-
-    const { id } = params;
     const body = await request.json();
     const { password } = body;
 

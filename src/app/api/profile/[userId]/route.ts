@@ -4,10 +4,10 @@ import prisma from "@/lib/prisma";
 // GET: Fetch profile for a specific user ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
 
     // Fetch user profile from the database
     const userProfile = await prisma.user.findUnique({
@@ -39,10 +39,10 @@ export async function GET(
 // PUT: Update profile for a specific user ID
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const { userId } = params;
+    const { userId } = await params;
     const data = await request.json();
     const { firstName, lastName, avatarUrl, active, phone, whatsapp } = data;
 

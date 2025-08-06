@@ -154,7 +154,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
   // Get available roles based on current user's role
   const getAvailableRoles = () => {
     if (!currentUser) return [];
-    
+
     switch (currentUser.role) {
       case "SUPER_ADMIN":
         return ["SUPER_ADMIN", "AGENCY_ADMIN", "AGENT"];
@@ -220,9 +220,12 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
         role: data.role,
         phone: data.phone || null,
         whatsapp: data.whatsapp || null,
-        agencyId: data.role === "SUPER_ADMIN" ? null : 
-          currentUser?.role === "AGENCY_ADMIN" ? currentUser.agencyId : 
-          data.agencyId || null,
+        agencyId:
+          data.role === "SUPER_ADMIN"
+            ? null
+            : currentUser?.role === "AGENCY_ADMIN"
+              ? currentUser.agencyId
+              : data.agencyId || null,
       };
 
       const response = await fetch("/api/users", {
@@ -304,9 +307,12 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
         role: data.role,
         phone: data.phone || null,
         whatsapp: data.whatsapp || null,
-        agencyId: data.role === "SUPER_ADMIN" ? null : 
-          currentUser?.role === "AGENCY_ADMIN" ? currentUser.agencyId : 
-          data.agencyId || null,
+        agencyId:
+          data.role === "SUPER_ADMIN"
+            ? null
+            : currentUser?.role === "AGENCY_ADMIN"
+              ? currentUser.agencyId
+              : data.agencyId || null,
       };
 
       const response = await fetch(`/api/users/${editingUser.id}`, {
@@ -606,7 +612,9 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                               <div className="flex items-center gap-2 p-2 border rounded-md bg-muted">
                                 <Building2 className="h-4 w-4" />
                                 <span className="text-sm">
-                                  {currentUser.agency?.name || "Your Agency"}
+                                  {currentUser.agencyId
+                                    ? "Your Agency"
+                                    : "No Agency Assigned"}
                                 </span>
                                 <span className="text-xs text-muted-foreground">
                                   (Automatically assigned)
@@ -624,7 +632,10 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                                 </FormControl>
                                 <SelectContent>
                                   {agencies.map((agency) => (
-                                    <SelectItem key={agency.id} value={agency.id}>
+                                    <SelectItem
+                                      key={agency.id}
+                                      value={agency.id}
+                                    >
                                       <div className="flex items-center gap-2">
                                         <Building2 className="h-4 w-4" />
                                         {agency.name}
@@ -794,7 +805,9 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                               <div className="flex items-center gap-2 p-2 border rounded-md bg-muted">
                                 <Building2 className="h-4 w-4" />
                                 <span className="text-sm">
-                                  {currentUser.agency?.name || "Your Agency"}
+                                  {currentUser.agencyId
+                                    ? "Your Agency"
+                                    : "No Agency Assigned"}
                                 </span>
                                 <span className="text-xs text-muted-foreground">
                                   (Automatically assigned)
@@ -812,7 +825,10 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                                 </FormControl>
                                 <SelectContent>
                                   {agencies.map((agency) => (
-                                    <SelectItem key={agency.id} value={agency.id}>
+                                    <SelectItem
+                                      key={agency.id}
+                                      value={agency.id}
+                                    >
                                       <div className="flex items-center gap-2">
                                         <Building2 className="h-4 w-4" />
                                         <span className="text-sm">

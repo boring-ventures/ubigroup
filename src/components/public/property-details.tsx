@@ -38,6 +38,9 @@ interface Property {
   locationCity: string;
   locationNeigh: string;
   address: string | null;
+  latitude?: number;
+  longitude?: number;
+  googleMapsUrl?: string;
   price: number;
   currency: string;
   exchangeRate: number | null;
@@ -506,7 +509,32 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                 </div>
 
                 {/* Map */}
-                <PropertySingleMap property={property as any} />
+                <PropertySingleMap
+                  property={{
+                    ...property,
+                    customId: property.id, // Use id as customId if not available
+                    latitude: property.latitude || undefined,
+                    longitude: property.longitude || undefined,
+                    municipality: property.locationCity, // Use locationCity as municipality
+                    address: property.address || undefined,
+                    exchangeRate: property.exchangeRate || undefined,
+                    googleMapsUrl: property.googleMapsUrl || undefined,
+                    status: property.status as
+                      | "PENDING"
+                      | "APPROVED"
+                      | "REJECTED",
+                    agent: {
+                      firstName: property.agent.firstName || undefined,
+                      lastName: property.agent.lastName || undefined,
+                      phone: property.agent.phone || undefined,
+                      whatsapp: property.agent.whatsapp || undefined,
+                    },
+                    agency: {
+                      name: property.agency.name,
+                      logoUrl: property.agency.logoUrl || undefined,
+                    },
+                  }}
+                />
               </CardContent>
             </Card>
           </div>

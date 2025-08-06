@@ -5,6 +5,7 @@ import {
   PropertyStatus,
   PropertyType,
   TransactionType,
+  Prisma,
 } from "@prisma/client";
 import { authenticateUser } from "@/lib/auth/server-auth";
 import { validateRequestBody } from "@/lib/auth/rbac";
@@ -60,27 +61,27 @@ export async function GET(request: NextRequest) {
     const isAuthenticated = !!user;
 
     // Build where clause
-    const whereClause: any = {};
+    const whereClause: Prisma.PropertyWhereInput = {};
 
     // Handle status filter and user-specific filtering based on authentication
     if (isAuthenticated) {
       // Authenticated users can see all statuses or filter by specific status
       if (status && status !== "all") {
-        whereClause.status = status;
+        whereClause.status = status as PropertyStatus;
       }
 
       // Filter by user role and permissions
       if (user.role === UserRole.AGENT) {
         // Agents can only see their own properties
         whereClause.agentId = user.id;
-      } else if (user.role === UserRole.AGENCY_ADMIN) {
+      } else if (user.role === UserRole.AGENCY_ADMIN && user.agencyId) {
         // Agency admins can see all properties from their agency
         whereClause.agencyId = user.agencyId;
       }
       // Super admins can see all properties (no additional filter needed)
     } else {
       // Public access only shows approved properties
-      whereClause.status = "APPROVED";
+      whereClause.status = PropertyStatus.APPROVED;
     }
 
     // Apply search filter if provided

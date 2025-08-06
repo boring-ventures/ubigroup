@@ -5,9 +5,10 @@ import prisma from "@/lib/prisma";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({
       cookies: () => cookieStore,
@@ -37,7 +38,7 @@ export async function PATCH(
 
     // Find the agency to update
     const agency = await prisma.agency.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!agency) {
@@ -83,7 +84,7 @@ export async function PATCH(
 
     // Update agency
     const updatedAgency = await prisma.agency.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         _count: {
@@ -107,8 +108,9 @@ export async function PATCH(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({
@@ -136,7 +138,7 @@ export async function GET(
 
     // Find the agency
     const agency = await prisma.agency.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         _count: {
           select: {

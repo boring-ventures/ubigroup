@@ -23,13 +23,6 @@ jest.mock("@/lib/prisma", () => ({
   },
 }));
 
-import { cookies } from "next/headers";
-import prisma from "@/lib/prisma";
-
-// Mock functions (keeping them for potential future use)
-const mockCookies = cookies as jest.MockedFunction<typeof cookies>;
-const mockPrismaUser = prisma.user as jest.Mocked<typeof prisma.user>;
-
 // Test interfaces
 interface TestUser {
   id: string;

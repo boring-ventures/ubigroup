@@ -4,6 +4,23 @@ import { applyPasswordHashMiddleware } from "./password-hash-middleware";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+// Type for mock auth methods
+interface MockAuthMethods {
+  getUser: () => Promise<{ data: { user: null }; error: null }>;
+  getSession: () => Promise<{ data: { session: null }; error: null }>;
+  onAuthStateChange: () => {
+    data: {
+      subscription: {
+        id: string;
+        callback: () => void;
+        unsubscribe: () => void;
+      };
+    };
+  };
+  _getUser: () => Promise<{ data: { user: null }; error: null }>;
+  _useSession: () => Promise<{ data: { session: null }; error: null }>;
+}
+
 let supabase: SupabaseClient;
 
 if (!supabaseUrl || !supabaseAnonKey) {
@@ -23,16 +40,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
       },
     });
 
-    // Override auth methods to prevent errors (using any for mock client)
-    (mockClient.auth as any).getUser = async () => ({
+    // Override auth methods to prevent errors with proper typing
+    (mockClient.auth as unknown as MockAuthMethods).getUser = async () => ({
       data: { user: null },
       error: null,
     });
-    (mockClient.auth as any).getSession = async () => ({
+    (mockClient.auth as unknown as MockAuthMethods).getSession = async () => ({
       data: { session: null },
       error: null,
     });
-    (mockClient.auth as any).onAuthStateChange = () => ({
+    (mockClient.auth as unknown as MockAuthMethods).onAuthStateChange = () => ({
       data: {
         subscription: {
           id: "mock",
@@ -43,13 +60,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
     });
 
     // Override the _getUser method to prevent AuthSessionMissingError
-    (mockClient.auth as any)._getUser = async () => ({
+    (mockClient.auth as unknown as MockAuthMethods)._getUser = async () => ({
       data: { user: null },
       error: null,
     });
 
     // Override the _useSession method to prevent AuthSessionMissingError
-    (mockClient.auth as any)._useSession = async () => ({
+    (mockClient.auth as unknown as MockAuthMethods)._useSession = async () => ({
       data: { session: null },
       error: null,
     });

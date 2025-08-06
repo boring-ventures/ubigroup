@@ -7,9 +7,10 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 // GET: Fetch specific user
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
@@ -39,8 +40,6 @@ export async function GET(
     if (!currentUser) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-
-    const { id } = params;
 
     // Fetch user with agency information
     const userData = await prisma.user.findUnique({
@@ -88,9 +87,10 @@ export async function GET(
 // PATCH: Update user
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
@@ -128,8 +128,6 @@ export async function PATCH(
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-
-    const { id } = params;
     const body = await request.json();
     const {
       firstName,
@@ -268,8 +266,9 @@ export async function PATCH(
 // DELETE: Delete user
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
@@ -308,8 +307,6 @@ export async function DELETE(
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-
-    const { id } = params;
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({

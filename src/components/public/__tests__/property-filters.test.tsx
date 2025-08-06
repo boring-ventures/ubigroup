@@ -261,9 +261,6 @@ describe("PropertyFilters", () => {
 
     render(<PropertyFilters {...defaultProps} />, { wrapper: createWrapper() });
 
-    const stateSelect = screen.getByDisplayValue(/estado/i);
-    // fireEvent.click(stateSelect); // This line was removed as per the new_code, as fireEvent is not imported.
-
     expect(screen.getByText(/carregando estados/i)).toBeInTheDocument();
   });
 

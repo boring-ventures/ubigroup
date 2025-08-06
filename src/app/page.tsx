@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Header from "@/components/views/landing-page/Header";
 import Hero from "@/components/views/landing-page/Hero";
 import SocialProof from "@/components/views/landing-page/SocialProof";
@@ -7,6 +8,9 @@ import Testimonials from "@/components/views/landing-page/Testimonials";
 import CTA from "@/components/views/landing-page/CTA";
 import Footer from "@/components/views/landing-page/Footer";
 import Properties from "@/components/views/landing-page/Properties";
+
+// Disable static generation for this page to avoid CSS build issues
+export const dynamic = "force-dynamic";
 
 export default function Home() {
   return (
@@ -20,7 +24,13 @@ export default function Home() {
         <Hero />
         <SocialProof />
         <Features />
-        <Properties />
+        <Suspense
+          fallback={
+            <div className="flex justify-center p-8">Loading properties...</div>
+          }
+        >
+          <Properties />
+        </Suspense>
         <About />
         <Testimonials />
         <CTA />

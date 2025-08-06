@@ -4,12 +4,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface PropertyPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
-export default function PropertyPage({ params }: PropertyPageProps) {
+export default async function PropertyPage({ params }: PropertyPageProps) {
+  const { id } = await params;
   return (
     <main className="min-h-screen bg-background">
       <Suspense
@@ -62,7 +63,7 @@ export default function PropertyPage({ params }: PropertyPageProps) {
           </div>
         }
       >
-        <PropertyDetails propertyId={params.id} />
+        <PropertyDetails propertyId={id} />
       </Suspense>
     </main>
   );
