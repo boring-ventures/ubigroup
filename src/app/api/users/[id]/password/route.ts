@@ -10,7 +10,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     // Use getUser() instead of getSession() for better security
@@ -23,12 +23,28 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get current user to check if they're a SUPER_ADMIN
+    // Get current user to check their role and agency
     const currentUser = await prisma.user.findUnique({
       where: { userId: user.id },
+      include: {
+        agency: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
-    if (!currentUser || currentUser.role !== "SUPER_ADMIN") {
+    if (!currentUser) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Only SUPER_ADMIN and AGENCY_ADMIN can reset passwords
+    if (
+      currentUser.role !== "SUPER_ADMIN" &&
+      currentUser.role !== "AGENCY_ADMIN"
+    ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -46,10 +62,47 @@ export async function PATCH(
     // Check if user exists
     const existingUser = await prisma.user.findUnique({
       where: { id },
+      include: {
+        agency: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
     if (!existingUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Agency Admin restrictions
+    if (currentUser.role === "AGENCY_ADMIN") {
+      // Agency Admin can only reset passwords for users from their agency
+      if (existingUser.agencyId !== currentUser.agencyId) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      // Agency Admin cannot reset passwords for SUPER_ADMIN users
+      if (existingUser.role === "SUPER_ADMIN") {
+        return NextResponse.json(
+          {
+            error: "Agency Admins cannot reset passwords for Super Admin users",
+          },
+          { status: 403 }
+        );
+      }
+
+      // Agency Admin cannot reset passwords for other AGENCY_ADMIN users
+      if (existingUser.role === "AGENCY_ADMIN") {
+        return NextResponse.json(
+          {
+            error:
+              "Agency Admins cannot reset passwords for other Agency Admin users",
+          },
+          { status: 403 }
+        );
+      }
     }
 
     // Update password in Supabase Auth if user has a real auth ID
