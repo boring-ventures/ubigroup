@@ -5,6 +5,9 @@ const nextConfig = {
       // Add your Supabase project domain
       "swfgvfhpmicwptupjyko.supabase.co",
       "xqakfzhkeiongvzgbhji.supabase.co",
+      "erbemjrbtyxryzdiqtnl.supabase.co",
+      // Add Unsplash for placeholder images
+      "images.unsplash.com",
     ],
   },
   output: "standalone",
