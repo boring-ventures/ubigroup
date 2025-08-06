@@ -40,8 +40,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  // Check if Supabase environment variables are configured
+  const isSupabaseConfigured = useMemo(() => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.warn(
+        "Supabase environment variables are not configured. Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in your .env.local file."
+      );
+      return false;
+    }
+
+    return true;
+  }, []);
+
   // Create supabase client once and memoize it
-  const supabase = useMemo(() => createClientComponentClient(), []);
+  const supabase = useMemo(() => {
+    if (!isSupabaseConfigured) {
+      return null;
+    }
+    return createClientComponentClient();
+  }, [isSupabaseConfigured]);
 
   // Fetch profile function with retry logic - memoized to prevent infinite loops
   const fetchProfile = useMemo(
@@ -98,29 +118,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user }, error }) => {
-      if (error) {
-        console.error("Auth error:", error);
-        setSession(null);
-        setUser(null);
-        setIsLoading(false);
-        return;
-      }
+    // If Supabase is not configured, skip auth initialization
+    if (!isSupabaseConfigured || !supabase) {
+      setIsLoading(false);
+      return;
+    }
 
-      // If we have a user, get their session
-      if (user) {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          setSession(session);
-          setUser(user);
-          fetchProfile(user.id);
+    supabase.auth
+      .getUser()
+      .then(({ data: { user }, error }) => {
+        if (error) {
+          // Handle AuthSessionMissingError specifically
+          if (error.message?.includes("Auth session missing")) {
+            console.warn(
+              "No active session found - this is normal for unauthenticated users"
+            );
+            setSession(null);
+            setUser(null);
+            setIsLoading(false);
+            return;
+          }
+          console.error("Auth error:", error);
+          setSession(null);
+          setUser(null);
           setIsLoading(false);
-        });
-      } else {
+          return;
+        }
+
+        // If we have a user, get their session
+        if (user) {
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            setSession(session);
+            setUser(user);
+            fetchProfile(user.id);
+            setIsLoading(false);
+          });
+        } else {
+          setSession(null);
+          setUser(null);
+          setIsLoading(false);
+        }
+      })
+      .catch((error) => {
+        // Catch any unexpected errors
+        console.warn("Auth initialization error:", error);
         setSession(null);
         setUser(null);
         setIsLoading(false);
-      }
-    });
+      });
 
     const {
       data: { subscription },
@@ -144,10 +189,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [router, supabase, fetchProfile]);
+  }, [router, supabase, fetchProfile, isSupabaseConfigured]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {
+      if (!supabase) {
+        throw new Error(
+          "Supabase is not configured. Please check your environment variables."
+        );
+      }
+
       const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -176,6 +227,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = useCallback(
     async (email: string, password: string) => {
+      if (!supabase) {
+        throw new Error(
+          "Supabase is not configured. Please check your environment variables."
+        );
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -186,6 +243,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const signOut = useCallback(async () => {
+    if (!supabase) {
+      throw new Error(
+        "Supabase is not configured. Please check your environment variables."
+      );
+    }
+
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
     setProfile(null);
