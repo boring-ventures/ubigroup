@@ -56,6 +56,7 @@ import {
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { PasswordInput } from "@/components/utils/password-input";
+import { useCurrentUser } from "@/hooks/use-current-user";
 
 // Types
 interface User {
@@ -104,6 +105,7 @@ interface UserManagementProps {
 }
 
 export function UserManagement({ onUserUpdate }: UserManagementProps) {
+  const { profile: currentUser } = useCurrentUser();
   const [users, setUsers] = useState<User[]>([]);
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,6 +150,22 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
 
   const watchedRole = form.watch("role");
   const watchedEditRole = editForm.watch("role");
+
+  // Get available roles based on current user's role
+  const getAvailableRoles = () => {
+    if (!currentUser) return [];
+    
+    switch (currentUser.role) {
+      case "SUPER_ADMIN":
+        return ["SUPER_ADMIN", "AGENCY_ADMIN", "AGENT"];
+      case "AGENCY_ADMIN":
+        return ["AGENCY_ADMIN", "AGENT"];
+      default:
+        return [];
+    }
+  };
+
+  const availableRoles = getAvailableRoles();
 
   // Fetch users and agencies
   const fetchUsers = async () => {
@@ -202,7 +220,9 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
         role: data.role,
         phone: data.phone || null,
         whatsapp: data.whatsapp || null,
-        agencyId: data.role === "SUPER_ADMIN" ? null : data.agencyId || null,
+        agencyId: data.role === "SUPER_ADMIN" ? null : 
+          currentUser?.role === "AGENCY_ADMIN" ? currentUser.agencyId : 
+          data.agencyId || null,
       };
 
       const response = await fetch("/api/users", {
@@ -284,7 +304,9 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
         role: data.role,
         phone: data.phone || null,
         whatsapp: data.whatsapp || null,
-        agencyId: data.role === "SUPER_ADMIN" ? null : data.agencyId || null,
+        agencyId: data.role === "SUPER_ADMIN" ? null : 
+          currentUser?.role === "AGENCY_ADMIN" ? currentUser.agencyId : 
+          data.agencyId || null,
       };
 
       const response = await fetch(`/api/users/${editingUser.id}`, {
@@ -542,24 +564,30 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="SUPER_ADMIN">
-                                <div className="flex items-center gap-2">
-                                  <Shield className="h-4 w-4" />
-                                  Super Admin
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="AGENCY_ADMIN">
-                                <div className="flex items-center gap-2">
-                                  <Settings className="h-4 w-4" />
-                                  Agency Admin
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="AGENT">
-                                <div className="flex items-center gap-2">
-                                  <Users className="h-4 w-4" />
-                                  Agent
-                                </div>
-                              </SelectItem>
+                              {availableRoles.includes("SUPER_ADMIN") && (
+                                <SelectItem value="SUPER_ADMIN">
+                                  <div className="flex items-center gap-2">
+                                    <Shield className="h-4 w-4" />
+                                    Super Admin
+                                  </div>
+                                </SelectItem>
+                              )}
+                              {availableRoles.includes("AGENCY_ADMIN") && (
+                                <SelectItem value="AGENCY_ADMIN">
+                                  <div className="flex items-center gap-2">
+                                    <Settings className="h-4 w-4" />
+                                    Agency Admin
+                                  </div>
+                                </SelectItem>
+                              )}
+                              {availableRoles.includes("AGENT") && (
+                                <SelectItem value="AGENT">
+                                  <div className="flex items-center gap-2">
+                                    <Users className="h-4 w-4" />
+                                    Agent
+                                  </div>
+                                </SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -574,26 +602,38 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Agency</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select an agency" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {agencies.map((agency) => (
-                                  <SelectItem key={agency.id} value={agency.id}>
-                                    <div className="flex items-center gap-2">
-                                      <Building2 className="h-4 w-4" />
-                                      {agency.name}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            {currentUser?.role === "AGENCY_ADMIN" ? (
+                              <div className="flex items-center gap-2 p-2 border rounded-md bg-muted">
+                                <Building2 className="h-4 w-4" />
+                                <span className="text-sm">
+                                  {currentUser.agency?.name || "Your Agency"}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  (Automatically assigned)
+                                </span>
+                              </div>
+                            ) : (
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select an agency" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {agencies.map((agency) => (
+                                    <SelectItem key={agency.id} value={agency.id}>
+                                      <div className="flex items-center gap-2">
+                                        <Building2 className="h-4 w-4" />
+                                        {agency.name}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
                             <FormMessage />
                           </FormItem>
                         )}
@@ -712,24 +752,30 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="SUPER_ADMIN">
-                                <div className="flex items-center gap-2">
-                                  <Shield className="h-4 w-4" />
-                                  Super Admin
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="AGENCY_ADMIN">
-                                <div className="flex items-center gap-2">
-                                  <Settings className="h-4 w-4" />
-                                  Agency Admin
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="AGENT">
-                                <div className="flex items-center gap-2">
-                                  <Users className="h-4 w-4" />
-                                  Agent
-                                </div>
-                              </SelectItem>
+                              {availableRoles.includes("SUPER_ADMIN") && (
+                                <SelectItem value="SUPER_ADMIN">
+                                  <div className="flex items-center gap-2">
+                                    <Shield className="h-4 w-4" />
+                                    Super Admin
+                                  </div>
+                                </SelectItem>
+                              )}
+                              {availableRoles.includes("AGENCY_ADMIN") && (
+                                <SelectItem value="AGENCY_ADMIN">
+                                  <div className="flex items-center gap-2">
+                                    <Settings className="h-4 w-4" />
+                                    Agency Admin
+                                  </div>
+                                </SelectItem>
+                              )}
+                              {availableRoles.includes("AGENT") && (
+                                <SelectItem value="AGENT">
+                                  <div className="flex items-center gap-2">
+                                    <Users className="h-4 w-4" />
+                                    Agent
+                                  </div>
+                                </SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -744,26 +790,40 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Agencia</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Seleccionar agencia" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {agencies.map((agency) => (
-                                  <SelectItem key={agency.id} value={agency.id}>
-                                    <div className="flex items-center gap-2">
-                                      <Building2 className="h-4 w-4" />
-                                      {agency.name}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            {currentUser?.role === "AGENCY_ADMIN" ? (
+                              <div className="flex items-center gap-2 p-2 border rounded-md bg-muted">
+                                <Building2 className="h-4 w-4" />
+                                <span className="text-sm">
+                                  {currentUser.agency?.name || "Your Agency"}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  (Automatically assigned)
+                                </span>
+                              </div>
+                            ) : (
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Seleccionar agencia" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {agencies.map((agency) => (
+                                    <SelectItem key={agency.id} value={agency.id}>
+                                      <div className="flex items-center gap-2">
+                                        <Building2 className="h-4 w-4" />
+                                        <span className="text-sm">
+                                          {agency.name}
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
                             <FormMessage />
                           </FormItem>
                         )}

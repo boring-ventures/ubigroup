@@ -6,7 +6,6 @@ interface Agency {
   logoUrl: string | null;
   address: string | null;
   phone: string | null;
-  email: string | null;
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -17,7 +16,6 @@ interface UpdateAgencyProfileData {
   logoUrl?: string | null;
   address?: string | null;
   phone?: string | null;
-  email?: string | null;
 }
 
 // Fetch agency profile for the current Agency Admin
