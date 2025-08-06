@@ -32,10 +32,11 @@ import {
   Save,
   Loader2,
 } from "lucide-react";
+import { LogoUpload } from "./logo-upload";
 
 const agencyProfileSchema = z.object({
   name: z.string().min(2, "Agency name must be at least 2 characters").max(100),
-  logoUrl: z.string().url("Invalid logo URL").optional().or(z.literal("")),
+  logoUrl: z.string().optional().or(z.literal("")),
   address: z
     .string()
     .min(10, "Address must be at least 10 characters")
@@ -48,7 +49,6 @@ const agencyProfileSchema = z.object({
     .max(20)
     .optional()
     .or(z.literal("")),
-  email: z.string().email("Invalid email address").optional().or(z.literal("")),
 });
 
 type AgencyProfileFormData = z.infer<typeof agencyProfileSchema>;
@@ -66,7 +66,6 @@ export function AgencyProfileManagement() {
       logoUrl: "",
       address: "",
       phone: "",
-      email: "",
     },
   });
 
@@ -78,7 +77,6 @@ export function AgencyProfileManagement() {
         logoUrl: agency.logoUrl || "",
         address: agency.address || "",
         phone: agency.phone || "",
-        email: agency.email || "",
       });
     }
   }, [agency, form]);
@@ -91,7 +89,6 @@ export function AgencyProfileManagement() {
         logoUrl: data.logoUrl || null,
         address: data.address || null,
         phone: data.phone || null,
-        email: data.email || null,
       };
 
       await updateAgencyProfile.mutateAsync(updateData);
@@ -121,7 +118,6 @@ export function AgencyProfileManagement() {
         logoUrl: agency.logoUrl || "",
         address: agency.address || "",
         phone: agency.phone || "",
-        email: agency.email || "",
       });
     }
     setIsEditing(false);
@@ -232,17 +228,31 @@ export function AgencyProfileManagement() {
               {/* Agency Logo and Name */}
               <div className="flex items-start space-x-6">
                 <div className="flex flex-col items-center space-y-2">
-                  <Avatar className="h-24 w-24">
-                    <AvatarImage src={agency.logoUrl || ""} alt={agency.name} />
-                    <AvatarFallback className="text-2xl">
-                      {agency.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  {isEditing && (
-                    <Button variant="outline" size="sm" type="button">
-                      <Camera className="mr-2 h-4 w-4" />
-                      Change Logo
-                    </Button>
+                  {isEditing ? (
+                    <LogoUpload
+                      agencyId={agency.id}
+                      currentLogoUrl={agency.logoUrl}
+                      onUploadComplete={(logoUrl) => {
+                        form.setValue("logoUrl", logoUrl);
+                      }}
+                      onUploadError={(error) => {
+                        toast({
+                          title: "Error",
+                          description: error.message,
+                          variant: "destructive",
+                        });
+                      }}
+                    />
+                  ) : (
+                    <Avatar className="h-24 w-24">
+                      <AvatarImage
+                        src={agency.logoUrl || ""}
+                        alt={agency.name}
+                      />
+                      <AvatarFallback className="text-2xl">
+                        {agency.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
                   )}
                 </div>
 
@@ -264,25 +274,6 @@ export function AgencyProfileManagement() {
                       </FormItem>
                     )}
                   />
-
-                  {isEditing && (
-                    <FormField
-                      control={form.control}
-                      name="logoUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Logo URL</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              placeholder="https://example.com/logo.png"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
                 </div>
               </div>
 
@@ -302,28 +293,6 @@ export function AgencyProfileManagement() {
                           {...field}
                           disabled={!isEditing}
                           placeholder="+55 11 9999-1234"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center">
-                        <Mail className="mr-2 h-4 w-4" />
-                        Email Address
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          disabled={!isEditing}
-                          placeholder="contact@agency.com"
-                          type="email"
                         />
                       </FormControl>
                       <FormMessage />
