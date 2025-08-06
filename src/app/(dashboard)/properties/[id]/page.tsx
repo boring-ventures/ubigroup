@@ -56,7 +56,15 @@ export default async function DashboardPropertyPage({
     },
   });
 
-  if (!property) {
+  // Convert Date to string for createdAt
+  const propertyWithStringDates = property
+    ? {
+        ...property,
+        createdAt: property.createdAt.toISOString(),
+      }
+    : null;
+
+  if (!propertyWithStringDates) {
     redirect("/my-properties");
   }
 
@@ -67,10 +75,10 @@ export default async function DashboardPropertyPage({
       hasAccess = true; // Super admin can access any property
       break;
     case "AGENCY_ADMIN":
-      hasAccess = property.agencyId === userProfile.agencyId;
+      hasAccess = propertyWithStringDates!.agencyId === userProfile.agencyId;
       break;
     case "AGENT":
-      hasAccess = property.agentId === userProfile.id;
+      hasAccess = propertyWithStringDates!.agentId === userProfile.id;
       break;
   }
 
@@ -83,7 +91,7 @@ export default async function DashboardPropertyPage({
       <PropertyDetailPage
         propertyId={params.id}
         userRole={userProfile.role}
-        initialProperty={property}
+        initialProperty={propertyWithStringDates}
       />
     </main>
   );
