@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PropertyCard } from "./property-card";
+import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 import { PropertyFilters } from "./property-filters";
 import { PropertySearchBar } from "./property-search-bar";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -53,8 +55,8 @@ interface Property {
   };
 }
 
-interface PropertyFilters {
-  transactionType?: "SALE" | "RENT" | "ANTICRÉTICO" | "";
+interface PublicPropertyFilters {
+  transactionType?: "SALE" | "RENT" | "";
   type?: "HOUSE" | "APARTMENT" | "OFFICE" | "LAND" | "";
   locationState?: string;
   locationCity?: string;
@@ -70,7 +72,7 @@ interface PropertyFilters {
 
 export function PublicPropertyCatalog() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filters, setFilters] = useState<PropertyFilters>({});
+  const [filters, setFilters] = useState<PublicPropertyFilters>({});
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState<"properties" | "projects">(
@@ -124,13 +126,32 @@ export function PublicPropertyCatalog() {
   });
 
   // Fetch projects
+  interface PublicProject {
+    id: string;
+    name: string;
+    description: string;
+    location: string;
+    propertyType: string;
+    images: string[];
+    active: boolean;
+    floors?: Array<{
+      id: string;
+      number: number;
+      name: string | null;
+      quadrants?: Array<{
+        id: string;
+        customId: string;
+        status: string;
+      }>;
+    }>;
+  }
   const {
     data: projects = [],
     isLoading: projectsLoading,
     error: projectsError,
   } = useQuery({
     queryKey: ["public-projects", searchQuery],
-    queryFn: async (): Promise<any[]> => {
+    queryFn: async (): Promise<PublicProject[]> => {
       const params = new URLSearchParams();
       if (searchQuery.trim()) {
         params.append("search", searchQuery.trim());
@@ -150,7 +171,7 @@ export function PublicPropertyCatalog() {
     setSearchQuery(query);
   };
 
-  const handleFiltersChange = (newFilters: PropertyFilters) => {
+  const handleFiltersChange = (newFilters: PublicPropertyFilters) => {
     setFilters(newFilters);
   };
 

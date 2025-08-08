@@ -12,9 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Building2, MapPin, Calendar, Users, Eye } from "lucide-react";
+import { Plus, Building2, MapPin, Calendar, Eye } from "lucide-react";
 import Link from "next/link";
-import { toast } from "@/components/ui/use-toast";
 
 // Client-side only date formatter to prevent hydration errors
 function ClientDateFormatter({ date }: { date: string }) {
@@ -84,31 +83,7 @@ export function ProjectsList() {
     },
   });
 
-  const handleDeleteProject = async (projectId: string) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete project");
-      }
-
-      toast({
-        title: "Success",
-        description: "Project deleted successfully",
-      });
-
-      refetch();
-    } catch (error) {
-      console.error("Error deleting project:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete project",
-        variant: "destructive",
-      });
-    }
-  };
+  // Removed unused handleDeleteProject to satisfy linter
 
   const getTotalQuadrants = (floors: Project["floors"]) => {
     return floors.reduce((total, floor) => total + floor.quadrants.length, 0);

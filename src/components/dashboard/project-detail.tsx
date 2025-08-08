@@ -1,19 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -41,13 +34,9 @@ import { toast } from "@/components/ui/use-toast";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Building2,
   MapPin,
-  Calendar,
   Users,
   Plus,
-  Edit,
-  Trash2,
   Layers,
   Grid3X3,
   CheckCircle,
@@ -60,6 +49,7 @@ import {
   createQuadrantSchema,
 } from "@/lib/validations/project";
 import { PropertyType, Currency, QuadrantStatus } from "@prisma/client";
+import { z } from "zod";
 
 // Client-side only date formatter to prevent hydration errors
 function ClientDateFormatter({ date }: { date: string }) {
@@ -92,7 +82,7 @@ interface Project {
   name: string;
   description: string;
   location: string;
-  propertyType: string;
+  propertyType: PropertyType;
   images: string[];
   createdAt: string;
   active: boolean;
@@ -118,8 +108,8 @@ interface Project {
       bedrooms: number;
       bathrooms: number;
       price: number;
-      currency: string;
-      status: string;
+      currency: Currency;
+      status: QuadrantStatus;
       active: boolean;
     }[];
   }[];
@@ -135,8 +125,14 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
   >(null);
   const [showFloorDialog, setShowFloorDialog] = useState(false);
   const [showQuadrantDialog, setShowQuadrantDialog] = useState(false);
-  const [selectedQuadrant, setSelectedQuadrant] = useState<any>(null);
+  type Quadrant = Project["floors"][0]["quadrants"][0];
+  const [selectedQuadrant, setSelectedQuadrant] = useState<Quadrant | null>(
+    null
+  );
   const queryClient = useQueryClient();
+
+  type CreateFloorInput = z.infer<typeof createFloorSchema>;
+  type CreateQuadrantInput = z.infer<typeof createQuadrantSchema>;
 
   const floorForm = useForm({
     resolver: zodResolver(createFloorSchema),
@@ -160,7 +156,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
   });
 
   const createFloorMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: CreateFloorInput) => {
       const response = await fetch(`/api/projects/${project.id}/floors`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -185,7 +181,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
   });
 
   const createQuadrantMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: CreateQuadrantInput) => {
       const response = await fetch(
         `/api/floors/${selectedFloor?.id}/quadrants`,
         {
@@ -218,7 +214,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
       data,
     }: {
       quadrantId: string;
-      data: any;
+      data: CreateQuadrantInput;
     }) => {
       const response = await fetch(
         `/api/floors/${selectedFloor?.id}/quadrants`,
@@ -247,11 +243,11 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
     },
   });
 
-  const handleFloorSubmit = (data: any) => {
+  const handleFloorSubmit = (data: CreateFloorInput) => {
     createFloorMutation.mutate(data);
   };
 
-  const handleQuadrantSubmit = (data: any) => {
+  const handleQuadrantSubmit = (data: CreateQuadrantInput) => {
     if (selectedQuadrant) {
       updateQuadrantMutation.mutate({ quadrantId: selectedQuadrant.id, data });
     } else {
@@ -259,7 +255,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
     }
   };
 
-  const handleQuadrantClick = (quadrant: any) => {
+  const handleQuadrantClick = (quadrant: Quadrant) => {
     setSelectedQuadrant(quadrant);
     quadrantForm.reset({
       area: quadrant.area,
@@ -273,26 +269,26 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
     setShowQuadrantDialog(true);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: QuadrantStatus) => {
     switch (status) {
-      case "AVAILABLE":
+      case QuadrantStatus.AVAILABLE:
         return "bg-green-500";
-      case "UNAVAILABLE":
+      case QuadrantStatus.UNAVAILABLE:
         return "bg-red-500";
-      case "RESERVED":
+      case QuadrantStatus.RESERVED:
         return "bg-yellow-500";
       default:
         return "bg-gray-500";
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: QuadrantStatus) => {
     switch (status) {
-      case "AVAILABLE":
+      case QuadrantStatus.AVAILABLE:
         return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "UNAVAILABLE":
+      case QuadrantStatus.UNAVAILABLE:
         return <XCircle className="h-4 w-4 text-red-600" />;
-      case "RESERVED":
+      case QuadrantStatus.RESERVED:
         return <Clock className="h-4 w-4 text-yellow-600" />;
       default:
         return null;

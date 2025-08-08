@@ -9,8 +9,9 @@ import {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     const cookieStore = cookies();
     const supabase = createServerComponentClient({
@@ -35,7 +36,7 @@ export async function GET(
 
     // Check if floor exists and user has permission
     const floor = await prisma.floor.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         project: {
           select: {
@@ -67,7 +68,7 @@ export async function GET(
     }
 
     const quadrants = await prisma.quadrant.findMany({
-      where: { floorId: params.id },
+      where: { floorId: id },
       orderBy: { customId: "asc" },
     });
 
@@ -83,8 +84,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     const cookieStore = cookies();
     const supabase = createServerComponentClient({
@@ -109,7 +111,7 @@ export async function POST(
 
     // Check if floor exists and user has permission
     const floor = await prisma.floor.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         project: {
           select: {
@@ -135,7 +137,7 @@ export async function POST(
 
     // Generate custom ID for quadrant
     const quadrantCount = await prisma.quadrant.count({
-      where: { floorId: params.id },
+      where: { floorId: id },
     });
 
     const customId = `Q${String(quadrantCount + 1).padStart(3, "0")}`;
@@ -144,7 +146,7 @@ export async function POST(
       data: {
         ...validatedData,
         customId,
-        floorId: params.id,
+        floorId: id,
       },
     });
 
@@ -164,10 +166,7 @@ export async function POST(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest) {
   try {
     const cookieStore = cookies();
     const supabase = createServerComponentClient({

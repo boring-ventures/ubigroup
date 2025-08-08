@@ -109,7 +109,7 @@ export function ProjectForm({
       // Upload new images
       let newImageUrls: string[] = [];
       if (images.length > 0) {
-        newImageUrls = await uploadFiles(images, "projects");
+        newImageUrls = await uploadFiles(images, "images");
       }
 
       // Combine uploaded images with existing ones
@@ -136,7 +136,7 @@ export function ProjectForm({
         throw new Error(errorData.error || "Failed to save project");
       }
 
-      const result = await response.json();
+      await response.json();
 
       toast({
         title: "Success",

@@ -6,8 +6,9 @@ import { createFloorSchema } from "@/lib/validations/project";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     const cookieStore = cookies();
     const supabase = createServerComponentClient({
@@ -32,7 +33,7 @@ export async function GET(
 
     // Check if project exists and user has permission
     const project = await prisma.project.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!project) {
@@ -52,7 +53,7 @@ export async function GET(
     }
 
     const floors = await prisma.floor.findMany({
-      where: { projectId: params.id },
+      where: { projectId: id },
       include: {
         quadrants: {
           orderBy: { customId: "asc" },
@@ -73,8 +74,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     const cookieStore = cookies();
     const supabase = createServerComponentClient({
@@ -99,7 +101,7 @@ export async function POST(
 
     // Check if project exists and user has permission
     const project = await prisma.project.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!project) {
@@ -117,7 +119,7 @@ export async function POST(
     // Check if floor number already exists for this project
     const existingFloor = await prisma.floor.findFirst({
       where: {
-        projectId: params.id,
+        projectId: id,
         number: validatedData.number,
       },
     });
@@ -132,7 +134,7 @@ export async function POST(
     const floor = await prisma.floor.create({
       data: {
         ...validatedData,
-        projectId: params.id,
+        projectId: id,
       },
       include: {
         quadrants: {

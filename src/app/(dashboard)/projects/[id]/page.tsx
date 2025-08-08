@@ -4,11 +4,12 @@ import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { ProjectDetail } from "@/components/dashboard/project-detail";
 
-interface ProjectPageProps {
-  params: { id: string };
-}
-
-export default async function ProjectPage({ params }: ProjectPageProps) {
+export default async function ProjectPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
   const cookieStore = cookies();
   const supabase = createServerComponentClient({ cookies: () => cookieStore });
   const {
@@ -33,7 +34,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
   // Fetch project data
   const project = await prisma.project.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       agent: {
         select: {

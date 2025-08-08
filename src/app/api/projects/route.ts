@@ -3,6 +3,7 @@ import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { createProjectSchema } from "@/lib/validations/project";
+import { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
     const skip = (page - 1) * limit;
 
     // Build where clause based on user role
-    let whereClause: any = {};
+    const whereClause: Prisma.ProjectWhereInput = {};
 
     if (userProfile.role === "SUPER_ADMIN") {
       // Super admin can see all projects
@@ -45,7 +46,9 @@ export async function GET(request: NextRequest) {
       }
     } else if (userProfile.role === "AGENCY_ADMIN") {
       // Agency admin can see projects from their agency
-      whereClause.agencyId = userProfile.agencyId;
+      if (userProfile.agencyId) {
+        whereClause.agencyId = userProfile.agencyId;
+      }
     } else if (userProfile.role === "AGENT") {
       // Agent can only see their own projects
       whereClause.agentId = userProfile.id;

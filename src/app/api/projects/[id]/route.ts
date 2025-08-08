@@ -6,8 +6,9 @@ import { updateProjectSchema } from "@/lib/validations/project";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     const cookieStore = cookies();
     const supabase = createServerComponentClient({
@@ -31,7 +32,7 @@ export async function GET(
     }
 
     const project = await prisma.project.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         agent: {
           select: {
@@ -87,8 +88,9 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     const cookieStore = cookies();
     const supabase = createServerComponentClient({
@@ -113,7 +115,7 @@ export async function PUT(
 
     // Check if project exists and user has permission
     const existingProject = await prisma.project.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingProject) {
@@ -129,7 +131,7 @@ export async function PUT(
     const validatedData = updateProjectSchema.parse(body);
 
     const project = await prisma.project.update({
-      where: { id: params.id },
+      where: { id },
       data: validatedData,
       include: {
         agent: {
@@ -176,8 +178,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await context.params;
   try {
     const cookieStore = cookies();
     const supabase = createServerComponentClient({
@@ -202,7 +205,7 @@ export async function DELETE(
 
     // Check if project exists and user has permission
     const existingProject = await prisma.project.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!existingProject) {
@@ -215,7 +218,7 @@ export async function DELETE(
     }
 
     await prisma.project.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ message: "Project deleted successfully" });
