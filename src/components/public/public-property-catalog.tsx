@@ -16,6 +16,7 @@ import {
   MapPin,
   Home,
   Building2,
+  Layers,
 } from "lucide-react";
 
 interface Property {
@@ -53,7 +54,7 @@ interface Property {
 }
 
 interface PropertyFilters {
-  transactionType?: "SALE" | "RENT" | "";
+  transactionType?: "SALE" | "RENT" | "ANTICRÉTICO" | "";
   type?: "HOUSE" | "APARTMENT" | "OFFICE" | "LAND" | "";
   locationState?: string;
   locationCity?: string;
@@ -72,13 +73,16 @@ export function PublicPropertyCatalog() {
   const [filters, setFilters] = useState<PropertyFilters>({});
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
+  const [activeTab, setActiveTab] = useState<"properties" | "projects">(
+    "properties"
+  );
   const isMobile = useIsMobile();
 
   // Fetch properties with search and filters
   const {
     data: properties = [],
-    isLoading,
-    error,
+    isLoading: propertiesLoading,
+    error: propertiesError,
   } = useQuery({
     queryKey: ["public-properties", searchQuery, filters],
     queryFn: async (): Promise<Property[]> => {
@@ -116,6 +120,30 @@ export function PublicPropertyCatalog() {
       return data.properties || [];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: activeTab === "properties",
+  });
+
+  // Fetch projects
+  const {
+    data: projects = [],
+    isLoading: projectsLoading,
+    error: projectsError,
+  } = useQuery({
+    queryKey: ["public-projects", searchQuery],
+    queryFn: async (): Promise<any[]> => {
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) {
+        params.append("search", searchQuery.trim());
+      }
+
+      const response = await fetch(`/api/public/projects?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch projects");
+      }
+      const data = await response.json();
+      return data.projects || [];
+    },
+    enabled: activeTab === "projects",
   });
 
   const handleSearch = (query: string) => {
@@ -132,11 +160,22 @@ export function PublicPropertyCatalog() {
   };
 
   const getResultsText = () => {
-    const count = properties.length;
-    if (count === 0) return "Ninguna propiedad encontrada";
-    if (count === 1) return "1 propiedad encontrada";
-    return `${count} propiedades encontradas`;
+    if (activeTab === "properties") {
+      const count = properties.length;
+      if (count === 0) return "Ninguna propiedad encontrada";
+      if (count === 1) return "1 propiedad encontrada";
+      return `${count} propiedades encontradas`;
+    } else {
+      const count = projects.length;
+      if (count === 0) return "Ningún proyecto encontrado";
+      if (count === 1) return "1 proyecto encontrado";
+      return `${count} proyectos encontrados`;
+    }
   };
+
+  const isLoading =
+    activeTab === "properties" ? propertiesLoading : projectsLoading;
+  const error = activeTab === "properties" ? propertiesError : projectsError;
 
   if (error) {
     return (
@@ -145,10 +184,13 @@ export function PublicPropertyCatalog() {
           <CardContent>
             <Building2 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">
-              Error al cargar propiedades
+              Error al cargar{" "}
+              {activeTab === "properties" ? "propiedades" : "proyectos"}
             </h3>
             <p className="text-muted-foreground mb-4">
-              No fue posible cargar las propiedades. Inténtalo de nuevo.
+              No fue posible cargar los{" "}
+              {activeTab === "properties" ? "propiedades" : "proyectos"}.
+              Inténtalo de nuevo.
             </p>
             <Button onClick={() => window.location.reload()}>
               Tentar Novamente
@@ -195,6 +237,28 @@ export function PublicPropertyCatalog() {
             placeholder="Buscar por ciudad, barrio, tipo de propiedad..."
             className="mb-4"
           />
+
+          {/* Tabs */}
+          <div className="flex space-x-1 mb-4">
+            <Button
+              variant={activeTab === "properties" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab("properties")}
+              className="flex items-center space-x-2"
+            >
+              <Home className="h-4 w-4" />
+              <span>Propiedades</span>
+            </Button>
+            <Button
+              variant={activeTab === "projects" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab("projects")}
+              className="flex items-center space-x-2"
+            >
+              <Layers className="h-4 w-4" />
+              <span>Proyectos</span>
+            </Button>
+          </div>
 
           {/* Controls */}
           <div className="flex items-center justify-between">
@@ -270,73 +334,195 @@ export function PublicPropertyCatalog() {
               </div>
             )}
 
-            {isLoading ? (
-              <div
-                className={`grid gap-6 ${
-                  viewMode === "grid"
-                    ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-                    : "grid-cols-1"
-                }`}
-              >
-                {Array.from({ length: 9 }).map((_, index) => (
-                  <Card key={index} className="overflow-hidden">
-                    <Skeleton className="aspect-[4/3] w-full" />
-                    <div className="p-4 space-y-3">
-                      <Skeleton className="h-6 w-32" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-3/4" />
-                      <div className="flex justify-between">
-                        <Skeleton className="h-4 w-20" />
-                        <Skeleton className="h-4 w-16" />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : properties.length === 0 ? (
-              <div className="text-center py-12">
-                <MapPin className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  Ninguna propiedad encontrada
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  {searchQuery || Object.keys(filters).length > 0
-                    ? "Tente ajustar seus filtros de busca para encontrar mais opções."
-                    : "No hay propiedades disponibles en este momento."}
-                </p>
-                {(searchQuery || Object.keys(filters).length > 0) && (
-                  <Button onClick={clearFilters} variant="outline">
-                    Limpar Filtros
-                  </Button>
+            {activeTab === "properties" ? (
+              <>
+                {isLoading ? (
+                  <div
+                    className={`grid gap-6 ${
+                      viewMode === "grid"
+                        ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                        : "grid-cols-1"
+                    }`}
+                  >
+                    {Array.from({ length: 9 }).map((_, index) => (
+                      <Card key={index} className="overflow-hidden">
+                        <Skeleton className="aspect-[4/3] w-full" />
+                        <div className="p-4 space-y-3">
+                          <Skeleton className="h-6 w-32" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-3/4" />
+                          <div className="flex justify-between">
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="h-4 w-16" />
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : properties.length === 0 ? (
+                  <div className="text-center py-12">
+                    <MapPin className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">
+                      Ninguna propiedad encontrada
+                    </h3>
+                    <p className="text-muted-foreground mb-4">
+                      {searchQuery || Object.keys(filters).length > 0
+                        ? "Tente ajustar seus filtros de busca para encontrar mais opções."
+                        : "No hay propiedades disponibles en este momento."}
+                    </p>
+                    {(searchQuery || Object.keys(filters).length > 0) && (
+                      <Button onClick={clearFilters} variant="outline">
+                        Limpar Filtros
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div
+                    className={`grid gap-6 ${
+                      viewMode === "grid"
+                        ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                        : "grid-cols-1"
+                    }`}
+                  >
+                    {properties.map((property) => (
+                      <PropertyCard
+                        key={property.id}
+                        property={property}
+                        className={
+                          viewMode === "list" ? "md:flex md:max-w-none" : ""
+                        }
+                      />
+                    ))}
+                  </div>
                 )}
-              </div>
-            ) : (
-              <div
-                className={`grid gap-6 ${
-                  viewMode === "grid"
-                    ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
-                    : "grid-cols-1"
-                }`}
-              >
-                {properties.map((property) => (
-                  <PropertyCard
-                    key={property.id}
-                    property={property}
-                    className={
-                      viewMode === "list" ? "md:flex md:max-w-none" : ""
-                    }
-                  />
-                ))}
-              </div>
-            )}
 
-            {/* Load More / Pagination could go here */}
-            {properties.length > 0 && (
-              <div className="mt-12 text-center">
-                <p className="text-sm text-muted-foreground">
-                  Mostrando {properties.length} propiedades
-                </p>
-              </div>
+                {/* Load More / Pagination could go here */}
+                {properties.length > 0 && (
+                  <div className="mt-12 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Mostrando {properties.length} propiedades
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {isLoading ? (
+                  <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <Card key={index} className="overflow-hidden">
+                        <Skeleton className="aspect-[4/3] w-full" />
+                        <div className="p-4 space-y-3">
+                          <Skeleton className="h-6 w-32" />
+                          <Skeleton className="h-4 w-full" />
+                          <Skeleton className="h-4 w-3/4" />
+                          <div className="flex justify-between">
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="h-4 w-16" />
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : projects.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Layers className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">
+                      Ningún proyecto encontrado
+                    </h3>
+                    <p className="text-muted-foreground mb-4">
+                      {searchQuery
+                        ? "Tente ajustar sua busca para encontrar mais opções."
+                        : "No hay proyectos disponibles en este momento."}
+                    </p>
+                    {searchQuery && (
+                      <Button
+                        onClick={() => setSearchQuery("")}
+                        variant="outline"
+                      >
+                        Limpar Busca
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                    {projects.map((project) => (
+                      <Card
+                        key={project.id}
+                        className="overflow-hidden hover:shadow-lg transition-shadow"
+                      >
+                        <div className="aspect-[4/3] relative overflow-hidden">
+                          {project.images && project.images.length > 0 ? (
+                            <Image
+                              src={project.images[0]}
+                              alt={project.name}
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-muted flex items-center justify-center">
+                              <Building2 className="h-12 w-12 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <div className="flex items-start justify-between mb-2">
+                            <h3 className="font-semibold text-lg line-clamp-1">
+                              {project.name}
+                            </h3>
+                            <Badge
+                              variant={project.active ? "default" : "secondary"}
+                            >
+                              {project.active ? "Activo" : "Inactivo"}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                            {project.description}
+                          </p>
+                          <div className="flex items-center text-sm text-muted-foreground mb-3">
+                            <MapPin className="mr-1 h-4 w-4" />
+                            {project.location}
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Tipo:</span>
+                            <Badge variant="outline">
+                              {project.propertyType}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between text-sm mt-2">
+                            <span className="text-muted-foreground">
+                              Pisos:
+                            </span>
+                            <span className="font-medium">
+                              {project.floors?.length || 0}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm mt-2">
+                            <span className="text-muted-foreground">
+                              Cuadrantes:
+                            </span>
+                            <span className="font-medium">
+                              {project.floors?.reduce(
+                                (total, floor) =>
+                                  total + (floor.quadrants?.length || 0),
+                                0
+                              ) || 0}
+                            </span>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+
+                {projects.length > 0 && (
+                  <div className="mt-12 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Mostrando {projects.length} proyectos
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

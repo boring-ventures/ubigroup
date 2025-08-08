@@ -8,6 +8,7 @@ import {
   UserCog,
   Building,
   Shield,
+  Layers,
 } from "lucide-react";
 import type { UserRole } from "@prisma/client";
 import type { SidebarData } from "../types";
@@ -186,6 +187,16 @@ export const getRoleBasedSidebarData = (role: UserRole): SidebarData => {
               title: "My Properties",
               url: "/my-properties",
               icon: Home,
+            },
+          ],
+        },
+        {
+          title: "Projects",
+          items: [
+            {
+              title: "My Projects",
+              url: "/projects",
+              icon: Layers,
             },
           ],
         },
