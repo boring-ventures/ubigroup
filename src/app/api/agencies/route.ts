@@ -10,7 +10,6 @@ import {
   AgencyQueryInput,
 } from "@/lib/validations/agency";
 
-// Test endpoint to check authentication
 export async function HEAD() {
   try {
     console.log("HEAD /api/agencies - Testing authentication");
