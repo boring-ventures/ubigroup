@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPropertyPinColor } from "@/lib/utils";
 import { TransactionType } from "@prisma/client";
@@ -54,6 +54,7 @@ export function PropertyMap({ properties, className }: PropertyMapProps) {
   const mapInstanceRef = useRef<Map>(null);
   const markersRef = useRef<Marker[]>([]);
   const isInitializedRef = useRef(false);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   useEffect(() => {
     // Only load Leaflet on client side
@@ -61,6 +62,8 @@ export function PropertyMap({ properties, className }: PropertyMapProps) {
       if (typeof window === "undefined" || !mapRef.current) return;
 
       try {
+        setMapError(null);
+
         // Dynamically import Leaflet
         const L = await import("leaflet");
 
@@ -103,6 +106,13 @@ export function PropertyMap({ properties, className }: PropertyMapProps) {
         }).addTo(map);
         console.log("Tiles added to map");
 
+        // Force map to refresh after a short delay to ensure proper rendering
+        setTimeout(() => {
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.invalidateSize();
+          }
+        }, 200);
+
         // Add custom CSS to fix zoom controls styling
         const style = document.createElement("style");
         style.textContent = `
@@ -144,6 +154,9 @@ export function PropertyMap({ properties, className }: PropertyMapProps) {
             background: #f5f5f5 !important;
             color: #ccc !important;
             cursor: not-allowed !important;
+          }
+          .leaflet-container {
+            z-index: 1 !important;
           }
         `;
         document.head.appendChild(style);
@@ -245,6 +258,7 @@ export function PropertyMap({ properties, className }: PropertyMapProps) {
         isInitializedRef.current = true;
       } catch (error) {
         console.error("Error loading map:", error);
+        setMapError("Failed to load map. Please refresh the page.");
       }
     };
 
@@ -282,11 +296,30 @@ export function PropertyMap({ properties, className }: PropertyMapProps) {
         <CardTitle>Property Locations</CardTitle>
       </CardHeader>
       <CardContent>
-        <div
-          ref={mapRef}
-          className="w-full h-96 rounded-lg border"
-          style={{ minHeight: "400px" }}
-        />
+        {mapError ? (
+          <div className="w-full h-96 rounded-lg border bg-gray-50 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-red-500 mb-2">⚠️</div>
+              <p className="text-gray-600">{mapError}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+              >
+                Refresh Page
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div
+            ref={mapRef}
+            className="w-full h-96 rounded-lg border"
+            style={{
+              minHeight: "400px",
+              position: "relative",
+              zIndex: 1,
+            }}
+          />
+        )}
         <div className="mt-4 flex flex-wrap gap-4 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow-sm"></div>

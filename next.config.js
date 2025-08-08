@@ -8,6 +8,8 @@ const nextConfig = {
       "erbemjrbtyxryzdiqtnl.supabase.co",
       // Add Unsplash for placeholder images
       "images.unsplash.com",
+      // Add randomuser.me for placeholder avatars
+      "randomuser.me",
     ],
   },
   // ... other config options
