@@ -172,7 +172,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
   const handleContactWhatsApp = () => {
     if (property?.agent.whatsapp) {
       const message = encodeURIComponent(
-        `Olá! Tenho interesse no imóvel "${property.title}" (ID: ${property.id}). Poderia me fornecer mais informações?`
+        `¡Hola! Tengo interés en la propiedad "${property.title}" (ID: ${property.id}). ¿Podrías darme más información?`
       );
       const whatsappUrl = `https://wa.me/${property.agent.whatsapp.replace(/\D/g, "")}?text=${message}`;
       window.open(whatsappUrl, "_blank");
@@ -212,11 +212,10 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
           <CardContent>
             <Home className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">
-              Imóvel não encontrado
+              Propiedad no encontrada
             </h3>
             <p className="text-muted-foreground mb-4">
-              O imóvel solicitado não foi encontrado ou não está mais
-              disponível.
+              La propiedad solicitada no fue encontrada o ya no está disponível.
             </p>
             <Button onClick={() => (window.location.href = "/")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -403,7 +402,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             {/* Property Details */}
             <Card>
               <CardHeader>
-                <CardTitle>Detalhes do Imóvel</CardTitle>
+                <CardTitle>Detalles de la Propiedad</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
@@ -595,8 +594,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                   </div>
 
                   <div className="text-xs text-muted-foreground text-center pt-2">
-                    Ao entrar em contato, mencione que viu este imóvel no
-                    UbiGroup
+                    Al contactar, menciona que viste esta propiedad en UbiGroup
                   </div>
                 </div>
               </CardContent>
@@ -621,7 +619,9 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">ID do Imóvel:</span>
+                  <span className="text-muted-foreground">
+                    ID de la Propiedad:
+                  </span>
                   <span className="font-medium font-mono text-sm">
                     {property.id}
                   </span>

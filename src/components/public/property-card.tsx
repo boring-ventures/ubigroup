@@ -142,7 +142,7 @@ export function PropertyCard({
   const handleContactWhatsApp = () => {
     if (property.agent.whatsapp) {
       const message = encodeURIComponent(
-        `Olá! Tenho interesse no imóvel "${property.title}" (ID: ${property.id}). Poderia me fornecer mais informações?`
+        `¡Hola! Tengo interés en la propiedad "${property.title}" (ID: ${property.id}). ¿Podrías darme más información?`
       );
       const whatsappUrl = `https://wa.me/${property.agent.whatsapp.replace(/\D/g, "")}?text=${message}`;
       window.open(whatsappUrl, "_blank");

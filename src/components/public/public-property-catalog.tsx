@@ -133,9 +133,9 @@ export function PublicPropertyCatalog() {
 
   const getResultsText = () => {
     const count = properties.length;
-    if (count === 0) return "Nenhum imóvel encontrado";
-    if (count === 1) return "1 imóvel encontrado";
-    return `${count} imóveis encontrados`;
+    if (count === 0) return "Ninguna propiedad encontrada";
+    if (count === 1) return "1 propiedad encontrada";
+    return `${count} propiedades encontradas`;
   };
 
   if (error) {
@@ -145,10 +145,10 @@ export function PublicPropertyCatalog() {
           <CardContent>
             <Building2 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">
-              Erro ao carregar propriedades
+              Error al cargar propiedades
             </h3>
             <p className="text-muted-foreground mb-4">
-              Não foi possível carregar os imóveis. Tente novamente.
+              No fue posible cargar las propiedades. Inténtalo de nuevo.
             </p>
             <Button onClick={() => window.location.reload()}>
               Tentar Novamente
@@ -173,7 +173,7 @@ export function PublicPropertyCatalog() {
               <div>
                 <h1 className="text-2xl font-bold">UbiGroup</h1>
                 <p className="text-sm text-muted-foreground">
-                  Encontre seu imóvel ideal
+                  Encuentra tu propiedad ideal
                 </p>
               </div>
             </div>
@@ -192,7 +192,7 @@ export function PublicPropertyCatalog() {
           <PropertySearchBar
             value={searchQuery}
             onSearch={handleSearch}
-            placeholder="Buscar por cidade, bairro, tipo de imóvel..."
+            placeholder="Buscar por ciudad, barrio, tipo de propiedad..."
             className="mb-4"
           />
 
@@ -297,12 +297,12 @@ export function PublicPropertyCatalog() {
               <div className="text-center py-12">
                 <MapPin className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">
-                  Nenhum imóvel encontrado
+                  Ninguna propiedad encontrada
                 </h3>
                 <p className="text-muted-foreground mb-4">
                   {searchQuery || Object.keys(filters).length > 0
                     ? "Tente ajustar seus filtros de busca para encontrar mais opções."
-                    : "Não há imóveis disponíveis no momento."}
+                    : "No hay propiedades disponibles en este momento."}
                 </p>
                 {(searchQuery || Object.keys(filters).length > 0) && (
                   <Button onClick={clearFilters} variant="outline">
@@ -334,7 +334,7 @@ export function PublicPropertyCatalog() {
             {properties.length > 0 && (
               <div className="mt-12 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Mostrando {properties.length} imóveis
+                  Mostrando {properties.length} propiedades
                 </p>
               </div>
             )}
@@ -360,7 +360,7 @@ export function PublicPropertyCatalog() {
             <div>
               <h3 className="font-semibold mb-3">Para Compradores</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>Buscar Imóveis</li>
+                <li>Buscar Propiedades</li>
                 <li>Calculadora de Financiamento</li>
                 <li>Guia do Comprador</li>
               </ul>
@@ -374,7 +374,7 @@ export function PublicPropertyCatalog() {
                     Acessar Dashboard
                   </a>
                 </li>
-                <li>Cadastrar Imóveis</li>
+                <li>Registrar Propiedades</li>
                 <li>Gerenciar Leads</li>
               </ul>
             </div>

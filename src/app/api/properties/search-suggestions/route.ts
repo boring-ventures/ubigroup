@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
           type: "property_type",
           value: type.value,
           label: type.label,
-          category: "Tipo de Imóvel",
+          category: "Tipo de Propiedad",
         });
       }
     });

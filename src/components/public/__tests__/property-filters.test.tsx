@@ -77,7 +77,7 @@ describe("PropertyFilters", () => {
     render(<PropertyFilters {...defaultProps} />, { wrapper: createWrapper() });
 
     expect(screen.getByText(/tipo de transação/i)).toBeInTheDocument();
-    expect(screen.getByText(/tipo de imóvel/i)).toBeInTheDocument();
+    expect(screen.getByText(/tipo de propiedad/i)).toBeInTheDocument();
     expect(screen.getByText(/localização/i)).toBeInTheDocument();
     expect(screen.getByText(/faixa de preço/i)).toBeInTheDocument();
     expect(screen.getByText(/características/i)).toBeInTheDocument();

@@ -166,7 +166,7 @@ export function PropertyPdfDownload({
                ? `
              <div style="margin-bottom: 30px;">
                <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #1f2937;">
-                 Imagens do Imóvel
+                 Imágenes de la Propiedad
                </h2>
                <div style="
                  display: grid;
@@ -188,7 +188,7 @@ export function PropertyPdfDownload({
                    ">
                      <img 
                        src="${image}" 
-                       alt="Imagem ${index + 1} do imóvel"
+                       alt="Imagen ${index + 1} de la propiedad"
                        style="
                          width: 100%;
                          height: 100%;
@@ -235,7 +235,7 @@ export function PropertyPdfDownload({
           <!-- Property Details -->
           <div style="margin-bottom: 30px;">
             <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #1f2937;">
-              Detalhes do Imóvel
+              Detalles de la Propiedad
             </h2>
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 20px;">
               ${
@@ -439,12 +439,12 @@ export function PropertyPdfDownload({
           <!-- Property Information -->
           <div style="margin-bottom: 30px;">
             <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #1f2937;">
-              Informações do Imóvel
+              Información de la Propiedad
             </h2>
             <div style="color: #6b7280; line-height: 1.8;">
               <div><strong>Tipo:</strong> ${getPropertyTypeLabel(property.type)}</div>
               <div><strong>Transação:</strong> ${property.transactionType === "SALE" ? "Venda" : "Aluguel"}</div>
-              <div><strong>ID do Imóvel:</strong> ${property.id}</div>
+              <div><strong>ID de la Propiedad:</strong> ${property.id}</div>
               <div><strong>Publicado:</strong> ${new Date(property.createdAt).toLocaleDateString()}</div>
             </div>
           </div>

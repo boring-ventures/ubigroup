@@ -38,7 +38,7 @@ interface PropertySearchBarProps {
 export function PropertySearchBar({
   value,
   onSearch,
-  placeholder = "Buscar imóveis...",
+  placeholder = "Buscar propiedades...",
   className = "",
 }: PropertySearchBarProps) {
   const [inputValue, setInputValue] = useState(value);
@@ -271,7 +271,7 @@ export function PropertySearchBar({
                 <CommandEmpty className="py-6 text-center text-sm">
                   {inputValue.trim()
                     ? "Nenhuma sugestão encontrada."
-                    : "Digite para buscar imóveis..."}
+                    : "Escribe para buscar propiedades..."}
                 </CommandEmpty>
               ) : (
                 <>

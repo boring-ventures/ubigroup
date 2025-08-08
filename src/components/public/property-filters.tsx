@@ -80,13 +80,13 @@ interface PropertyFiltersProps {
 
 const FEATURES_OPTIONS = [
   "Piscina",
-  "Jardim",
-  "Varanda",
+  "Jardín",
+  "Balcón",
   "Churrasqueira",
   "Academia",
   "Playground",
   "Segurança 24h",
-  "Portaria",
+  "Portería",
   "Elevador",
   "Ar Condicionado",
   "Móveis Planejados",
@@ -167,7 +167,7 @@ export function PropertyFilters({
 
       {/* Property Type */}
       <div className="space-y-2">
-        <Label className="text-base font-medium">Tipo de Imóvel</Label>
+        <Label className="text-base font-medium">Tipo de Propiedad</Label>
         <Select
           value={filters.type || ""}
           onValueChange={(value) => updateFilter("type", value)}
@@ -455,9 +455,9 @@ export function PropertyFilters({
         </SheetTrigger>
         <SheetContent side="bottom" className="h-[90vh]">
           <SheetHeader>
-            <SheetTitle>Filtrar Propriedades</SheetTitle>
+            <SheetTitle>Filtrar Propiedades</SheetTitle>
             <SheetDescription>
-              Use os filtros abaixo para encontrar o imóvel ideal
+              Utiliza los filtros siguientes para encontrar la propiedad ideal
             </SheetDescription>
           </SheetHeader>
           <div className="mt-6 overflow-y-auto h-full pb-20">
@@ -484,7 +484,7 @@ export function PropertyFilters({
           )}
         </CardTitle>
         <CardDescription>
-          Refine sua busca para encontrar o imóvel ideal
+          Refina tu búsqueda para encontrar la propiedad ideal
         </CardDescription>
       </CardHeader>
       <CardContent>

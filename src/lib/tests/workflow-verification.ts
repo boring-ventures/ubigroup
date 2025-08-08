@@ -141,10 +141,10 @@ export class PropertyApprovalWorkflowVerification {
       description:
         "This is a test property for workflow verification. It should start with PENDING status and go through the approval process.",
       type: "HOUSE",
-      locationState: "São Paulo",
-      locationCity: "São Paulo",
+      locationState: "Madrid",
+      locationCity: "Madrid",
       locationNeigh: "Vila Madalena",
-      address: "Rua Test, 123 - Vila Madalena, São Paulo - SP",
+      address: "Calle Test, 123 - Malasaña, Madrid - MD",
       price: 450000,
       bedrooms: 3,
       bathrooms: 2,
@@ -155,7 +155,7 @@ export class PropertyApprovalWorkflowVerification {
         "https://example.com/image1.jpg",
         "https://example.com/image2.jpg",
       ],
-      features: ["Jardim", "Varanda", "Portaria"],
+      features: ["Jardín", "Balcón", "Portería"],
     };
 
     try {
@@ -388,7 +388,7 @@ export class PropertyApprovalWorkflowVerification {
       squareMeters: 80,
       transactionType: "SALE",
       images: ["https://example.com/reject-image1.jpg"],
-      features: ["Vista para o mar"],
+      features: ["Vista al mar"],
     };
 
     try {

@@ -108,12 +108,12 @@ describe("RBAC Utility Functions", () => {
       searchParams.append("type", "HOUSE");
       searchParams.append("minPrice", "200000");
       searchParams.append("features[]", "Piscina");
-      searchParams.append("features[]", "Jardim");
+      searchParams.append("features[]", "Jardín");
 
       const expectedParsedData = {
         type: "HOUSE",
         minPrice: 200000,
-        features: ["Piscina", "Jardim"],
+        features: ["Piscina", "Jardín"],
       };
 
       mockSchema.safeParse.mockReturnValue({
@@ -133,7 +133,7 @@ describe("RBAC Utility Functions", () => {
       >;
       expect(calledWith.type).toBe("HOUSE");
       expect(calledWith.minPrice).toBe("200000");
-      expect(calledWith.features).toEqual(["Piscina", "Jardim"]);
+      expect(calledWith.features).toEqual(["Piscina", "Jardín"]);
     });
 
     it("handles empty search params", () => {
