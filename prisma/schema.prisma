@@ -40,6 +40,12 @@ enum PropertyStatus {
   REJECTED
 }
 
+enum QuadrantStatus {
+  AVAILABLE
+  UNAVAILABLE
+  RESERVED
+}
+
 enum Currency {
   BOLIVIANOS
   DOLLARS
@@ -64,6 +70,9 @@ model User {
 
   // Only agents create properties
   properties Property[]
+  
+  // Only agents create projects
+  projects Project[]
 
   @@index([userId])
   @@index([role])
@@ -84,6 +93,7 @@ model Agency {
   // Agency has many users (Agency Admins and Agents)
   users      User[]
   properties Property[]
+  projects   Project[]
 
   @@map("agencies")
 }
@@ -133,4 +143,73 @@ model Property {
   @@index([agencyId])
   @@index([customId])
   @@map("properties")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  location    String
+  propertyType PropertyType
+  images      String[] // Array of image URLs
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  active      Boolean  @default(true)
+
+  // Project is created by an agent
+  agent    User   @relation(fields: [agentId], references: [id])
+  agentId  String @map("agent_id")
+
+  // Project belongs to an agency
+  agency   Agency @relation(fields: [agencyId], references: [id])
+  agencyId String @map("agency_id")
+
+  // Project has many floors
+  floors Floor[]
+
+  @@index([agentId])
+  @@index([agencyId])
+  @@map("projects")
+}
+
+model Floor {
+  id        String   @id @default(cuid())
+  number    Int
+  name      String?  // Optional floor name like "Ground Floor", "First Floor"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Floor belongs to a project
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String  @map("project_id")
+
+  // Floor has many quadrants
+  quadrants Quadrant[]
+
+  @@index([projectId])
+  @@map("floors")
+}
+
+model Quadrant {
+  id          String         @id @default(cuid())
+  customId    String         @unique @map("custom_id") // Auto-generated ID like Q001, Q002, etc.
+  area        Float
+  bedrooms    Int
+  bathrooms   Int
+  price       Float
+  currency    Currency       @default(BOLIVIANOS)
+  exchangeRate Float?        @map("exchange_rate")
+  status      QuadrantStatus @default(AVAILABLE)
+  active      Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  // Quadrant belongs to a floor
+  floor   Floor @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  floorId String @map("floor_id")
+
+  @@index([floorId])
+  @@index([status])
+  @@index([customId])
+  @@map("quadrants")
 }
