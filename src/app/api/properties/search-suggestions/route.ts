@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
           type: "location",
           value: property.locationState,
           label: property.locationState,
-          category: "Estado",
+          category: "Departamento",
         });
       }
 
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
           type: "location",
           value: property.locationCity,
           label: `${property.locationCity}, ${property.locationState}`,
-          category: "Cidade",
+          category: "Ciudad",
         });
       }
 
@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
           type: "location",
           value: property.locationNeigh,
           label: `${property.locationNeigh}, ${property.locationCity}`,
-          category: "Bairro",
+          category: "Barrio",
         });
       }
     });
@@ -100,8 +100,8 @@ export async function GET(request: NextRequest) {
     // Property type suggestions
     const propertyTypes = [
       { value: "HOUSE", label: "Casa" },
-      { value: "APARTMENT", label: "Apartamento" },
-      { value: "OFFICE", label: "Escritório" },
+      { value: "APARTMENT", label: "Departamento" },
+      { value: "OFFICE", label: "Oficina" },
       { value: "LAND", label: "Terreno" },
     ];
 
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
           type: "property_type",
           value: type.value,
           label: type.label,
-          category: "Tipo de Propiedad",
+          category: "Tipo de propiedad",
         });
       }
     });
@@ -119,11 +119,11 @@ export async function GET(request: NextRequest) {
     // Price range suggestions (only if query contains numbers)
     if (/\d/.test(normalizedQuery)) {
       const priceRanges = [
-        { min: 0, max: 200000, label: "Até R$ 200.000" },
-        { min: 200000, max: 500000, label: "R$ 200.000 - R$ 500.000" },
-        { min: 500000, max: 1000000, label: "R$ 500.000 - R$ 1.000.000" },
-        { min: 1000000, max: 2000000, label: "R$ 1.000.000 - R$ 2.000.000" },
-        { min: 2000000, max: Infinity, label: "Acima de R$ 2.000.000" },
+        { min: 0, max: 200000, label: "Hasta Bs. 200.000" },
+        { min: 200000, max: 500000, label: "Bs. 200.000 - Bs. 500.000" },
+        { min: 500000, max: 1000000, label: "Bs. 500.000 - Bs. 1.000.000" },
+        { min: 1000000, max: 2000000, label: "Bs. 1.000.000 - Bs. 2.000.000" },
+        { min: 2000000, max: Infinity, label: "Más de Bs. 2.000.000" },
       ];
 
       priceRanges.forEach((range) => {
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
           type: "price_range",
           value: `${range.min}-${range.max === Infinity ? "" : range.max}`,
           label: range.label,
-          category: "Faixa de Preço",
+          category: "Rango de precio",
         });
       });
     }
