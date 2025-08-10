@@ -149,7 +149,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             : "bg-green-600 hover:bg-green-700 text-white"
         }`}
       >
-        {type === "SALE" ? "Venda" : "Aluguel"}
+        {type === "SALE" ? "Venta" : "Alquiler"}
       </Badge>
     );
   };
@@ -219,7 +219,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             </p>
             <Button onClick={() => (window.location.href = "/")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar para a busca
+              Volver a la búsqueda
             </Button>
           </CardContent>
         </Card>
@@ -239,16 +239,16 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
               onClick={() => window.history.back()}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
+              Volver
             </Button>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm">
                 <Heart className="h-4 w-4 mr-2" />
-                Favoritar
+                Favorito
               </Button>
               <Button variant="outline" size="sm">
                 <Share2 className="h-4 w-4 mr-2" />
-                Compartilhar
+                Compartir
               </Button>
               {property && (
                 <PropertyPdfDownload property={property} variant="header" />
@@ -285,7 +285,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                 )}
               </div>
               <div className="text-sm text-muted-foreground">
-                {property.squareMeters}m² • Publicado em{" "}
+                {property.squareMeters}m² • Publicado el{" "}
                 {new Date(property.createdAt).toLocaleDateString()}
               </div>
             </div>
@@ -372,7 +372,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                   >
                     <Image
                       src={property.images[3]}
-                      alt={`${property.title} - Mais imagens`}
+                      alt={`${property.title} - Más imágenes`}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
@@ -389,7 +389,9 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             <div className="aspect-[4/3] rounded-lg bg-muted flex items-center justify-center">
               <div className="text-center">
                 <Home className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">Sem imagens disponíveis</p>
+                <p className="text-muted-foreground">
+                  Sin imágenes disponibles
+                </p>
               </div>
             </div>
           )}
@@ -413,7 +415,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                       </div>
                       <div className="font-semibold">{property.bedrooms}</div>
                       <div className="text-sm text-muted-foreground">
-                        Quartos
+                        Habitaciones
                       </div>
                     </div>
                   )}
@@ -424,9 +426,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                         <Bath className="h-6 w-6 text-primary" />
                       </div>
                       <div className="font-semibold">{property.bathrooms}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Banheiros
-                      </div>
+                      <div className="text-sm text-muted-foreground">Baños</div>
                     </div>
                   )}
 
@@ -448,7 +448,9 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                       <div className="font-semibold">
                         {property.garageSpaces}
                       </div>
-                      <div className="text-sm text-muted-foreground">Vagas</div>
+                      <div className="text-sm text-muted-foreground">
+                        Parqueos
+                      </div>
                     </div>
                   )}
                 </div>
@@ -472,7 +474,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             {/* Description */}
             <Card>
               <CardHeader>
-                <CardTitle>Descrição</CardTitle>
+                <CardTitle>Descripción</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
@@ -486,23 +488,23 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <MapPin className="h-5 w-5 mr-2" />
-                  Localização
+                  Ubicación
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 mb-4">
                   <div>
-                    <strong>Bairro:</strong> {property.locationNeigh}
+                    <strong>Barrio:</strong> {property.locationNeigh}
                   </div>
                   <div>
-                    <strong>Cidade:</strong> {property.locationCity}
+                    <strong>Ciudad:</strong> {property.locationCity}
                   </div>
                   <div>
-                    <strong>Estado:</strong> {property.locationState}
+                    <strong>Departamento:</strong> {property.locationState}
                   </div>
                   {property.address && (
                     <div>
-                      <strong>Endereço:</strong> {property.address}
+                      <strong>Dirección:</strong> {property.address}
                     </div>
                   )}
                 </div>
@@ -543,7 +545,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             {/* Agent Contact */}
             <Card>
               <CardHeader>
-                <CardTitle>Entre em Contato</CardTitle>
+                <CardTitle>Contacta al agente</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -588,7 +590,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                         className="w-full"
                       >
                         <Phone className="mr-2 h-4 w-4" />
-                        Ligar
+                        Llamar
                       </Button>
                     )}
                   </div>
@@ -603,7 +605,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             {/* Quick Info */}
             <Card>
               <CardHeader>
-                <CardTitle>Informações Rápidas</CardTitle>
+                <CardTitle>Información rápida</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
@@ -613,9 +615,9 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Transação:</span>
+                  <span className="text-muted-foreground">Transacción:</span>
                   <span className="font-medium">
-                    {property.transactionType === "SALE" ? "Venda" : "Aluguel"}
+                    {property.transactionType === "SALE" ? "Venta" : "Alquiler"}
                   </span>
                 </div>
                 <div className="flex justify-between">

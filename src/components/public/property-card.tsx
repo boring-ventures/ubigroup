@@ -119,7 +119,7 @@ export function PropertyCard({
             : "bg-green-600 hover:bg-green-700 text-white"
         }`}
       >
-        {type === "SALE" ? "Venda" : "Aluguel"}
+        {type === "SALE" ? "Venta" : "Alquiler"}
       </Badge>
     );
   };
@@ -361,7 +361,7 @@ export function PropertyCard({
               handleViewDetails();
             }}
           >
-            Ver Detalhes
+            Ver detalles
           </Button>
         </CardContent>
       </Card>

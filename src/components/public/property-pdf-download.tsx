@@ -102,7 +102,7 @@ export function PropertyPdfDownload({
       case "APARTMENT":
         return "Apartamento";
       case "OFFICE":
-        return "Escritório";
+        return "Oficina";
       case "LAND":
         return "Terreno";
       default:
@@ -156,7 +156,7 @@ export function PropertyPdfDownload({
                ${formatPrice(property.price, property.currency, property.exchangeRate, property.transactionType)}
              </div>
              <div style="font-size: 14px; color: #6b7280;">
-               ${property.squareMeters}m² • ${property.transactionType === "SALE" ? "Venda" : "Aluguel"} • ${getPropertyTypeLabel(property.type)}
+                ${property.squareMeters}m² • ${property.transactionType === "SALE" ? "Venta" : "Alquiler"} • ${getPropertyTypeLabel(property.type)}
              </div>
            </div>
 
@@ -243,7 +243,7 @@ export function PropertyPdfDownload({
                   ? `
                 <div style="text-align: center; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px;">
                   <div style="font-size: 18px; font-weight: bold; color: #2563eb;">${property.bedrooms}</div>
-                  <div style="font-size: 12px; color: #6b7280;">Quartos</div>
+                  <div style="font-size: 12px; color: #6b7280;">Habitaciones</div>
                 </div>
               `
                   : ""
@@ -253,7 +253,7 @@ export function PropertyPdfDownload({
                   ? `
                 <div style="text-align: center; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px;">
                   <div style="font-size: 18px; font-weight: bold; color: #2563eb;">${property.bathrooms}</div>
-                  <div style="font-size: 12px; color: #6b7280;">Banheiros</div>
+                  <div style="font-size: 12px; color: #6b7280;">Baños</div>
                 </div>
               `
                   : ""
@@ -267,7 +267,7 @@ export function PropertyPdfDownload({
                   ? `
                 <div style="text-align: center; padding: 15px; border: 1px solid #e5e7eb; border-radius: 8px;">
                   <div style="font-size: 18px; font-weight: bold; color: #2563eb;">${property.garageSpaces}</div>
-                  <div style="font-size: 12px; color: #6b7280;">Vagas</div>
+                  <div style="font-size: 12px; color: #6b7280;">Parqueos</div>
                 </div>
               `
                   : ""
@@ -301,9 +301,9 @@ export function PropertyPdfDownload({
 
           <!-- Description -->
           <div style="margin-bottom: 30px;">
-            <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #1f2937;">
-              Descrição
-            </h2>
+             <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #1f2937;">
+               Descripción
+             </h2>
             <p style="color: #6b7280; line-height: 1.8; white-space: pre-line;">
               ${property.description}
             </p>
@@ -312,19 +312,19 @@ export function PropertyPdfDownload({
                      <!-- Location -->
            <div style="margin-bottom: 30px;">
              <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #1f2937;">
-               Localização
+               Ubicación
              </h2>
              <div style="color: #6b7280; line-height: 1.8; margin-bottom: 20px;">
-               <div><strong>Bairro:</strong> ${property.locationNeigh}</div>
-               <div><strong>Cidade:</strong> ${property.locationCity}</div>
-               <div><strong>Estado:</strong> ${property.locationState}</div>
-               ${property.address ? `<div><strong>Endereço:</strong> ${property.address}</div>` : ""}
+               <div><strong>Barrio:</strong> ${property.locationNeigh}</div>
+               <div><strong>Ciudad:</strong> ${property.locationCity}</div>
+               <div><strong>Departamento:</strong> ${property.locationState}</div>
+               ${property.address ? `<div><strong>Dirección:</strong> ${property.address}</div>` : ""}
              </div>
              
                            <!-- Map Section -->
               <div style="margin-top: 20px;">
                 <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 10px; color: #1f2937;">
-                  Mapa da Localização
+                  Mapa de la ubicación
                 </h3>
                                  ${(() => {
                                    const coords = getLocationCoordinates(
@@ -417,7 +417,7 @@ export function PropertyPdfDownload({
                          color: #6b7280;
                          font-weight: 500;
                        ">
-                         🗺️ Mapa
+                          🗺️ Mapa
                        </div>
                      </div>
                      
@@ -429,7 +429,7 @@ export function PropertyPdfDownload({
                        text-align: center;
                        font-style: italic;
                      ">
-                       Localização: ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)} • Mapa real da localização
+                        Ubicación: ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)} • Mapa real de la ubicación
                      </div>
                    `;
                                  })()}
@@ -441,18 +441,18 @@ export function PropertyPdfDownload({
             <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #1f2937;">
               Información de la Propiedad
             </h2>
-            <div style="color: #6b7280; line-height: 1.8;">
-              <div><strong>Tipo:</strong> ${getPropertyTypeLabel(property.type)}</div>
-              <div><strong>Transação:</strong> ${property.transactionType === "SALE" ? "Venda" : "Aluguel"}</div>
-              <div><strong>ID de la Propiedad:</strong> ${property.id}</div>
-              <div><strong>Publicado:</strong> ${new Date(property.createdAt).toLocaleDateString()}</div>
-            </div>
+              <div style="color: #6b7280; line-height: 1.8;">
+                <div><strong>Tipo:</strong> ${getPropertyTypeLabel(property.type)}</div>
+                <div><strong>Transacción:</strong> ${property.transactionType === "SALE" ? "Venta" : "Alquiler"}</div>
+                <div><strong>ID de la Propiedad:</strong> ${property.id}</div>
+                <div><strong>Publicado:</strong> ${new Date(property.createdAt).toLocaleDateString()}</div>
+              </div>
           </div>
 
           <!-- Footer -->
           <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px;">
-            <div>Documento gerado em ${new Date().toLocaleDateString()} às ${new Date().toLocaleTimeString()}</div>
-            <div style="margin-top: 5px;">UbiGroup - Plataforma Imobiliária</div>
+            <div>Documento generado el ${new Date().toLocaleDateString()} a las ${new Date().toLocaleTimeString()}</div>
+            <div style="margin-top: 5px;">UbiGroup - Plataforma inmobiliaria</div>
           </div>
         </div>
       `;
@@ -501,7 +501,7 @@ export function PropertyPdfDownload({
       pdf.save(fileName);
     } catch (error) {
       console.error("Error generating PDF:", error);
-      alert("Erro ao gerar PDF. Tente novamente.");
+      alert("Error al generar el PDF. Intenta nuevamente.");
     }
   };
 

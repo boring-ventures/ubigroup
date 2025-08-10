@@ -214,7 +214,7 @@ export function PublicPropertyCatalog() {
               Inténtalo de nuevo.
             </p>
             <Button onClick={() => window.location.reload()}>
-              Tentar Novamente
+              Intentar de nuevo
             </Button>
           </CardContent>
         </Card>
@@ -247,7 +247,7 @@ export function PublicPropertyCatalog() {
               onClick={() => (window.location.href = "/sign-in")}
               className="hidden sm:flex"
             >
-              Acessar Dashboard
+              Acceder al panel
             </Button>
           </div>
 
@@ -388,12 +388,12 @@ export function PublicPropertyCatalog() {
                     </h3>
                     <p className="text-muted-foreground mb-4">
                       {searchQuery || Object.keys(filters).length > 0
-                        ? "Tente ajustar seus filtros de busca para encontrar mais opções."
+                        ? "Intenta ajustar tus filtros de búsqueda para encontrar más opciones."
                         : "No hay propiedades disponibles en este momento."}
                     </p>
                     {(searchQuery || Object.keys(filters).length > 0) && (
                       <Button onClick={clearFilters} variant="outline">
-                        Limpar Filtros
+                        Limpiar filtros
                       </Button>
                     )}
                   </div>
@@ -453,7 +453,7 @@ export function PublicPropertyCatalog() {
                     </h3>
                     <p className="text-muted-foreground mb-4">
                       {searchQuery
-                        ? "Tente ajustar sua busca para encontrar mais opções."
+                        ? "Intenta ajustar tu búsqueda para encontrar más opciones."
                         : "No hay proyectos disponibles en este momento."}
                     </p>
                     {searchQuery && (
@@ -461,7 +461,7 @@ export function PublicPropertyCatalog() {
                         onClick={() => setSearchQuery("")}
                         variant="outline"
                       >
-                        Limpar Busca
+                        Limpiar búsqueda
                       </Button>
                     )}
                   </div>
@@ -559,45 +559,45 @@ export function PublicPropertyCatalog() {
                 <span className="font-bold text-lg">UbiGroup</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                Plataforma completa para gestão imobiliária com tecnologia
-                avançada.
+                Plataforma completa para gestión inmobiliaria con tecnología
+                avanzada.
               </p>
             </div>
 
             <div>
-              <h3 className="font-semibold mb-3">Para Compradores</h3>
+              <h3 className="font-semibold mb-3">Para compradores</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>Buscar Propiedades</li>
-                <li>Calculadora de Financiamento</li>
-                <li>Guia do Comprador</li>
+                <li>Calculadora de financiamiento</li>
+                <li>Guía del comprador</li>
               </ul>
             </div>
 
             <div>
-              <h3 className="font-semibold mb-3">Para Profissionais</h3>
+              <h3 className="font-semibold mb-3">Para profesionales</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
                   <a href="/sign-in" className="hover:text-primary">
-                    Acessar Dashboard
+                    Acceder al panel
                   </a>
                 </li>
                 <li>Registrar Propiedades</li>
-                <li>Gerenciar Leads</li>
+                <li>Gestionar leads</li>
               </ul>
             </div>
 
             <div>
-              <h3 className="font-semibold mb-3">Contato</h3>
+              <h3 className="font-semibold mb-3">Contacto</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>support@ubigroup.com</li>
                 <li>+55 (11) 9999-9999</li>
-                <li>Segunda a Sexta, 9h às 18h</li>
+                <li>Lunes a Viernes, 9h a 18h</li>
               </ul>
             </div>
           </div>
 
           <div className="border-t mt-8 pt-6 text-center text-sm text-muted-foreground">
-            <p>&copy; 2024 UbiGroup. Todos os direitos reservados.</p>
+            <p>&copy; 2024 UbiGroup. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>

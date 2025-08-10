@@ -108,7 +108,7 @@ export function PropertySearchBar({
         id: `recent-${index}`,
         type: "recent" as const,
         label: search,
-        description: "Busca recente",
+        description: "Búsqueda reciente",
         icon: Clock,
       }));
       suggestions.push(...recent);
@@ -196,13 +196,13 @@ export function PropertySearchBar({
   const getSuggestionTypeLabel = (type: string) => {
     switch (type) {
       case "location":
-        return "Local";
+        return "Lugar";
       case "property_type":
         return "Tipo";
       case "price_range":
-        return "Preço";
+        return "Precio";
       case "recent":
-        return "Recente";
+        return "Reciente";
       default:
         return "";
     }
@@ -265,18 +265,18 @@ export function PropertySearchBar({
             <CommandList className="max-h-80">
               {isLoading ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
-                  Buscando sugestões...
+                  Buscando sugerencias...
                 </div>
               ) : getAllSuggestions().length === 0 ? (
                 <CommandEmpty className="py-6 text-center text-sm">
                   {inputValue.trim()
-                    ? "Nenhuma sugestão encontrada."
+                    ? "No se encontraron sugerencias."
                     : "Escribe para buscar propiedades..."}
                 </CommandEmpty>
               ) : (
                 <>
                   {recentSearches.length > 0 && !inputValue.trim() && (
-                    <CommandGroup heading="Buscas Recentes">
+                    <CommandGroup heading="Búsquedas recientes">
                       {getAllSuggestions()
                         .filter((s) => s.type === "recent")
                         .map((suggestion) => (
@@ -305,7 +305,7 @@ export function PropertySearchBar({
                   {getAllSuggestions().filter((s) => s.type !== "recent")
                     .length > 0 && (
                     <CommandGroup
-                      heading={inputValue.trim() ? "Sugestões" : "Populares"}
+                      heading={inputValue.trim() ? "Sugerencias" : "Populares"}
                     >
                       {getAllSuggestions()
                         .filter((s) => s.type !== "recent")

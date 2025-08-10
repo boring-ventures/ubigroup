@@ -82,18 +82,18 @@ const FEATURES_OPTIONS = [
   "Piscina",
   "Jardín",
   "Balcón",
-  "Churrasqueira",
-  "Academia",
+  "Parrilla",
+  "Gimnasio",
   "Playground",
-  "Segurança 24h",
+  "Seguridad 24h",
   "Portería",
-  "Elevador",
-  "Ar Condicionado",
-  "Móveis Planejados",
-  "Lareira",
+  "Ascensor",
+  "Aire acondicionado",
+  "Muebles empotrados",
+  "Chimenea",
   "Sauna",
-  "Salão de Festas",
-  "Quadra Esportiva",
+  "Salón de fiestas",
+  "Cancha deportiva",
 ];
 
 // Dynamic location data will be loaded from API
@@ -149,37 +149,37 @@ export function PropertyFilters({
     <div className="space-y-6">
       {/* Transaction Type */}
       <div className="space-y-2">
-        <Label className="text-base font-medium">Tipo de Transação</Label>
+        <Label className="text-base font-medium">Tipo de transacción</Label>
         <Select
           value={filters.transactionType || ""}
           onValueChange={(value) => updateFilter("transactionType", value)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Venda ou Aluguel" />
+            <SelectValue placeholder="Venta o alquiler" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">Todos</SelectItem>
-            <SelectItem value="SALE">Venda</SelectItem>
-            <SelectItem value="RENT">Aluguel</SelectItem>
+            <SelectItem value="SALE">Venta</SelectItem>
+            <SelectItem value="RENT">Alquiler</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Property Type */}
       <div className="space-y-2">
-        <Label className="text-base font-medium">Tipo de Propiedad</Label>
+        <Label className="text-base font-medium">Tipo de propiedad</Label>
         <Select
           value={filters.type || ""}
           onValueChange={(value) => updateFilter("type", value)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Selecione o tipo" />
+            <SelectValue placeholder="Selecciona el tipo" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">Todos</SelectItem>
             <SelectItem value="HOUSE">Casa</SelectItem>
-            <SelectItem value="APARTMENT">Apartamento</SelectItem>
-            <SelectItem value="OFFICE">Escritório</SelectItem>
+            <SelectItem value="APARTMENT">Departamento</SelectItem>
+            <SelectItem value="OFFICE">Oficina</SelectItem>
             <SelectItem value="LAND">Terreno</SelectItem>
           </SelectContent>
         </Select>
@@ -189,7 +189,7 @@ export function PropertyFilters({
       <div className="space-y-4">
         <Label className="text-base font-medium flex items-center">
           <MapPin className="h-4 w-4 mr-2" />
-          Localização
+          Ubicación
         </Label>
 
         <div className="space-y-3">
@@ -198,13 +198,13 @@ export function PropertyFilters({
             onValueChange={(value) => updateFilter("locationState", value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Estado" />
+              <SelectValue placeholder="Departamento" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os Estados</SelectItem>
+              <SelectItem value="">Todos los departamentos</SelectItem>
               {locationsLoading ? (
                 <SelectItem value="" disabled>
-                  Carregando estados...
+                  Cargando departamentos...
                 </SelectItem>
               ) : (
                 locationData?.states?.map((state: string) => (
@@ -221,13 +221,13 @@ export function PropertyFilters({
             onValueChange={(value) => updateFilter("locationCity", value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Cidade" />
+              <SelectValue placeholder="Ciudad" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas as Cidades</SelectItem>
+              <SelectItem value="">Todas las ciudades</SelectItem>
               {locationsLoading ? (
                 <SelectItem value="" disabled>
-                  Carregando cidades...
+                  Cargando ciudades...
                 </SelectItem>
               ) : (
                 locationData?.cities
@@ -250,13 +250,13 @@ export function PropertyFilters({
             onValueChange={(value) => updateFilter("locationNeigh", value)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Bairro" />
+              <SelectValue placeholder="Barrio" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os Bairros</SelectItem>
+              <SelectItem value="">Todos los barrios</SelectItem>
               {locationsLoading ? (
                 <SelectItem value="" disabled>
-                  Carregando bairros...
+                  Cargando barrios...
                 </SelectItem>
               ) : (
                 locationData?.neighborhoods
@@ -280,12 +280,12 @@ export function PropertyFilters({
       <div className="space-y-2">
         <Label className="text-base font-medium flex items-center">
           <DollarSign className="h-4 w-4 mr-2" />
-          Faixa de Preço
+          Rango de precio
         </Label>
         <div className="grid grid-cols-2 gap-2">
           <Input
             type="number"
-            placeholder="Preço mín."
+            placeholder="Precio mín."
             value={filters.minPrice || ""}
             onChange={(e) =>
               updateFilter(
@@ -296,7 +296,7 @@ export function PropertyFilters({
           />
           <Input
             type="number"
-            placeholder="Preço máx."
+            placeholder="Precio máx."
             value={filters.maxPrice || ""}
             onChange={(e) =>
               updateFilter(
@@ -317,7 +317,7 @@ export function PropertyFilters({
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label className="text-sm">Quartos</Label>
+            <Label className="text-sm">Habitaciones</Label>
             <Select
               value={filters.bedrooms?.toString() || ""}
               onValueChange={(value) =>
@@ -325,10 +325,10 @@ export function PropertyFilters({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Qualquer" />
+                <SelectValue placeholder="Cualquiera" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Qualquer</SelectItem>
+                <SelectItem value="">Cualquiera</SelectItem>
                 <SelectItem value="1">1+</SelectItem>
                 <SelectItem value="2">2+</SelectItem>
                 <SelectItem value="3">3+</SelectItem>
@@ -339,7 +339,7 @@ export function PropertyFilters({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm">Banheiros</Label>
+            <Label className="text-sm">Baños</Label>
             <Select
               value={filters.bathrooms?.toString() || ""}
               onValueChange={(value) =>
@@ -347,10 +347,10 @@ export function PropertyFilters({
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Qualquer" />
+                <SelectValue placeholder="Cualquiera" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Qualquer</SelectItem>
+                <SelectItem value="">Cualquiera</SelectItem>
                 <SelectItem value="1">1+</SelectItem>
                 <SelectItem value="2">2+</SelectItem>
                 <SelectItem value="3">3+</SelectItem>
@@ -364,7 +364,7 @@ export function PropertyFilters({
       {/* Advanced Filters */}
       <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
         <CollapsibleTrigger className="flex items-center justify-between w-full p-3 rounded-lg border">
-          <span className="font-medium">Filtros Avançados</span>
+          <span className="font-medium">Filtros avanzados</span>
           <ChevronDown
             className={`h-4 w-4 transition-transform ${isAdvancedOpen ? "rotate-180" : ""}`}
           />
@@ -406,7 +406,7 @@ export function PropertyFilters({
           {/* Features */}
           <div className="space-y-3">
             <Label className="text-base font-medium">
-              Características Especiais
+              Características especiales
             </Label>
             <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
               {FEATURES_OPTIONS.map((feature) => (
@@ -430,7 +430,7 @@ export function PropertyFilters({
       {/* Actions */}
       <div className="flex space-x-2 pt-4 border-t">
         <Button variant="outline" onClick={onClearFilters} className="flex-1">
-          Limpar Filtros
+          Limpiar filtros
         </Button>
       </div>
     </div>
@@ -455,9 +455,9 @@ export function PropertyFilters({
         </SheetTrigger>
         <SheetContent side="bottom" className="h-[90vh]">
           <SheetHeader>
-            <SheetTitle>Filtrar Propiedades</SheetTitle>
+            <SheetTitle>Filtrar propiedades</SheetTitle>
             <SheetDescription>
-              Utiliza los filtros siguientes para encontrar la propiedad ideal
+              Utiliza los siguientes filtros para encontrar la propiedad ideal
             </SheetDescription>
           </SheetHeader>
           <div className="mt-6 overflow-y-auto h-full pb-20">
