@@ -575,9 +575,7 @@ export function PropertyDetailPage({
                       />
                     </div>
                     <div>
-                      <Label htmlFor="garageSpaces">
-                        Vagas de Estacionamiento
-                      </Label>
+                      <Label htmlFor="garageSpaces">Parqueos</Label>
                       <Input
                         id="garageSpaces"
                         type="number"
@@ -631,7 +629,9 @@ export function PropertyDetailPage({
                       <div className="font-semibold">
                         {property.garageSpaces}
                       </div>
-                      <div className="text-xs text-muted-foreground">Vagas</div>
+                      <div className="text-xs text-muted-foreground">
+                        Parqueos
+                      </div>
                     </div>
                     <div className="text-center">
                       <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-2 mx-auto">

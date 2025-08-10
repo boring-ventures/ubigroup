@@ -168,7 +168,7 @@ export function SuperAdminAllProperties() {
             : "bg-green-600 hover:bg-green-700 text-white"
         }`}
       >
-        {type === "SALE" ? "Venda" : "Aluguel"}
+        {type === "SALE" ? "Venta" : "Alquiler"}
       </Badge>
     );
   };
@@ -197,9 +197,9 @@ export function SuperAdminAllProperties() {
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+    return new Intl.NumberFormat("es-BO", {
       style: "currency",
-      currency: "BRL",
+      currency: "BOB",
     }).format(price);
   };
 
