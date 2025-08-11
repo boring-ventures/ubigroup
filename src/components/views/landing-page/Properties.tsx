@@ -203,6 +203,9 @@ export default function Properties() {
       params.append("sortBy", "createdAt");
       params.append("sortOrder", "desc");
 
+      // Always restrict to APPROVED for public homepage
+      params.append("status", "APPROVED");
+
       // Add search and filter params
       if (searchFilters) {
         if (searchFilters.searchTerm) {

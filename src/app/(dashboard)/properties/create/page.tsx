@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { PropertyForm } from "@/components/dashboard/property-form";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Profile } from "@/types/profile";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 export default function CreatePropertyPage() {
   const [isLoading, setIsLoading] = useState(true);

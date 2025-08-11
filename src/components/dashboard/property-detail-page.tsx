@@ -17,7 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   MapPin,
   Bed,
@@ -821,7 +826,7 @@ export function PropertyDetailPage({
                 {property.images.map((image, index) => (
                   <div
                     key={index}
-                    className="aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer group"
+                    className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer group"
                     onClick={() => {
                       setCurrentImageIndex(index);
                       setShowImageGallery(true);
@@ -869,6 +874,9 @@ export function PropertyDetailPage({
       {/* Image Gallery Modal */}
       <Dialog open={showImageGallery} onOpenChange={setShowImageGallery}>
         <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
+          <DialogHeader>
+            <DialogTitle className="sr-only">Galería de Imágenes</DialogTitle>
+          </DialogHeader>
           <div className="relative w-full h-full flex items-center justify-center bg-black">
             <Image
               src={property.images[currentImageIndex]}

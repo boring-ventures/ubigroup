@@ -384,7 +384,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                 {property.images.slice(1, 3).map((image, index) => (
                   <div
                     key={index}
-                    className="aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer group"
+                    className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer group"
                     onClick={() => {
                       setCurrentImageIndex(index + 1);
                       setShowImageGallery(true);

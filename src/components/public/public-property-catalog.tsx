@@ -115,7 +115,7 @@ export function PublicPropertyCatalog() {
         });
 
       // Only get approved properties for public view
-      params.append("status", "APPROVED");
+      params.set("status", "APPROVED");
 
       // Map tab to transaction type
       const tabToTransaction: Record<string, string> = {
