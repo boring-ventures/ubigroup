@@ -125,8 +125,10 @@ export function ProjectsList() {
       <Card>
         <CardContent className="pt-6">
           <div className="text-center">
-            <p className="text-destructive mb-4">Failed to load projects</p>
-            <Button onClick={() => refetch()}>Try Again</Button>
+            <p className="text-destructive mb-4">
+              No se pudieron cargar los proyectos
+            </p>
+            <Button onClick={() => refetch()}>Intentar de nuevo</Button>
           </div>
         </CardContent>
       </Card>
@@ -139,7 +141,7 @@ export function ProjectsList() {
         <div className="flex items-center space-x-2">
           <input
             type="text"
-            placeholder="Search projects..."
+            placeholder="Buscar proyectos..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -148,7 +150,7 @@ export function ProjectsList() {
         <Button asChild>
           <Link href="/projects/create">
             <Plus className="mr-2 h-4 w-4" />
-            Create New Project
+            Crear nuevo proyecto
           </Link>
         </Button>
       </div>
@@ -158,17 +160,19 @@ export function ProjectsList() {
           <CardContent className="pt-6">
             <div className="text-center">
               <Building2 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No projects found</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                No se encontraron proyectos
+              </h3>
               <p className="text-muted-foreground mb-4">
                 {searchQuery
-                  ? "No projects match your search."
-                  : "You haven't created any projects yet."}
+                  ? "No hay proyectos que coincidan con tu búsqueda."
+                  : "Aún no has creado ningún proyecto."}
               </p>
               {!searchQuery && (
                 <Button asChild>
                   <Link href="/projects/create">
                     <Plus className="mr-2 h-4 w-4" />
-                    Create Your First Project
+                    Crea tu primer proyecto
                   </Link>
                 </Button>
               )}
@@ -196,7 +200,7 @@ export function ProjectsList() {
                       </CardDescription>
                     </div>
                     <Badge variant={project.active ? "default" : "secondary"}>
-                      {project.active ? "Active" : "Inactive"}
+                      {project.active ? "Activo" : "Inactivo"}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -208,13 +212,13 @@ export function ProjectsList() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">
-                        Property Type:
+                        Tipo de propiedad:
                       </span>
                       <Badge variant="outline">{project.propertyType}</Badge>
                     </div>
 
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Floors:</span>
+                      <span className="text-muted-foreground">Pisos:</span>
                       <span className="font-medium">
                         {project.floors.length}
                       </span>
@@ -222,23 +226,23 @@ export function ProjectsList() {
 
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">
-                        Total Quadrants:
+                        Cuadrantes totales:
                       </span>
                       <span className="font-medium">{totalQuadrants}</span>
                     </div>
 
                     {totalQuadrants > 0 && (
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Status:</span>
+                        <span className="text-muted-foreground">Estado:</span>
                         <div className="flex space-x-1">
                           <Badge variant="default" className="text-xs">
-                            {statusCounts.available} Available
+                            {statusCounts.available} Disponible
                           </Badge>
                           <Badge variant="destructive" className="text-xs">
-                            {statusCounts.unavailable} Unavailable
+                            {statusCounts.unavailable} No disponible
                           </Badge>
                           <Badge variant="secondary" className="text-xs">
-                            {statusCounts.reserved} Reserved
+                            {statusCounts.reserved} Reservado
                           </Badge>
                         </div>
                       </div>
@@ -258,7 +262,9 @@ export function ProjectsList() {
                         </Link>
                       </Button>
                       <Button size="sm" variant="outline" asChild>
-                        <Link href={`/projects/${project.id}/edit`}>Edit</Link>
+                        <Link href={`/projects/${project.id}/edit`}>
+                          Editar
+                        </Link>
                       </Button>
                     </div>
                   </div>

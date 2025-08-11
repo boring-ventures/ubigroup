@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import React, { useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +42,7 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  Trash,
 } from "lucide-react";
 import Image from "next/image";
 import {
@@ -50,6 +51,8 @@ import {
 } from "@/lib/validations/project";
 import { PropertyType, Currency, QuadrantStatus } from "@prisma/client";
 import { z } from "zod";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // Client-side only date formatter to prevent hydration errors
 function ClientDateFormatter({ date }: { date: string }) {
@@ -130,6 +133,16 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
     null
   );
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Local staged state
+  const [localFloors, setLocalFloors] = useState<Project["floors"]>(
+    project.floors
+  );
+  const [deletedFloorIds, setDeletedFloorIds] = useState<string[]>([]);
+  const [deletedQuadrantIds, setDeletedQuadrantIds] = useState<string[]>([]);
+  const originalFloors = useMemo(() => project.floors, [project.floors]);
 
   type CreateFloorInput = z.infer<typeof createFloorSchema>;
   type CreateQuadrantInput = z.infer<typeof createQuadrantSchema>;
@@ -138,7 +151,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
     resolver: zodResolver(createFloorSchema),
     defaultValues: {
       number: 1,
-      name: "",
+      name: undefined,
     },
   });
 
@@ -155,103 +168,332 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
     },
   });
 
-  const createFloorMutation = useMutation({
-    mutationFn: async (data: CreateFloorInput) => {
-      const response = await fetch(`/api/projects/${project.id}/floors`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error("Failed to create floor");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
-      setShowFloorDialog(false);
-      floorForm.reset();
-      toast({ title: "Success", description: "Floor created successfully" });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create floor",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const createQuadrantMutation = useMutation({
-    mutationFn: async (data: CreateQuadrantInput) => {
-      const response = await fetch(
-        `/api/floors/${selectedFloor?.id}/quadrants`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        }
-      );
-      if (!response.ok) throw new Error("Failed to create quadrant");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
-      setShowQuadrantDialog(false);
-      quadrantForm.reset();
-      toast({ title: "Success", description: "Quadrant created successfully" });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create quadrant",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateQuadrantMutation = useMutation({
-    mutationFn: async ({
-      quadrantId,
-      data,
-    }: {
-      quadrantId: string;
-      data: CreateQuadrantInput;
-    }) => {
-      const response = await fetch(
-        `/api/floors/${selectedFloor?.id}/quadrants`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ quadrantId, ...data }),
-        }
-      );
-      if (!response.ok) throw new Error("Failed to update quadrant");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["projects"] });
-      setShowQuadrantDialog(false);
-      setSelectedQuadrant(null);
-      quadrantForm.reset();
-      toast({ title: "Success", description: "Quadrant updated successfully" });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update quadrant",
-        variant: "destructive",
-      });
-    },
-  });
+  // Staging helpers
+  const generateTempId = () => `temp_${Math.random().toString(36).slice(2)}`;
 
   const handleFloorSubmit = (data: CreateFloorInput) => {
-    createFloorMutation.mutate(data);
+    if (selectedFloor) {
+      // Editing a single floor: ensure no duplicate number
+      const exists = localFloors.some(
+        (f) => f.number === data.number && f.id !== selectedFloor.id
+      );
+      if (exists) {
+      toast({
+        title: "Error",
+          description: `Ya existe un piso con el número ${data.number}`,
+        variant: "destructive",
+      });
+        return;
+      }
+      setLocalFloors((prev) =>
+        prev.map((f) =>
+          f.id === selectedFloor.id
+            ? { ...f, number: data.number, name: null }
+            : f
+        )
+      );
+      toast({ title: "Éxito", description: "Piso actualizado localmente" });
+    } else {
+      // Creating multiple floors: 'number' is the count to add
+      const countToAdd = Math.max(1, Math.floor(data.number));
+      const maxNumber = localFloors.reduce(
+        (max, f) => Math.max(max, f.number),
+        0
+      );
+      const newFloors: Project["floors"] = [];
+      for (let i = 1; i <= countToAdd; i++) {
+        newFloors.push({
+          id: generateTempId(),
+          number: maxNumber + i,
+          name: null,
+          quadrants: [],
+        } as Project["floors"][number]);
+      }
+      setLocalFloors((prev) => [...prev, ...newFloors]);
+      toast({
+        title: "Éxito",
+        description: `${countToAdd} piso(s) agregado(s) localmente`,
+      });
+    }
+    setShowFloorDialog(false);
+    setSelectedFloor(null);
+    floorForm.reset();
+  };
+
+  const handleDeleteFloor = (floorId: string) => {
+    setLocalFloors((prev) => prev.filter((f) => f.id !== floorId));
+    if (!floorId.startsWith("temp_")) {
+      setDeletedFloorIds((prev) => [...prev, floorId]);
+    }
+    toast({ title: "Éxito", description: "Piso eliminado localmente" });
   };
 
   const handleQuadrantSubmit = (data: CreateQuadrantInput) => {
-    if (selectedQuadrant) {
-      updateQuadrantMutation.mutate({ quadrantId: selectedQuadrant.id, data });
-    } else {
-      createQuadrantMutation.mutate(data);
+    if (!selectedFloor) return;
+    setLocalFloors((prev) =>
+      prev.map((f) => {
+        if (f.id !== selectedFloor.id) return f;
+        if (selectedQuadrant) {
+          return {
+            ...f,
+            quadrants: f.quadrants.map((q) =>
+              q.id === selectedQuadrant.id
+                ? {
+                    ...q,
+                    area: data.area,
+                    bedrooms: data.bedrooms,
+                    bathrooms: data.bathrooms,
+                    price: data.price,
+                    currency: data.currency,
+                    status: data.status ?? q.status,
+                    active: data.active ?? q.active,
+                  }
+                : q
+            ),
+          };
+        }
+        return {
+          ...f,
+          quadrants: [
+            ...f.quadrants,
+            {
+              id: generateTempId(),
+              customId: "TEMP",
+              area: data.area,
+              bedrooms: data.bedrooms,
+              bathrooms: data.bathrooms,
+              price: data.price,
+              currency: data.currency,
+              status: data.status ?? QuadrantStatus.AVAILABLE,
+              active: data.active ?? true,
+            } as Project["floors"][number]["quadrants"][number],
+          ],
+        };
+      })
+    );
+      setShowQuadrantDialog(false);
+    setSelectedQuadrant(null);
+      quadrantForm.reset();
+      toast({
+      title: "Éxito",
+      description: selectedQuadrant
+        ? "Cuadrante actualizado localmente"
+        : "Cuadrante agregado localmente",
+    });
+  };
+
+  const handleDeleteQuadrant = (floorId: string, quadrantId: string) => {
+    setLocalFloors((prev) =>
+      prev.map((f) =>
+        f.id === floorId
+          ? {
+              ...f,
+              quadrants: f.quadrants.filter((q) => q.id !== quadrantId),
+            }
+          : f
+      )
+    );
+    if (!quadrantId.startsWith("temp_")) {
+      setDeletedQuadrantIds((prev) => [...prev, quadrantId]);
+    }
+    toast({ title: "Éxito", description: "Cuadrante eliminado localmente" });
+  };
+
+  const persistChanges = async () => {
+    try {
+      setIsSaving(true);
+      // Validate duplicates client-side before contacting server
+      const numbers = new Map<number, number>();
+      for (const f of localFloors) {
+        numbers.set(f.number, (numbers.get(f.number) ?? 0) + 1);
+      }
+      const duplicateEntry = Array.from(numbers.entries()).find(
+        ([, c]) => c > 1
+      );
+      if (duplicateEntry) {
+        throw new Error(
+          `Número de piso duplicado: ${duplicateEntry[0]}. Cada piso debe tener un número único.`
+        );
+      }
+      const originalFloorsMap = new Map(originalFloors.map((f) => [f.id, f]));
+
+      // 0) Process deletions first
+      for (const qId of deletedQuadrantIds) {
+        // Need the owning floor id; attempt to find it in original or local
+        const floorContaining = [...originalFloors, ...localFloors].find((f) =>
+          f.quadrants.some((q) => q.id === qId)
+        );
+        if (!floorContaining) continue;
+        const res = await fetch(`/api/floors/${floorContaining.id}/quadrants`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quadrantId: qId }),
+        });
+        if (!res.ok) {
+          let reason = "No se pudo eliminar un cuadrante";
+          try {
+            const data = await res.json();
+            if (data?.error) reason = data.error;
+          } catch {}
+          throw new Error(reason);
+        }
+      }
+
+      for (const fId of deletedFloorIds) {
+        const res = await fetch(`/api/floors/${fId}`, { method: "DELETE" });
+        if (!res.ok) {
+          let reason = "No se pudo eliminar un piso";
+          try {
+            const data = await res.json();
+            if (data?.error) reason = data.error;
+          } catch {}
+          throw new Error(reason);
+        }
+      }
+
+      // 1) Create new floors
+      const floorIdMap = new Map<string, string>();
+      for (const f of localFloors) {
+        if (f.id.startsWith("temp_")) {
+          const res = await fetch(`/api/projects/${project.id}/floors`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              number: f.number,
+              name: f.name ?? undefined,
+            }),
+          });
+          if (!res.ok) {
+            let reason = "No se pudo crear un piso";
+            try {
+              const data = await res.json();
+              if (data?.error) reason = data.error;
+            } catch {}
+            throw new Error(reason);
+          }
+          const created = await res.json();
+          floorIdMap.set(f.id, created.id);
+        }
+      }
+
+      // 2) Update existing floors
+      for (const f of localFloors) {
+        if (f.id.startsWith("temp_")) continue;
+        const orig = originalFloorsMap.get(f.id);
+        if (!orig) continue;
+        if (
+          orig.number !== f.number ||
+          (orig.name ?? null) !== (f.name ?? null)
+        ) {
+          const res = await fetch(`/api/floors/${f.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              number: f.number,
+              name: f.name ?? undefined,
+            }),
+          });
+          if (!res.ok) {
+            let reason = "No se pudo actualizar un piso";
+            try {
+              const data = await res.json();
+              if (data?.error) reason = data.error;
+            } catch {}
+            throw new Error(reason);
+          }
+        }
+      }
+
+      // 3) Create/Update quadrants (skip deleted)
+      for (const f of localFloors) {
+        const persistedFloorId = f.id.startsWith("temp_")
+          ? floorIdMap.get(f.id)!
+          : f.id;
+        const orig = originalFloorsMap.get(f.id);
+        const origQMap = new Map((orig?.quadrants ?? []).map((q) => [q.id, q]));
+
+        for (const q of f.quadrants) {
+          if (deletedQuadrantIds.includes(q.id)) continue;
+          const isNewQ = q.id.startsWith("temp_");
+          if (isNewQ) {
+            const res = await fetch(
+              `/api/floors/${persistedFloorId}/quadrants`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  area: q.area,
+                  bedrooms: q.bedrooms,
+                  bathrooms: q.bathrooms,
+                  price: q.price,
+                  currency: q.currency,
+                  status: q.status,
+                  active: q.active,
+                }),
+              }
+            );
+            if (!res.ok) {
+              let reason = "No se pudo crear un cuadrante";
+              try {
+                const data = await res.json();
+                if (data?.error) reason = data.error;
+              } catch {}
+              throw new Error(reason);
+            }
+          } else {
+            const oq = origQMap.get(q.id);
+            if (!oq) continue;
+            const changed =
+              oq.area !== q.area ||
+              oq.bedrooms !== q.bedrooms ||
+              oq.bathrooms !== q.bathrooms ||
+              oq.price !== q.price ||
+              oq.currency !== q.currency ||
+              oq.status !== q.status ||
+              oq.active !== q.active;
+            if (changed) {
+              const res = await fetch(
+                `/api/floors/${persistedFloorId}/quadrants`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    quadrantId: q.id,
+                    area: q.area,
+                    bedrooms: q.bedrooms,
+                    bathrooms: q.bathrooms,
+                    price: q.price,
+                    currency: q.currency,
+                    status: q.status,
+                    active: q.active,
+                  }),
+                }
+              );
+              if (!res.ok) {
+                let reason = "No se pudo actualizar un cuadrante";
+                try {
+                  const data = await res.json();
+                  if (data?.error) reason = data.error;
+                } catch {}
+                throw new Error(reason);
+              }
+            }
+          }
+        }
+      }
+
+      toast({ title: "Éxito", description: "Cambios guardados correctamente" });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      router.refresh();
+    } catch (e) {
+      toast({
+        title: "Error",
+        description:
+          (e as Error).message ?? "No se pudieron guardar los cambios",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -306,16 +548,21 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
             {project.location}
           </p>
         </div>
+        <div className="flex items-center gap-2">
         <Badge variant={project.active ? "default" : "secondary"}>
-          {project.active ? "Active" : "Inactive"}
+          {project.active ? "Activo" : "Inactivo"}
         </Badge>
+          <Button size="sm" variant="outline" asChild>
+            <Link href={`/projects/${project.id}/edit`}>Editar proyecto</Link>
+          </Button>
+        </div>
       </div>
 
       {/* Project Images */}
       {project.images.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Project Images</CardTitle>
+            <CardTitle>Imágenes del proyecto</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -338,34 +585,34 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Project Information</CardTitle>
+            <CardTitle>Información del proyecto</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-sm font-medium">Description</Label>
+              <Label className="text-sm font-medium">Descripción</Label>
               <p className="text-sm text-muted-foreground mt-1">
                 {project.description}
               </p>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Property Type:</span>
+              <span className="text-sm font-medium">Tipo de propiedad:</span>
               <Badge variant="outline">{project.propertyType}</Badge>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Total Floors:</span>
-              <span className="font-medium">{project.floors.length}</span>
+              <span className="text-sm font-medium">Total de pisos:</span>
+              <span className="font-medium">{localFloors.length}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Total Quadrants:</span>
+              <span className="text-sm font-medium">Total de cuadrantes:</span>
               <span className="font-medium">
-                {project.floors.reduce(
+                {localFloors.reduce(
                   (total, floor) => total + floor.quadrants.length,
                   0
                 )}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Created:</span>
+              <span className="text-sm font-medium">Creado:</span>
               <span className="text-sm text-muted-foreground">
                 <ClientDateFormatter date={project.createdAt} />
               </span>
@@ -375,14 +622,14 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Agent Information</CardTitle>
+            <CardTitle>Información del agente</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center space-x-3">
               {project.agent.avatarUrl ? (
                 <Image
                   src={project.agent.avatarUrl}
-                  alt="Agent avatar"
+                  alt="Avatar del agente"
                   width={40}
                   height={40}
                   className="rounded-full"
@@ -396,11 +643,11 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                 <p className="font-medium">
                   {project.agent.firstName} {project.agent.lastName}
                 </p>
-                <p className="text-sm text-muted-foreground">Agent</p>
+                <p className="text-sm text-muted-foreground">Agente</p>
               </div>
             </div>
             <div>
-              <Label className="text-sm font-medium">Agency</Label>
+              <Label className="text-sm font-medium">Agencia</Label>
               <p className="text-sm text-muted-foreground mt-1">
                 {project.agency.name}
               </p>
@@ -415,111 +662,61 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center">
               <Layers className="mr-2 h-5 w-5" />
-              Floors & Quadrants
+              Pisos y cuadrantes
             </CardTitle>
             <ClientOnly>
-              <Dialog open={showFloorDialog} onOpenChange={setShowFloorDialog}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Floor
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Floor</DialogTitle>
-                    <DialogDescription>
-                      Add a new floor to your project
-                    </DialogDescription>
-                  </DialogHeader>
-                  <Form {...floorForm}>
-                    <form
-                      onSubmit={floorForm.handleSubmit(handleFloorSubmit)}
-                      className="space-y-4"
-                    >
-                      <FormField
-                        control={floorForm.control}
-                        name="number"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Floor Number</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                min="1"
-                                {...field}
-                                onChange={(e) =>
-                                  field.onChange(parseInt(e.target.value))
-                                }
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={floorForm.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Floor Name (Optional)</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="e.g., Ground Floor, First Floor"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="flex justify-end space-x-2">
+              <div className="flex items-center gap-2">
                         <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setShowFloorDialog(false)}
-                        >
-                          Cancel
+                  onClick={() => {
+                    setSelectedFloor(null);
+                    floorForm.reset({ number: 1 });
+                    setShowFloorDialog(true);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Pisos
                         </Button>
-                        <Button
-                          type="submit"
-                          disabled={createFloorMutation.isPending}
-                        >
-                          {createFloorMutation.isPending
-                            ? "Creating..."
-                            : "Create Floor"}
+                <Button size="sm" onClick={persistChanges} disabled={isSaving}>
+                  {isSaving ? "Guardando..." : "Guardar"}
                         </Button>
                       </div>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
             </ClientOnly>
           </div>
         </CardHeader>
         <CardContent>
-          {project.floors.length === 0 ? (
+          {localFloors.length === 0 ? (
             <div className="text-center py-8">
               <Layers className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No floors yet</h3>
+              <h3 className="text-lg font-semibold mb-2">Aún no hay pisos</h3>
               <p className="text-muted-foreground mb-4">
-                Add your first floor to start creating quadrants
+                Agrega tu primer piso para empezar a crear cuadrantes
               </p>
             </div>
           ) : (
             <div className="space-y-6">
-              {project.floors.map((floor) => (
+              {localFloors.map((floor) => (
                 <div key={floor.id} className="border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h3 className="text-lg font-semibold">
-                        Floor {floor.number}
-                        {floor.name && ` - ${floor.name}`}
+                        Piso {floor.number}
                       </h3>
                       <p className="text-sm text-muted-foreground">
-                        {floor.quadrants.length} quadrants
+                        {floor.quadrants.length} cuadrantes
                       </p>
                     </div>
+                    <div className="flex gap-2">
+                      {null}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-red-500 text-red-600 hover:bg-red-50"
+                        onClick={() => handleDeleteFloor(floor.id)}
+                        aria-label="Eliminar piso"
+                        title="Eliminar piso"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
                     <Button
                       size="sm"
                       onClick={() => {
@@ -530,15 +727,16 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                       }}
                     >
                       <Plus className="mr-2 h-4 w-4" />
-                      Add Quadrant
+                      Agregar cuadrante
                     </Button>
+                    </div>
                   </div>
 
                   {floor.quadrants.length === 0 ? (
                     <div className="text-center py-8 border-2 border-dashed border-muted-foreground rounded-lg">
                       <Grid3X3 className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
                       <p className="text-sm text-muted-foreground">
-                        No quadrants yet
+                        Aún no hay cuadrantes
                       </p>
                     </div>
                   ) : (
@@ -562,21 +760,36 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                           </div>
                           <div className="space-y-1 text-xs">
                             <div className="flex justify-between">
-                              <span>Area:</span>
+                              <span>Área:</span>
                               <span>{quadrant.area}m²</span>
                             </div>
                             <div className="flex justify-between">
-                              <span>Bed:</span>
+                              <span>Dorm:</span>
                               <span>{quadrant.bedrooms}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span>Bath:</span>
+                              <span>Baño:</span>
                               <span>{quadrant.bathrooms}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span>Price:</span>
+                              <span>Precio:</span>
                               <span>${quadrant.price.toLocaleString()}</span>
                             </div>
+                          </div>
+                          <div className="mt-2 flex justify-end">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-red-500 text-red-600 hover:bg-red-50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteQuadrant(floor.id, quadrant.id);
+                              }}
+                              aria-label="Eliminar cuadrante"
+                              title="Eliminar cuadrante"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -595,12 +808,14 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>
-                {selectedQuadrant ? "Edit Quadrant" : "Add New Quadrant"}
+                {selectedQuadrant
+                  ? "Editar cuadrante"
+                  : "Agregar nuevo cuadrante"}
               </DialogTitle>
               <DialogDescription>
                 {selectedQuadrant
-                  ? "Update quadrant information"
-                  : "Add a new quadrant to this floor"}
+                  ? "Actualizar información del cuadrante"
+                  : "Agregar un nuevo cuadrante a este piso"}
               </DialogDescription>
             </DialogHeader>
             <Form {...quadrantForm}>
@@ -614,7 +829,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                     name="area"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Area (m²)</FormLabel>
+                        <FormLabel>Área (m²)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -635,7 +850,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                     name="bedrooms"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Bedrooms</FormLabel>
+                        <FormLabel>Dormitorios</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -657,7 +872,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                     name="bathrooms"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Bathrooms</FormLabel>
+                        <FormLabel>Baños</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -677,7 +892,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Price</FormLabel>
+                        <FormLabel>Precio</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -700,7 +915,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                     name="currency"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Currency</FormLabel>
+                        <FormLabel>Moneda</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
@@ -715,7 +930,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                               Bolivianos
                             </SelectItem>
                             <SelectItem value={Currency.DOLLARS}>
-                              Dollars
+                              Dólares
                             </SelectItem>
                           </SelectContent>
                         </Select>
@@ -728,7 +943,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status</FormLabel>
+                        <FormLabel>Estado</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
@@ -740,13 +955,13 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value={QuadrantStatus.AVAILABLE}>
-                              Available
+                              Disponible
                             </SelectItem>
                             <SelectItem value={QuadrantStatus.UNAVAILABLE}>
-                              Unavailable
+                              No disponible
                             </SelectItem>
                             <SelectItem value={QuadrantStatus.RESERVED}>
-                              Reserved
+                              Reservado
                             </SelectItem>
                           </SelectContent>
                         </Select>
@@ -761,22 +976,65 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                     variant="outline"
                     onClick={() => setShowQuadrantDialog(false)}
                   >
-                    Cancel
+                    Cancelar
                   </Button>
+                  <Button type="submit">
+                    {selectedQuadrant
+                        ? "Actualizar cuadrante"
+                        : "Crear cuadrante"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </ClientOnly>
+
+      {/* Floor Dialog */}
+      <ClientOnly>
+        <Dialog open={showFloorDialog} onOpenChange={setShowFloorDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Agregar pisos</DialogTitle>
+              <DialogDescription>
+                Ingresa cuántos pisos deseas agregar
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...floorForm}>
+              <form
+                onSubmit={floorForm.handleSubmit(handleFloorSubmit)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={floorForm.control}
+                  name="number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de piso</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="1"
+                          {...field}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value))
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {/* Floor name removed per request */}
+                <div className="flex justify-end space-x-2">
                   <Button
-                    type="submit"
-                    disabled={
-                      createQuadrantMutation.isPending ||
-                      updateQuadrantMutation.isPending
-                    }
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowFloorDialog(false)}
                   >
-                    {createQuadrantMutation.isPending ||
-                    updateQuadrantMutation.isPending
-                      ? "Saving..."
-                      : selectedQuadrant
-                        ? "Update Quadrant"
-                        : "Create Quadrant"}
+                    Cancelar
                   </Button>
+                  <Button type="submit">Agregar pisos</Button>
                 </div>
               </form>
             </Form>

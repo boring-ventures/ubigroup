@@ -76,6 +76,9 @@ export function ProjectForm({
       location: initialData?.location || "",
       propertyType: initialData?.propertyType || PropertyType.APARTMENT,
       images: initialData?.images || [],
+      googleMapsUrl: (initialData as any)?.googleMapsUrl || "",
+      latitude: (initialData as any)?.latitude || undefined,
+      longitude: (initialData as any)?.longitude || undefined,
     },
   });
 
@@ -85,8 +88,9 @@ export function ProjectForm({
 
     if (validFiles.length !== files.length) {
       toast({
-        title: "Invalid file type",
-        description: "Please upload only image files (JPG, PNG, GIF, WebP)",
+        title: "Tipo de archivo no válido",
+        description:
+          "Por favor sube solo archivos de imagen (JPG, PNG, GIF, WebP)",
         variant: "destructive",
       });
     }
@@ -133,16 +137,16 @@ export function ProjectForm({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to save project");
+        throw new Error(errorData.error || "No se pudo guardar el proyecto");
       }
 
       await response.json();
 
       toast({
-        title: "Success",
+        title: "Éxito",
         description: projectId
-          ? "Project updated successfully"
-          : "Project created successfully",
+          ? "Proyecto actualizado correctamente"
+          : "Proyecto creado correctamente",
       });
 
       if (onSuccess) {
@@ -156,11 +160,13 @@ export function ProjectForm({
         }
       }
     } catch (error) {
-      console.error("Error saving project:", error);
+      console.error("Error al guardar el proyecto:", error);
       toast({
         title: "Error",
         description:
-          error instanceof Error ? error.message : "Failed to save project",
+          error instanceof Error
+            ? error.message
+            : "No se pudo guardar el proyecto",
         variant: "destructive",
       });
     } finally {
@@ -174,12 +180,12 @@ export function ProjectForm({
         <CardHeader>
           <CardTitle className="flex items-center">
             <Building2 className="mr-2 h-5 w-5" />
-            {projectId ? "Edit Project" : "Create New Project"}
+            {projectId ? "Editar proyecto" : "Crear nuevo proyecto"}
           </CardTitle>
           <CardDescription>
             {projectId
-              ? "Update your project information"
-              : "Fill in the details to create a new project"}
+              ? "Actualiza la información de tu proyecto"
+              : "Completa los detalles para crear un nuevo proyecto"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -190,9 +196,12 @@ export function ProjectForm({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Project Name</FormLabel>
+                    <FormLabel>Nombre del proyecto</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter project name" {...field} />
+                      <Input
+                        placeholder="Ingresa el nombre del proyecto"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -206,42 +215,115 @@ export function ProjectForm({
                   <FormItem>
                     <FormLabel className="flex items-center">
                       <MapPin className="mr-1 h-4 w-4" />
-                      Location
+                      Ubicación
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter project location" {...field} />
+                      <Input
+                        placeholder="Ingresa la ubicación del proyecto"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="googleMapsUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Google Maps URL</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="https://maps.google.com/..."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Opcional: enlace de Google Maps del proyecto
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="latitude"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Latitud</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.000001"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ""
+                                ? undefined
+                                : parseFloat(e.target.value)
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="longitude"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Longitud</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.000001"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ""
+                                ? undefined
+                                : parseFloat(e.target.value)
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
                 name="propertyType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Property Type</FormLabel>
+                    <FormLabel>Tipo de propiedad</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select property type" />
+                          <SelectValue placeholder="Selecciona el tipo de propiedad" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value={PropertyType.HOUSE}>
-                          House
-                        </SelectItem>
+                        <SelectItem value={PropertyType.HOUSE}>Casa</SelectItem>
                         <SelectItem value={PropertyType.APARTMENT}>
-                          Apartment
+                          Departamento
                         </SelectItem>
                         <SelectItem value={PropertyType.OFFICE}>
-                          Office
+                          Oficina
                         </SelectItem>
-                        <SelectItem value={PropertyType.LAND}>Land</SelectItem>
+                        <SelectItem value={PropertyType.LAND}>
+                          Terreno
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -254,16 +336,16 @@ export function ProjectForm({
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>Descripción</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Describe your project..."
+                        placeholder="Describe tu proyecto..."
                         className="min-h-[100px]"
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      Provide a detailed description of your project
+                      Proporciona una descripción detallada de tu proyecto
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -274,7 +356,7 @@ export function ProjectForm({
                 <div>
                   <Label className="flex items-center">
                     <ImageIcon className="mr-1 h-4 w-4" />
-                    Project Images
+                    Imágenes del proyecto
                   </Label>
                   <div className="mt-2">
                     <Input
@@ -294,7 +376,7 @@ export function ProjectForm({
                       <div key={index} className="relative group">
                         <Image
                           src={imageUrl}
-                          alt={`Project image ${index + 1}`}
+                          alt={`Imagen del proyecto ${index + 1}`}
                           width={200}
                           height={150}
                           className="rounded-lg object-cover w-full h-32"
@@ -343,19 +425,19 @@ export function ProjectForm({
               <div className="flex justify-end space-x-4">
                 {onCancel && (
                   <Button type="button" variant="outline" onClick={onCancel}>
-                    Cancel
+                    Cancelar
                   </Button>
                 )}
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
                     <>
                       <Loader className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
+                      Guardando...
                     </>
                   ) : (
                     <>
                       <Plus className="mr-2 h-4 w-4" />
-                      {projectId ? "Update Project" : "Create Project"}
+                      {projectId ? "Actualizar proyecto" : "Crear proyecto"}
                     </>
                   )}
                 </Button>
