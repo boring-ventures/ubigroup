@@ -8,6 +8,7 @@ import Testimonials from "@/components/views/landing-page/Testimonials";
 import CTA from "@/components/views/landing-page/CTA";
 import Footer from "@/components/views/landing-page/Footer";
 import Properties from "@/components/views/landing-page/Properties";
+import CaptureBanner from "@/components/views/landing-page/CaptureBanner";
 
 // Disable static generation for this page to avoid CSS build issues
 export const dynamic = "force-dynamic";
@@ -33,6 +34,7 @@ export default function Home() {
         </Suspense>
         <About />
         <Testimonials />
+        <CaptureBanner />
         <CTA />
       </main>
 
