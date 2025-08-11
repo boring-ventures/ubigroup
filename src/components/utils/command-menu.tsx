@@ -41,11 +41,11 @@ export function CommandMenu() {
 
   return (
     <CommandDialog modal open={open} onOpenChange={setOpen}>
-      <DialogTitle className="sr-only">Command Menu</DialogTitle>
-      <CommandInput placeholder="Type a command or search..." />
+      <DialogTitle className="sr-only">Menú de comandos</DialogTitle>
+      <CommandInput placeholder="Escribe un comando o busca..." />
       <CommandList>
         <ScrollArea type="hover" className="h-72 pr-1">
-          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandEmpty>No se encontraron resultados.</CommandEmpty>
           {sidebarData.navGroups.map((group) => (
             <CommandGroup key={group.title} heading={group.title}>
               {group.items.map((navItem, i) => {
@@ -83,17 +83,17 @@ export function CommandMenu() {
             </CommandGroup>
           ))}
           <CommandSeparator />
-          <CommandGroup heading="Theme">
+          <CommandGroup heading="Tema">
             <CommandItem onSelect={() => runCommand(() => setTheme("light"))}>
-              <Sun className="mr-2 h-4 w-4" /> <span>Light</span>
+              <Sun className="mr-2 h-4 w-4" /> <span>Claro</span>
             </CommandItem>
             <CommandItem onSelect={() => runCommand(() => setTheme("dark"))}>
               <Moon className="mr-2 h-4 w-4 scale-90" />
-              <span>Dark</span>
+              <span>Oscuro</span>
             </CommandItem>
             <CommandItem onSelect={() => runCommand(() => setTheme("system"))}>
               <Laptop className="mr-2 h-4 w-4" />
-              <span>System</span>
+              <span>Sistema</span>
             </CommandItem>
           </CommandGroup>
         </ScrollArea>
