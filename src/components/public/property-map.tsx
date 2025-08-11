@@ -44,16 +44,31 @@ interface Property {
   };
 }
 
+interface ProjectPin {
+  id: string;
+  name: string;
+  location?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
 interface PropertyMapProps {
   properties: Property[];
+  projects?: ProjectPin[];
   className?: string;
 }
 
-export function PropertyMap({ properties, className }: PropertyMapProps) {
+export function PropertyMap({
+  properties,
+  projects = [],
+  className,
+}: PropertyMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map>(null);
   const markersRef = useRef<Marker[]>([]);
   const isInitializedRef = useRef(false);
+  const cssInjectedRef = useRef(false);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -66,6 +81,23 @@ export function PropertyMap({ properties, className }: PropertyMapProps) {
 
         // Dynamically import Leaflet
         const L = await import("leaflet");
+
+        // Inject Leaflet CSS once to ensure tiles/controls are visible
+        if (!cssInjectedRef.current && typeof document !== "undefined") {
+          const existing = Array.from(
+            document.querySelectorAll('link[rel="stylesheet"]')
+          ).some((l) => (l as HTMLLinkElement).href.includes("leaflet.css"));
+          if (!existing) {
+            const linkEl = document.createElement("link");
+            linkEl.rel = "stylesheet";
+            linkEl.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+            linkEl.integrity =
+              "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=";
+            linkEl.crossOrigin = "";
+            document.head.appendChild(linkEl);
+          }
+          cssInjectedRef.current = true;
+        }
 
         // Clear existing markers first
         if (markersRef.current.length > 0) {
@@ -108,10 +140,17 @@ export function PropertyMap({ properties, className }: PropertyMapProps) {
 
         // Force map to refresh after a short delay to ensure proper rendering
         setTimeout(() => {
-          if (mapInstanceRef.current) {
-            mapInstanceRef.current.invalidateSize();
-          }
+          map.invalidateSize();
         }, 200);
+
+        // Observe container resize and invalidate map size
+        if (mapRef.current && typeof ResizeObserver !== "undefined") {
+          const ro = new ResizeObserver(() => {
+            map.invalidateSize();
+          });
+          ro.observe(mapRef.current);
+          resizeObserverRef.current = ro;
+        }
 
         // Add custom CSS to fix zoom controls styling
         const style = document.createElement("style");
@@ -172,7 +211,11 @@ export function PropertyMap({ properties, className }: PropertyMapProps) {
           (p) => p.latitude && p.longitude
         );
 
-        if (validProperties.length > 0) {
+        const validProjects = (projects || []).filter(
+          (p) => p.latitude && p.longitude
+        );
+
+        if (validProperties.length > 0 || validProjects.length > 0) {
           const bounds = L.latLngBounds([]);
 
           validProperties.forEach((property) => {
@@ -248,6 +291,54 @@ export function PropertyMap({ properties, className }: PropertyMapProps) {
             bounds.extend([property.latitude, property.longitude]);
           });
 
+          // Add markers for projects
+          validProjects.forEach((project) => {
+            if (!project.latitude || !project.longitude) return;
+
+            const projectIcon = L.divIcon({
+              className: "custom-marker",
+              html: `
+                <div style="
+                  width: 20px;
+                  height: 20px;
+                  background-color: #7c3aed;
+                  border: 2px solid white;
+                  border-radius: 50%;
+                  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  font-size: 10px;
+                  font-weight: bold;
+                  color: white;
+                  text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+                ">
+                  P
+                </div>
+              `,
+              iconSize: [20, 20],
+              iconAnchor: [10, 10],
+            });
+
+            const popupContent = `
+              <div style="min-width: 200px;">
+                <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">
+                  ${project.name}
+                </h3>
+                ${project.location ? `<p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">${project.location}</p>` : ""}
+              </div>
+            `;
+
+            const marker = L.marker([project.latitude, project.longitude], {
+              icon: projectIcon,
+            })
+              .addTo(map)
+              .bindPopup(popupContent);
+
+            markersRef.current.push(marker);
+            bounds.extend([project.latitude, project.longitude]);
+          });
+
           // Fit map to show all markers
           if (bounds.isValid()) {
             map.fitBounds(bounds, { padding: [20, 20] });
@@ -258,7 +349,7 @@ export function PropertyMap({ properties, className }: PropertyMapProps) {
         isInitializedRef.current = true;
       } catch (error) {
         console.error("Error loading map:", error);
-        setMapError("Failed to load map. Please refresh the page.");
+        setMapError("No se pudo cargar el mapa. Por favor, recarga la página.");
       }
     };
 
@@ -287,13 +378,19 @@ export function PropertyMap({ properties, className }: PropertyMapProps) {
         mapInstanceRef.current = null;
         isInitializedRef.current = false;
       }
+
+      // Disconnect resize observer
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+        resizeObserverRef.current = null;
+      }
     };
   }, [properties]);
 
   return (
     <Card className={className}>
       <CardHeader>
-        <CardTitle>Property Locations</CardTitle>
+        <CardTitle>Mapa</CardTitle>
       </CardHeader>
       <CardContent>
         {mapError ? (
@@ -305,7 +402,7 @@ export function PropertyMap({ properties, className }: PropertyMapProps) {
                 onClick={() => window.location.reload()}
                 className="mt-2 px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
               >
-                Refresh Page
+                Recargar
               </button>
             </div>
           </div>
@@ -323,15 +420,19 @@ export function PropertyMap({ properties, className }: PropertyMapProps) {
         <div className="mt-4 flex flex-wrap gap-4 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-green-500 border-2 border-white shadow-sm"></div>
-            <span>For Sale</span>
+            <span>Venta</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-yellow-500 border-2 border-white shadow-sm"></div>
-            <span>For Rent</span>
+            <span>Alquiler</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-sm"></div>
             <span>Anticrético</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 rounded-full bg-purple-600 border-2 border-white shadow-sm"></div>
+            <span>Proyectos</span>
           </div>
         </div>
       </CardContent>

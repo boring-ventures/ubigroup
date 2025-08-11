@@ -44,11 +44,17 @@ interface Property {
 interface PropertyPdfDownloadProps {
   property: Property;
   variant?: "header" | "sidebar";
+  mapView?: { centerLat: number; centerLng: number; zoom: number } | null;
+  mapSnapshotDataUrl?: string | null;
+  onBeforeGenerate?: () => Promise<string | null> | string | void;
 }
 
 export function PropertyPdfDownload({
   property,
   variant = "sidebar",
+  mapView,
+  mapSnapshotDataUrl,
+  onBeforeGenerate,
 }: PropertyPdfDownloadProps) {
   const formatPrice = (
     price: number,
@@ -110,23 +116,42 @@ export function PropertyPdfDownload({
     }
   };
 
-  // Generate mock coordinates based on location (for demonstration)
-  const getLocationCoordinates = (city: string, neighborhood: string) => {
-    // This is a simplified mock - in a real app you'd use geocoding
+  // Resolve coordinates and zoom with precedence: mapView -> property coords -> mock by city/neigh
+  const resolveCoordsAndZoom = () => {
+    if (mapView) {
+      return {
+        lat: mapView.centerLat,
+        lng: mapView.centerLng,
+        zoom: Math.max(1, Math.min(19, Math.round(mapView.zoom))),
+      };
+    }
+    if ((property as any).latitude && (property as any).longitude) {
+      return {
+        lat: (property as any).latitude as number,
+        lng: (property as any).longitude as number,
+        zoom: 15,
+      };
+    }
+    const city = property.locationCity || "";
+    const neighborhood = property.locationNeigh || "";
     const cityHash = city.split("").reduce((a, b) => a + b.charCodeAt(0), 0);
     const neighHash = neighborhood
       .split("")
       .reduce((a, b) => a + b.charCodeAt(0), 0);
-
-    // Generate consistent coordinates based on city and neighborhood
-    const lat = -16.5 + (cityHash % 100) / 1000; // Bolivia latitude range
-    const lng = -68.1 + (neighHash % 100) / 1000; // Bolivia longitude range
-
-    return { lat, lng };
+    const lat = -16.5 + (cityHash % 100) / 1000;
+    const lng = -68.1 + (neighHash % 100) / 1000;
+    return { lat, lng, zoom: 15 };
   };
 
   const handleDownloadPdf = async () => {
     try {
+      let liveSnapshot: string | null = null;
+      if (onBeforeGenerate) {
+        const maybe = await onBeforeGenerate();
+        if (typeof maybe === "string") {
+          liveSnapshot = maybe;
+        }
+      }
       // Create a temporary container for PDF generation
       const tempContainer = document.createElement("div");
       tempContainer.style.position = "fixed";
@@ -140,6 +165,27 @@ export function PropertyPdfDownload({
       tempContainer.style.lineHeight = "1.6";
       tempContainer.style.color = "#333";
       tempContainer.style.zIndex = "-1";
+
+      // Compute map params
+      const { lat, lng, zoom } = resolveCoordsAndZoom();
+      const mapWidth = 800; // px inside the temp container
+      const mapHeight = 500; // increase height to reduce stretching
+      const markerSpec = `${lat},${lng},red`;
+      const staticMapUrl = `/api/static-map?center=${encodeURIComponent(`${lat},${lng}`)}&zoom=${encodeURIComponent(String(zoom))}&size=${encodeURIComponent(`${mapWidth}x${mapHeight}`)}&markers=${encodeURIComponent(markerSpec)}`;
+
+      // Preload map image and convert to data URL to avoid any capture issues
+      let mapDataUrl: string | null = null;
+      try {
+        const res = await fetch(staticMapUrl, { cache: "no-store" });
+        if (res.ok) {
+          const blob = await res.blob();
+          mapDataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+        }
+      } catch (_) {}
 
       // Create PDF content directly
       const pdfContent = `
@@ -189,11 +235,12 @@ export function PropertyPdfDownload({
                      <img 
                        src="${image}" 
                        alt="Imagen ${index + 1} de la propiedad"
-                       style="
-                         width: 100%;
-                         height: 100%;
-                         object-fit: cover;
-                       "
+                            style="
+                              width: 100%;
+                              height: 100%;
+                              object-fit: cover;
+                              object-position: center;
+                            "
                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                      />
                      <div style="
@@ -323,29 +370,22 @@ export function PropertyPdfDownload({
              
                            <!-- Map Section -->
               <div style="margin-top: 20px;">
-                <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 10px; color: #1f2937;">
+                 <h3 style="font-size: 16px; font-weight: bold; margin-bottom: 10px; color: #1f2937;">
                   Mapa de la ubicación
                 </h3>
-                                 ${(() => {
-                                   const coords = getLocationCoordinates(
-                                     property.locationCity,
-                                     property.locationNeigh
-                                   );
-
-                                   return `
-                     <div style="
-                       width: 100%; 
-                       height: 200px; 
+                      <div style="
+                        width: 100%; 
+                        height: ${mapHeight}px; 
                        border: 2px solid #d1d5db;
                        border-radius: 8px;
                        position: relative;
                        overflow: hidden;
                        background: #f3f4f6;
                      ">
-                                               <!-- Map Image -->
+                        <!-- Map Image (preload hidden, then show once loaded) -->
                         <img 
-                          src="https://staticmap.openstreetmap.de/staticmap.php?center=${coords.lat},${coords.lng}&zoom=15&size=600x300&markers=${coords.lat},${coords.lng},red"
-                          alt="Mapa da localização"
+                            src="${liveSnapshot ?? mapSnapshotDataUrl ?? mapDataUrl ?? staticMapUrl}"
+                          alt="Mapa de la ubicación"
                           style="
                             width: 100%;
                             height: 100%;
@@ -366,8 +406,8 @@ export function PropertyPdfDownload({
                         ">
                           <div style="font-size: 24px; margin-bottom: 8px;">🗺️</div>
                           <div style="font-size: 12px; text-align: center;">
-                            Mapa da localização<br/>
-                            ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}
+                             Mapa de la ubicación<br/>
+                             ${lat.toFixed(4)}, ${lng.toFixed(4)}
                           </div>
                         </div>
                        
@@ -402,7 +442,7 @@ export function PropertyPdfDownload({
                          font-weight: 500;
                          font-family: monospace;
                        ">
-                         ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}
+                          ${lat.toFixed(4)}, ${lng.toFixed(4)}
                        </div>
                        
                        <!-- Map Legend -->
@@ -429,10 +469,9 @@ export function PropertyPdfDownload({
                        text-align: center;
                        font-style: italic;
                      ">
-                        Ubicación: ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)} • Mapa real de la ubicación
+                        Ubicación: ${lat.toFixed(4)}, ${lng.toFixed(4)} • Vista del mapa (zoom ${zoom})
                      </div>
-                   `;
-                                 })()}
+                   
               </div>
            </div>
 
@@ -460,11 +499,39 @@ export function PropertyPdfDownload({
       tempContainer.innerHTML = pdfContent;
       document.body.appendChild(tempContainer);
 
+      // Ensure images inside the container are loaded before rendering
+      const waitForImages = (container: HTMLElement, timeoutMs = 7000) =>
+        new Promise<void>((resolve) => {
+          const images = Array.from(container.querySelectorAll("img"));
+          if (images.length === 0) {
+            resolve();
+            return;
+          }
+          let loadedCount = 0;
+          const done = () => {
+            loadedCount++;
+            if (loadedCount >= images.length) resolve();
+          };
+          setTimeout(() => resolve(), timeoutMs);
+          images.forEach((img) => {
+            const image = img as HTMLImageElement;
+            if (image.complete) {
+              done();
+            } else {
+              image.addEventListener("load", done, { once: true });
+              image.addEventListener("error", done, { once: true });
+            }
+          });
+        });
+
+      await waitForImages(tempContainer, 8000);
+
       // Generate PDF
       const canvas = await html2canvas(tempContainer, {
         scale: 2,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false,
+        imageTimeout: 10000,
         backgroundColor: "#ffffff",
         logging: false,
         width: 800,
@@ -514,7 +581,7 @@ export function PropertyPdfDownload({
         className={variant === "sidebar" ? "w-full" : ""}
       >
         <Download className="h-4 w-4 mr-2" />
-        {variant === "sidebar" ? "Baixar PDF" : "PDF"}
+        {variant === "sidebar" ? "Descargar PDF" : "PDF"}
       </Button>
     </>
   );

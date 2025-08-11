@@ -20,6 +20,7 @@ import {
   Building2,
   Layers,
 } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Property {
   id: string;
@@ -75,9 +76,9 @@ export function PublicPropertyCatalog() {
   const [filters, setFilters] = useState<PublicPropertyFilters>({});
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
-  const [activeTab, setActiveTab] = useState<"properties" | "projects">(
-    "properties"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "venta" | "alquiler" | "anticretico" | "proyectos"
+  >("venta");
   const isMobile = useIsMobile();
 
   // Fetch properties with search and filters
@@ -86,7 +87,7 @@ export function PublicPropertyCatalog() {
     isLoading: propertiesLoading,
     error: propertiesError,
   } = useQuery({
-    queryKey: ["public-properties", searchQuery, filters],
+    queryKey: ["public-properties", searchQuery, filters, activeTab],
     queryFn: async (): Promise<Property[]> => {
       const params = new URLSearchParams();
 
@@ -95,24 +96,36 @@ export function PublicPropertyCatalog() {
         params.append("search", searchQuery.trim());
       }
 
-      // Add filters with proper mapping for API
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== "") {
-          if (Array.isArray(value)) {
-            value.forEach((v) => params.append(`${key}[]`, v));
-          } else {
-            // Map frontend filter names to API parameter names
-            let apiKey = key;
-            if (key === "bedrooms") apiKey = "minBedrooms";
-            if (key === "bathrooms") apiKey = "minBathrooms";
+      // Add filters with proper mapping for API (exclude transactionType; controlled by tab)
+      Object.entries(filters)
+        .filter(([key]) => key !== "transactionType")
+        .forEach(([key, value]) => {
+          if (value !== undefined && value !== "") {
+            if (Array.isArray(value)) {
+              value.forEach((v) => params.append(`${key}[]`, v));
+            } else {
+              // Map frontend filter names to API parameter names
+              let apiKey = key;
+              if (key === "bedrooms") apiKey = "minBedrooms";
+              if (key === "bathrooms") apiKey = "minBathrooms";
 
-            params.append(apiKey, value.toString());
+              params.append(apiKey, value.toString());
+            }
           }
-        }
-      });
+        });
 
       // Only get approved properties for public view
       params.append("status", "APPROVED");
+
+      // Map tab to transaction type
+      const tabToTransaction: Record<string, string> = {
+        venta: "SALE",
+        alquiler: "RENT",
+        anticretico: "ANTICRÉTICO",
+      };
+      if (activeTab !== "proyectos") {
+        params.append("transactionType", tabToTransaction[activeTab]);
+      }
 
       const response = await fetch(`/api/properties?${params.toString()}`);
       if (!response.ok) {
@@ -122,7 +135,7 @@ export function PublicPropertyCatalog() {
       return data.properties || [];
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: activeTab === "properties",
+    enabled: activeTab !== "proyectos",
   });
 
   // Fetch projects
@@ -164,7 +177,7 @@ export function PublicPropertyCatalog() {
       const data = await response.json();
       return data.projects || [];
     },
-    enabled: activeTab === "projects",
+    enabled: activeTab === "proyectos",
   });
 
   const handleSearch = (query: string) => {
@@ -181,7 +194,7 @@ export function PublicPropertyCatalog() {
   };
 
   const getResultsText = () => {
-    if (activeTab === "properties") {
+    if (activeTab !== "proyectos") {
       const count = properties.length;
       if (count === 0) return "Ninguna propiedad encontrada";
       if (count === 1) return "1 propiedad encontrada";
@@ -195,8 +208,8 @@ export function PublicPropertyCatalog() {
   };
 
   const isLoading =
-    activeTab === "properties" ? propertiesLoading : projectsLoading;
-  const error = activeTab === "properties" ? propertiesError : projectsError;
+    activeTab !== "proyectos" ? propertiesLoading : projectsLoading;
+  const error = activeTab !== "proyectos" ? propertiesError : projectsError;
 
   if (error) {
     return (
@@ -206,11 +219,11 @@ export function PublicPropertyCatalog() {
             <Building2 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">
               Error al cargar{" "}
-              {activeTab === "properties" ? "propiedades" : "proyectos"}
+              {activeTab !== "proyectos" ? "propiedades" : "proyectos"}
             </h3>
             <p className="text-muted-foreground mb-4">
               No fue posible cargar los{" "}
-              {activeTab === "properties" ? "propiedades" : "proyectos"}.
+              {activeTab !== "proyectos" ? "propiedades" : "proyectos"}.
               Inténtalo de nuevo.
             </p>
             <Button onClick={() => window.location.reload()}>
@@ -260,26 +273,28 @@ export function PublicPropertyCatalog() {
           />
 
           {/* Tabs */}
-          <div className="flex space-x-1 mb-4">
-            <Button
-              variant={activeTab === "properties" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveTab("properties")}
-              className="flex items-center space-x-2"
-            >
-              <Home className="h-4 w-4" />
-              <span>Propiedades</span>
-            </Button>
-            <Button
-              variant={activeTab === "projects" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveTab("projects")}
-              className="flex items-center space-x-2"
-            >
-              <Layers className="h-4 w-4" />
-              <span>Proyectos</span>
-            </Button>
-          </div>
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="venta" aria-label="Propiedades en venta">
+                Venta
+              </TabsTrigger>
+              <TabsTrigger
+                value="alquiler"
+                aria-label="Propiedades en alquiler"
+              >
+                Alquiler
+              </TabsTrigger>
+              <TabsTrigger
+                value="anticretico"
+                aria-label="Propiedades en anticrético"
+              >
+                Anticrético
+              </TabsTrigger>
+              <TabsTrigger value="proyectos" aria-label="Proyectos">
+                Proyectos
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           {/* Controls */}
           <div className="flex items-center justify-between">
@@ -355,7 +370,7 @@ export function PublicPropertyCatalog() {
               </div>
             )}
 
-            {activeTab === "properties" ? (
+            {activeTab !== "proyectos" ? (
               <>
                 {isLoading ? (
                   <div

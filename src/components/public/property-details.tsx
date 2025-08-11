@@ -7,9 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { PropertyPdfDownload } from "./property-pdf-download";
-import { PropertySingleMap } from "./property-single-map";
+import {
+  PropertySingleMap,
+  type PropertySingleMapHandle,
+} from "./property-single-map";
 import Image from "next/image";
 import type { PropertyType, TransactionType } from "@prisma/client";
 import {
@@ -76,6 +84,13 @@ interface PropertyDetailsProps {
 export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageGallery, setShowImageGallery] = useState(false);
+  const [mapView, setMapView] = useState<{
+    centerLat: number;
+    centerLng: number;
+    zoom: number;
+  } | null>(null);
+  const mapRef = React.useRef<PropertySingleMapHandle | null>(null);
+  const [mapSnapshot, setMapSnapshot] = useState<string | null>(null);
 
   // Fetch property details
   const {
@@ -161,7 +176,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
       case "APARTMENT":
         return "Apartamento";
       case "OFFICE":
-        return "Escritório";
+        return "Oficina";
       case "LAND":
         return "Terreno";
       default:
@@ -182,6 +197,17 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
   const handleContactPhone = () => {
     if (property?.agent.phone) {
       window.location.href = `tel:${property.agent.phone}`;
+    }
+  };
+
+  const captureMapSnapshot = async () => {
+    try {
+      await mapRef.current?.awaitReady();
+      const dataUrl = await mapRef.current?.getSnapshot();
+      if (dataUrl) setMapSnapshot(dataUrl);
+      return dataUrl ?? null;
+    } catch {
+      return null;
     }
   };
 
@@ -215,7 +241,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
               Propiedad no encontrada
             </h3>
             <p className="text-muted-foreground mb-4">
-              La propiedad solicitada no fue encontrada o ya no está disponível.
+              La propiedad solicitada no fue encontrada o ya no está disponible.
             </p>
             <Button onClick={() => (window.location.href = "/")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -251,7 +277,15 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                 Compartir
               </Button>
               {property && (
-                <PropertyPdfDownload property={property} variant="header" />
+                <div className="flex items-center gap-2">
+                  <PropertyPdfDownload
+                    property={property}
+                    variant="header"
+                    mapView={mapView}
+                    mapSnapshotDataUrl={mapSnapshot}
+                    onBeforeGenerate={captureMapSnapshot}
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -304,7 +338,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                 <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted group cursor-pointer">
                   <Image
                     src={property.images[currentImageIndex]}
-                    alt={`${property.title} - Imagem ${currentImageIndex + 1}`}
+                    alt={`${property.title} - Imagen ${currentImageIndex + 1}`}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                     onClick={() => setShowImageGallery(true)}
@@ -358,7 +392,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                   >
                     <Image
                       src={image}
-                      alt={`${property.title} - Imagem ${index + 2}`}
+                      alt={`${property.title} - Imagen ${index + 2}`}
                       fill
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
@@ -511,6 +545,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
 
                 {/* Map */}
                 <PropertySingleMap
+                  ref={mapRef}
                   property={{
                     ...property,
                     customId: property.id, // Use id as customId if not available
@@ -535,6 +570,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                       logoUrl: property.agency.logoUrl || undefined,
                     },
                   }}
+                  onViewChange={setMapView}
                 />
               </CardContent>
             </Card>
@@ -637,7 +673,13 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
 
                 {/* PDF Download Button */}
                 <div className="pt-3 border-t">
-                  <PropertyPdfDownload property={property} variant="sidebar" />
+                  <PropertyPdfDownload
+                    property={property}
+                    variant="sidebar"
+                    mapView={mapView}
+                    mapSnapshotDataUrl={mapSnapshot}
+                    onBeforeGenerate={captureMapSnapshot}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -648,10 +690,13 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
       {/* Image Gallery Modal */}
       <Dialog open={showImageGallery} onOpenChange={setShowImageGallery}>
         <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{property.title}</DialogTitle>
+          </DialogHeader>
           <div className="relative w-full h-full flex items-center justify-center bg-black">
             <Image
               src={property.images[currentImageIndex]}
-              alt={`${property.title} - Imagem ${currentImageIndex + 1}`}
+              alt={`${property.title} - Imagen ${currentImageIndex + 1}`}
               fill
               className="object-contain"
             />
