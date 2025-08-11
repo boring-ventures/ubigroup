@@ -19,6 +19,9 @@ export const createProjectSchema = z.object({
     errorMap: () => ({ message: "Please select a valid property type" }),
   }),
   images: z.array(z.string().url("Invalid image URL")).optional().default([]),
+  googleMapsUrl: z.string().url("Invalid Google Maps URL").optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 
 export const updateProjectSchema = createProjectSchema.partial();
