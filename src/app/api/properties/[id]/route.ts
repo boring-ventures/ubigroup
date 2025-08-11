@@ -54,14 +54,6 @@ export async function GET(
       },
     });
 
-    console.log("Property found:", property ? "Yes" : "No");
-    if (property) {
-      console.log("Property title:", property.title);
-      console.log("Property status:", property.status);
-      console.log("Property agent:", property.agent);
-      console.log("Property agency:", property.agency);
-    }
-
     if (!property) {
       return NextResponse.json(
         { error: "Property not found" },

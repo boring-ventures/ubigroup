@@ -251,3 +251,73 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const { id } = await context.params; // floor id
+  try {
+    const cookieStore = cookies();
+    const supabase = createServerComponentClient({
+      cookies: () => cookieStore,
+    });
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userProfile = await prisma.user.findUnique({
+      where: { userId: user.id },
+      include: { agency: true },
+    });
+
+    if (!userProfile) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const body = await request.json();
+    const { quadrantId } = body || {};
+    if (!quadrantId) {
+      return NextResponse.json(
+        { error: "Quadrant ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Ensure quadrant belongs to the specified floor and user has access
+    const quadrant = await prisma.quadrant.findUnique({
+      where: { id: quadrantId },
+      include: {
+        floor: {
+          include: {
+            project: { select: { id: true, agentId: true, agencyId: true } },
+          },
+        },
+      },
+    });
+
+    if (!quadrant || quadrant.floorId !== id) {
+      return NextResponse.json(
+        { error: "Quadrant not found" },
+        { status: 404 }
+      );
+    }
+
+    if (quadrant.floor.project.agentId !== userProfile.id) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    await prisma.quadrant.delete({ where: { id: quadrantId } });
+    return NextResponse.json({ message: "Quadrant deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting quadrant:", error);
+    return NextResponse.json(
+      { error: "Failed to delete quadrant" },
+      { status: 500 }
+    );
+  }
+}
