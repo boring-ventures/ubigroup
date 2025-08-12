@@ -8,14 +8,14 @@ import { ShimmerButton } from "@/components/magicui/shimmer-button";
 
 export default function Hero() {
   return (
-    <section className="relative py-20 md:py-32 overflow-hidden">
+    <section className="relative py-10 md:py-16 lg:py-20 overflow-hidden">
       {/* Gradient background */}
       <div className="absolute inset-0 bg-gradient-radial from-primary/20 via-transparent to-transparent" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div className="max-w-4xl mx-auto text-center">
           <ShineBorder className="p-8 rounded-2xl">
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="space-y-6 lg:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
               {/* Floating badge */}
               <BlurFade>
                 <div className="inline-flex items-center rounded-full border border-primary/20 bg-background/50 px-6 py-2 mb-8 shadow-glow backdrop-blur-sm">
@@ -25,7 +25,7 @@ export default function Hero() {
               </BlurFade>
 
               <BoxReveal>
-                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground leading-tight tracking-tight">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground leading-[1.1] tracking-tight">
                   Encuentra tu
                   <br />
                   <span className="text-primary">Propiedad Ideal</span>
@@ -33,7 +33,7 @@ export default function Hero() {
               </BoxReveal>
 
               <BlurFade delay={0.2}>
-                <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
+                <p className="text-lg md:text-xl lg:text-2xl text-muted-foreground max-w-2xl mx-auto">
                   Explora nuestra amplia selección de propiedades en venta y
                   alquiler. Conectamos compradores con los mejores agentes
                   inmobiliarios.
@@ -64,7 +64,7 @@ export default function Hero() {
             </div>
 
             {/* Stats section with enhanced styling */}
-            <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-3xl mx-auto">
+            <div className="mt-10 lg:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6 lg:gap-8 max-w-3xl mx-auto">
               {[
                 { label: "Propiedades Activas", value: "500+", icon: Home },
                 {

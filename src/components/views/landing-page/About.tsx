@@ -8,9 +8,7 @@ export default function About() {
     <section id="about" className="py-20 bg-secondary">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <BlurFade className="max-w-3xl mx-auto text-center">
-          <SparklesText text="About POSITIVE-Next">
-
-          </SparklesText>
+          <SparklesText text="About POSITIVE-Next"></SparklesText>
           <p className="text-lg text-muted-foreground mb-12">
             POSITIVE-Next is a revolutionary app designed to help you harness
             the power of your mind. Our mission is to empower individuals to
@@ -18,8 +16,8 @@ export default function About() {
           </p>
         </BlurFade>
 
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          <ShineBorder 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <ShineBorder
             className="space-y-6 p-8 rounded-xl"
             borderWidth={1}
             color="rgba(var(--primary), 0.5)"
@@ -33,17 +31,14 @@ export default function About() {
               { id: "progress", text: "Track your progress" },
               { id: "expert", text: "Expert guidance" },
             ].map((item) => (
-              <BlurFade
-                key={item.id}
-                className="flex items-center space-x-3"
-              >
+              <BlurFade key={item.id} className="flex items-center space-x-3">
                 <CheckCircle className="h-6 w-6 text-primary" />
                 <span className="text-foreground">{item.text}</span>
               </BlurFade>
             ))}
           </ShineBorder>
 
-          <ShineBorder 
+          <ShineBorder
             className="bg-primary/10 rounded-xl p-8"
             borderWidth={1}
             color="rgba(var(--primary), 0.5)"
@@ -53,9 +48,10 @@ export default function About() {
                 Our Vision
               </h3>
               <p className="text-muted-foreground">
-                We envision a world where everyone has the tools and knowledge to
-                cultivate a positive, resilient mindset. Through POSITIVE-Next,
-                we&apos;re making mental fitness accessible and engaging for all.
+                We envision a world where everyone has the tools and knowledge
+                to cultivate a positive, resilient mindset. Through
+                POSITIVE-Next, we&apos;re making mental fitness accessible and
+                engaging for all.
               </p>
             </BlurFade>
           </ShineBorder>
