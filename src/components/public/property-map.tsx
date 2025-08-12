@@ -1,4 +1,5 @@
 "use client";
+import "leaflet/dist/leaflet.css";
 
 import { useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,8 +71,33 @@ export function PropertyMap({
   const cssInjectedRef = useRef(false);
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
+  const isCancelledRef = useRef(false);
+  const switchedToFallbackRef = useRef(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Observe visibility to initialize only when in viewport
+  useEffect(() => {
+    const el = mapRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry && entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
+    if (!isVisible) return;
+    // Reset cancellation and fallback flags for each re-run
+    isCancelledRef.current = false;
+    switchedToFallbackRef.current = false;
     // Only load Leaflet on client side
     const loadMap = async () => {
       if (typeof window === "undefined" || !mapRef.current) return;
@@ -99,6 +125,8 @@ export function PropertyMap({
           cssInjectedRef.current = true;
         }
 
+        if (isCancelledRef.current) return;
+
         // Clear existing markers first
         if (markersRef.current.length > 0) {
           markersRef.current.forEach((marker) => {
@@ -116,37 +144,95 @@ export function PropertyMap({
           isInitializedRef.current = false;
         }
 
-        // Check if container is already initialized
-        if (
-          (mapRef.current as HTMLDivElement & { _leaflet_id?: number })
-            ._leaflet_id
-        ) {
-          console.warn("Map container already initialized, skipping...");
-          return;
+        // Ensure Leaflet can re-initialize on the same container
+        if ((mapRef.current as any)?._leaflet_id) {
+          try {
+            delete (mapRef.current as any)._leaflet_id;
+          } catch {}
         }
 
         // Small delay to ensure DOM is clean
         await new Promise((resolve) => setTimeout(resolve, 100));
+        if (isCancelledRef.current || !mapRef.current) return;
+
+        // If container has no size (hidden), delay until it has layout
+        const hasSize = () => {
+          const el = mapRef.current!;
+          const rect = el.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0;
+        };
+        if (!hasSize()) {
+          // try longer before giving up (up to ~3s)
+          for (
+            let i = 0;
+            i < 20 && !hasSize() && !isCancelledRef.current;
+            i++
+          ) {
+            // eslint-disable-next-line no-await-in-loop
+            await new Promise((r) => setTimeout(r, 150));
+          }
+          if (!hasSize() || isCancelledRef.current) return;
+        }
 
         // Create map instance
         const map = L.map(mapRef.current).setView([-16.5, -68.1], 10); // Default to La Paz, Bolivia
         console.log("Map created successfully");
 
-        // Add OpenStreetMap tiles
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        // Use internal proxy tiles (matches single property page behavior)
+        const primaryTiles = L.tileLayer("/api/tiles/{z}/{x}/{y}.png", {
           attribution: "© OpenStreetMap contributors",
+          crossOrigin: true as any,
         }).addTo(map);
+
+        primaryTiles.on("tileerror", () => {
+          try {
+            if (switchedToFallbackRef.current) return;
+            switchedToFallbackRef.current = true;
+            map.removeLayer(primaryTiles);
+            const fallback = L.tileLayer(
+              "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+              {
+                subdomains: "abc",
+                attribution: "© OpenStreetMap contributors",
+                crossOrigin: true as any,
+              }
+            );
+            fallback.addTo(map);
+          } catch {}
+        });
         console.log("Tiles added to map");
 
         // Force map to refresh after a short delay to ensure proper rendering
         setTimeout(() => {
-          map.invalidateSize();
+          try {
+            if (!isCancelledRef.current) {
+              map.invalidateSize();
+            }
+          } catch {}
         }, 200);
+        setTimeout(() => {
+          try {
+            if (!isCancelledRef.current) {
+              map.invalidateSize();
+            }
+          } catch {}
+        }, 800);
+        setTimeout(() => {
+          try {
+            if (!isCancelledRef.current) {
+              map.invalidateSize();
+            }
+          } catch {}
+        }, 1500);
 
         // Observe container resize and invalidate map size
         if (mapRef.current && typeof ResizeObserver !== "undefined") {
           const ro = new ResizeObserver(() => {
-            map.invalidateSize();
+            try {
+              if (!isCancelledRef.current) {
+                map.invalidateSize();
+              }
+            } catch {}
           });
           ro.observe(mapRef.current);
           resizeObserverRef.current = ro;
@@ -355,12 +441,13 @@ export function PropertyMap({
 
     // Use a timeout to ensure the component is fully mounted
     const timeoutId = setTimeout(() => {
-      loadMap();
+      if (!isCancelledRef.current) loadMap();
     }, 100);
 
     // Cleanup on unmount
     return () => {
       clearTimeout(timeoutId);
+      isCancelledRef.current = true;
 
       // Clear markers
       if (markersRef.current.length > 0) {
@@ -385,7 +472,7 @@ export function PropertyMap({
         resizeObserverRef.current = null;
       }
     };
-  }, [properties]);
+  }, [properties, projects, isVisible]);
 
   return (
     <Card className={className}>

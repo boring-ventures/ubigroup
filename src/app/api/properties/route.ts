@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Apply search filter if provided
-    const search = searchParams.get("search");
+    const search = (searchParams.get("search") || "").trim();
     if (search) {
       whereClause.OR = [
         {
@@ -96,6 +96,36 @@ export async function GET(request: NextRequest) {
         },
         {
           description: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          locationCity: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          locationState: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          municipality: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          locationNeigh: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          address: {
             contains: search,
             mode: "insensitive",
           },
