@@ -19,9 +19,30 @@ export const createProjectSchema = z.object({
     errorMap: () => ({ message: "Please select a valid property type" }),
   }),
   images: z.array(z.string().url("Invalid image URL")).optional().default([]),
-  googleMapsUrl: z.string().url("Invalid Google Maps URL").optional(),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
+  // Treat empty string as undefined to avoid URL validation error when optional field is left blank
+  googleMapsUrl: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.string().url("Invalid Google Maps URL").optional()
+  ),
+  // Be tolerant to empty strings coming from forms; coerce to number when string provided
+  latitude: z.preprocess(
+    (val) =>
+      val === "" || val == null
+        ? undefined
+        : typeof val === "string"
+          ? parseFloat(val)
+          : val,
+    z.number().optional()
+  ),
+  longitude: z.preprocess(
+    (val) =>
+      val === "" || val == null
+        ? undefined
+        : typeof val === "string"
+          ? parseFloat(val)
+          : val,
+    z.number().optional()
+  ),
 });
 
 export const updateProjectSchema = createProjectSchema.partial();
