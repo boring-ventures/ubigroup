@@ -3,6 +3,10 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  output: 'standalone',
+  experimental: {
+    serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
+  },
   webpack: (config) => {
     config.resolve = config.resolve || {};
     config.resolve.alias = {
