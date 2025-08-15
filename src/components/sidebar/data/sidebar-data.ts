@@ -1,20 +1,14 @@
 import {
-  BarChart3,
   Building2,
   Home,
   LayoutDashboard,
   Users,
-  CheckCircle,
   Clock,
   Settings,
   UserCog,
-  Plus,
-  FileText,
-  UserPlus,
   Building,
-  User,
   Shield,
-  Cog,
+  Layers,
 } from "lucide-react";
 import type { UserRole } from "@prisma/client";
 import type { SidebarData } from "../types";
@@ -33,17 +27,17 @@ const getDefaultTeams = (role: UserRole) => {
     case "AGENCY_ADMIN":
       return [
         {
-          name: "My Agency",
+          name: "Mi agencia",
           logo: Building,
-          plan: "Agency Admin",
+          plan: "Administrador de agencia",
         },
       ];
     case "AGENT":
       return [
         {
-          name: "My Agency",
+          name: "Mi agencia",
           logo: Building,
-          plan: "Agent",
+          plan: "Agente",
         },
       ];
     default:
@@ -51,7 +45,7 @@ const getDefaultTeams = (role: UserRole) => {
         {
           name: "UbiGroup",
           logo: Building,
-          plan: "Default",
+          plan: "Predeterminado",
         },
       ];
   }
@@ -75,46 +69,41 @@ export const getRoleBasedSidebarData = (role: UserRole): SidebarData => {
     case "SUPER_ADMIN":
       baseNavGroups.push(
         {
-          title: "Overview",
+          title: "Resumen",
           items: [
             {
-              title: "Dashboard",
+              title: "Panel",
               url: "/dashboard",
               icon: LayoutDashboard,
             },
           ],
         },
         {
-          title: "Management",
+          title: "Gestión",
           items: [
             {
-              title: "Users",
+              title: "Usuarios",
               url: "/users",
               icon: Users,
             },
             {
-              title: "Agencies",
+              title: "Agencias",
               url: "/agencies",
               icon: Building2,
             },
 
             {
-              title: "All Properties",
+              title: "Todas las propiedades",
               url: "/all-properties",
               icon: Home,
             },
           ],
         },
         {
-          title: "System",
+          title: "Sistema",
           items: [
             {
-              title: "System Config",
-              url: "/system-config",
-              icon: Cog,
-            },
-            {
-              title: "Settings",
+              title: "Configuración",
               url: "/settings",
               icon: Settings,
             },
@@ -126,51 +115,51 @@ export const getRoleBasedSidebarData = (role: UserRole): SidebarData => {
     case "AGENCY_ADMIN":
       baseNavGroups.push(
         {
-          title: "Overview",
+          title: "Resumen",
           items: [
             {
-              title: "Dashboard",
+              title: "Panel",
               url: "/dashboard",
               icon: LayoutDashboard,
             },
           ],
         },
         {
-          title: "Properties",
+          title: "Propiedades",
           items: [
             {
-              title: "My Properties",
+              title: "Mis propiedades",
               url: "/my-properties",
               icon: Home,
             },
 
             {
-              title: "Pending Properties",
+              title: "Propiedades pendientes",
               url: "/properties/pending",
               icon: Clock,
             },
           ],
         },
         {
-          title: "Management",
+          title: "Gestión",
           items: [
             {
-              title: "Users",
+              title: "Usuarios",
               url: "/users",
               icon: Users,
             },
           ],
         },
         {
-          title: "Account",
+          title: "Cuenta",
           items: [
             {
-              title: "Agency Profile",
+              title: "Perfil de la agencia",
               url: "/agency/profile",
               icon: Building,
             },
             {
-              title: "Settings",
+              title: "Configuración",
               url: "/settings",
               icon: Settings,
             },
@@ -182,35 +171,45 @@ export const getRoleBasedSidebarData = (role: UserRole): SidebarData => {
     case "AGENT":
       baseNavGroups.push(
         {
-          title: "Overview",
+          title: "Resumen",
           items: [
             {
-              title: "Dashboard",
+              title: "Panel",
               url: "/dashboard",
               icon: LayoutDashboard,
             },
           ],
         },
         {
-          title: "Properties",
+          title: "Propiedades",
           items: [
             {
-              title: "My Properties",
+              title: "Mis propiedades",
               url: "/my-properties",
               icon: Home,
             },
           ],
         },
         {
-          title: "Account",
+          title: "Proyectos",
           items: [
             {
-              title: "Profile",
+              title: "Mis proyectos",
+              url: "/projects",
+              icon: Layers,
+            },
+          ],
+        },
+        {
+          title: "Cuenta",
+          items: [
+            {
+              title: "Perfil",
               url: "/settings",
               icon: UserCog,
             },
             {
-              title: "Settings",
+              title: "Configuración",
               url: "/settings",
               icon: Settings,
             },
@@ -221,15 +220,15 @@ export const getRoleBasedSidebarData = (role: UserRole): SidebarData => {
 
     default:
       baseNavGroups.push({
-        title: "Navigation",
+        title: "Navegación",
         items: [
           {
-            title: "Dashboard",
+            title: "Panel",
             url: "/dashboard",
             icon: LayoutDashboard,
           },
           {
-            title: "Properties",
+            title: "Propiedades",
             url: "/properties",
             icon: Home,
           },

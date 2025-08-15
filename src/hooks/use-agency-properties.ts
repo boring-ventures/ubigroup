@@ -36,6 +36,19 @@ export interface UseAgencyPropertiesParams {
   agentId?: string;
   page?: number;
   limit?: number;
+  // New filter parameters
+  locationState?: string;
+  locationCity?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  minBedrooms?: number;
+  maxBedrooms?: number;
+  minBathrooms?: number;
+  maxBathrooms?: number;
+  minSquareMeters?: number;
+  maxSquareMeters?: number;
+  propertyType?: string;
+  transactionType?: string;
 }
 
 export interface AgencyPropertiesResponse {
@@ -51,10 +64,47 @@ export interface AgencyPropertiesResponse {
 }
 
 export function useAgencyProperties(params: UseAgencyPropertiesParams = {}) {
-  const { status, search, agentId, page = 1, limit = 10 } = params;
+  const {
+    status,
+    search,
+    agentId,
+    page = 1,
+    limit = 10,
+    locationState,
+    locationCity,
+    minPrice,
+    maxPrice,
+    minBedrooms,
+    maxBedrooms,
+    minBathrooms,
+    maxBathrooms,
+    minSquareMeters,
+    maxSquareMeters,
+    propertyType,
+    transactionType,
+  } = params;
 
   return useQuery({
-    queryKey: ["agency-properties", status, search, agentId, page, limit],
+    queryKey: [
+      "agency-properties",
+      status,
+      search,
+      agentId,
+      page,
+      limit,
+      locationState,
+      locationCity,
+      minPrice,
+      maxPrice,
+      minBedrooms,
+      maxBedrooms,
+      minBathrooms,
+      maxBathrooms,
+      minSquareMeters,
+      maxSquareMeters,
+      propertyType,
+      transactionType,
+    ],
     queryFn: async (): Promise<AgencyPropertiesResponse> => {
       const searchParams = new URLSearchParams({
         page: page.toString(),
@@ -71,6 +121,55 @@ export function useAgencyProperties(params: UseAgencyPropertiesParams = {}) {
 
       if (agentId) {
         searchParams.append("agentId", agentId);
+      }
+
+      // Add new filter parameters
+      if (locationState) {
+        searchParams.append("locationState", locationState);
+      }
+
+      if (locationCity) {
+        searchParams.append("locationCity", locationCity);
+      }
+
+      if (minPrice) {
+        searchParams.append("minPrice", minPrice.toString());
+      }
+
+      if (maxPrice) {
+        searchParams.append("maxPrice", maxPrice.toString());
+      }
+
+      if (minBedrooms) {
+        searchParams.append("minBedrooms", minBedrooms.toString());
+      }
+
+      if (maxBedrooms) {
+        searchParams.append("maxBedrooms", maxBedrooms.toString());
+      }
+
+      if (minBathrooms) {
+        searchParams.append("minBathrooms", minBathrooms.toString());
+      }
+
+      if (maxBathrooms) {
+        searchParams.append("maxBathrooms", maxBathrooms.toString());
+      }
+
+      if (minSquareMeters) {
+        searchParams.append("minSquareMeters", minSquareMeters.toString());
+      }
+
+      if (maxSquareMeters) {
+        searchParams.append("maxSquareMeters", maxSquareMeters.toString());
+      }
+
+      if (propertyType) {
+        searchParams.append("type", propertyType);
+      }
+
+      if (transactionType) {
+        searchParams.append("transactionType", transactionType);
       }
 
       const response = await fetch(`/api/properties?${searchParams}`);

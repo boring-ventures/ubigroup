@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { generateCustomPropertyId } from "@/lib/utils";
 import {
@@ -8,7 +8,7 @@ import {
   Currency,
 } from "@prisma/client";
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     console.log("Testing property creation with new fields...");
 

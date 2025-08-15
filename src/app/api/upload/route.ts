@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { authenticateUser } from "@/lib/auth/server-auth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
@@ -81,8 +83,8 @@ export async function POST(request: NextRequest) {
           `Upload API: Initial upload failed, trying to create bucket: ${bucket}`
         );
 
-        // Try to create bucket
-        const { error: createError } = await supabase.storage.createBucket(
+        // Try to create bucket using admin client
+        const { error: createError } = await supabaseAdmin.storage.createBucket(
           bucket,
           {
             public: true,
@@ -133,6 +135,8 @@ export async function POST(request: NextRequest) {
           errorMessage = "Storage access denied. Please contact support.";
         } else if (uploadResult.error.message.includes("bucket")) {
           errorMessage = "Storage bucket not available. Please try again.";
+        } else if (uploadResult.error.message.includes("not found")) {
+          errorMessage = "Storage bucket not found. Please contact support.";
         } else {
           errorMessage = `${errorMessage}: ${uploadResult.error.message}`;
         }

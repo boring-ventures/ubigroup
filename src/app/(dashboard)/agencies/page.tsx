@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, MapPin, Building2, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { AgencyManagement } from "@/components/agency-management/agency-management";
 
 interface AgencyMetrics {
@@ -11,6 +10,18 @@ interface AgencyMetrics {
   totalAgents: number;
   activeProperties: number;
   pendingApproval: number;
+}
+
+interface User {
+  id: string;
+  role: string;
+  [key: string]: unknown;
+}
+
+interface Property {
+  id: string;
+  status: string;
+  [key: string]: unknown;
 }
 
 export default function AgenciesPage() {
@@ -42,13 +53,13 @@ export default function AgenciesPage() {
 
         const metrics = {
           totalAgencies: agencies.length,
-          totalAgents: users.filter((user: any) => user.role === "AGENT")
+          totalAgents: users.filter((user: User) => user.role === "AGENT")
             .length,
           activeProperties: properties.filter(
-            (property: any) => property.status === "APPROVED"
+            (property: Property) => property.status === "APPROVED"
           ).length,
           pendingApproval: properties.filter(
-            (property: any) => property.status === "PENDING"
+            (property: Property) => property.status === "PENDING"
           ).length,
         };
 

@@ -13,7 +13,7 @@ export async function uploadFiles(
   const formData = new FormData();
 
   // Add files to FormData
-  files.forEach((file, index) => {
+  files.forEach((file) => {
     formData.append(`${type}`, file);
   });
 

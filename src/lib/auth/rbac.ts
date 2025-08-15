@@ -95,8 +95,8 @@ export function canManageProperty(
 /**
  * Higher-order function to wrap API routes with authentication and role checks
  */
-export function withAuth(allowedRoles: UserRole[]) {
-  return function (handler: Function) {
+export function withAuth() {
+  return function (handler: (req: Request) => Promise<Response>) {
     return async function (req: Request) {
       // This would need to be implemented in server-side API routes
       // For now, we'll keep the client-side utilities
@@ -109,20 +109,29 @@ export function withAuth(allowedRoles: UserRole[]) {
  * Validate request body against a schema
  */
 export function validateRequestBody<T>(
-  schema: any,
-  body: any
+  schema: {
+    safeParse: (data: unknown) => {
+      success: boolean;
+      data?: T;
+      error?: { errors: Array<{ message: string }> };
+    };
+  },
+  body: unknown
 ): { data: T | null; error: string | null } {
   try {
     const result = schema.safeParse(body);
-    if (result.success) {
+    if (result.success && result.data) {
       return { data: result.data, error: null };
     } else {
       return {
         data: null,
-        error: result.error.errors.map((e: any) => e.message).join(", "),
+        error:
+          result.error?.errors
+            .map((e: { message: string }) => e.message)
+            .join(", ") || "Validation failed",
       };
     }
-  } catch (error) {
+  } catch {
     return {
       data: null,
       error: "Validation failed",
@@ -134,21 +143,30 @@ export function validateRequestBody<T>(
  * Validate query parameters against a schema
  */
 export function validateQueryParams<T>(
-  schema: any,
+  schema: {
+    safeParse: (data: unknown) => {
+      success: boolean;
+      data?: T;
+      error?: { errors: Array<{ message: string }> };
+    };
+  },
   searchParams: URLSearchParams
 ): { data: T | null; error: string | null } {
   try {
     const params = Object.fromEntries(searchParams.entries());
     const result = schema.safeParse(params);
-    if (result.success) {
+    if (result.success && result.data) {
       return { data: result.data, error: null };
     } else {
       return {
         data: null,
-        error: result.error.errors.map((e: any) => e.message).join(", "),
+        error:
+          result.error?.errors
+            .map((e: { message: string }) => e.message)
+            .join(", ") || "Query parameter validation failed",
       };
     }
-  } catch (error) {
+  } catch {
     return {
       data: null,
       error: "Query parameter validation failed",

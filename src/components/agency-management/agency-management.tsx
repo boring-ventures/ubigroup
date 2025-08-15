@@ -33,7 +33,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import {
   Plus,
   Search,
@@ -42,10 +41,7 @@ import {
   EyeOff,
   Building2,
   Phone,
-  Mail,
-  MapPin,
   Users,
-  Trash2,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import {

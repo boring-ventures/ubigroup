@@ -25,10 +25,7 @@ export async function GET(request: NextRequest) {
 
     // Verify the user with getUser() for better security
     if (session?.user) {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+      const { error: userError } = await supabase.auth.getUser();
       if (userError) {
         console.error("User verification error:", userError);
         return NextResponse.redirect(

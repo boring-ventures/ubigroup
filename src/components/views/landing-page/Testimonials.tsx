@@ -31,11 +31,11 @@ export default function Testimonials() {
         <h2 className="text-3xl md:text-4xl font-bold text-center text-foreground mb-12">
           What Our Users Say
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {testimonials.map((testimonial) => (
             <div
               key={testimonial.id}
-              className="bg-card rounded-lg p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 animate-in fade-in slide-in-from-bottom-4 duration-700"
+              className="bg-card rounded-lg p-6 shadow-lg hover:shadow-xl transition-shadow animate-in fade-in slide-in-from-bottom-4 duration-700"
               style={{
                 animationDelay: `${Number(testimonial.id.slice(1)) * 100}ms`,
               }}

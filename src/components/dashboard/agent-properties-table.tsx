@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -19,15 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Edit, Trash2, Eye, Search, Plus, AlertCircle } from "lucide-react";
+import { Edit, Trash2, Eye, Plus, Download } from "lucide-react";
 import {
   useAgentProperties,
   type UseAgentPropertiesParams,
@@ -36,29 +28,31 @@ import { PropertyStatus } from "@prisma/client";
 import { toast } from "@/components/ui/use-toast";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import Link from "next/link";
+import { exportToCSV } from "@/lib/utils";
+import {
+  PropertyFilters,
+  type PropertyFilters as PropertyFiltersType,
+} from "./property-filters";
 
 export function AgentPropertiesTable() {
   const [params, setParams] = useState<UseAgentPropertiesParams>({
     page: 1,
     limit: 10,
   });
-  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<PropertyFiltersType>({});
   const [deletePropertyId, setDeletePropertyId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  const { data, isLoading, error, refetch } = useAgentProperties(params);
-
-  const handleSearch = (value: string) => {
-    setSearch(value);
-    setParams((prev) => ({ ...prev, search: value, page: 1 }));
+  // Merge filters with params
+  const queryParams = {
+    ...params,
+    ...filters,
   };
 
-  const handleStatusFilter = (status: PropertyStatus | "all") => {
-    setParams((prev) => ({
-      ...prev,
-      status: status === "all" ? undefined : status,
-      page: 1,
-    }));
+  const { data, isLoading, error, refetch } = useAgentProperties(queryParams);
+
+  const handleFiltersChange = (newFilters: PropertyFiltersType) => {
+    setFilters(newFilters);
+    setParams((prev) => ({ ...prev, page: 1 })); // Reset to first page when filters change
   };
 
   const handlePageChange = (page: number) => {
@@ -67,7 +61,6 @@ export function AgentPropertiesTable() {
 
   const handleDeleteProperty = async (propertyId: string) => {
     try {
-      setIsDeleting(true);
       const response = await fetch(`/api/properties/${propertyId}`, {
         method: "DELETE",
       });
@@ -94,12 +87,52 @@ export function AgentPropertiesTable() {
         variant: "destructive",
       });
     } finally {
-      setIsDeleting(false);
       setDeletePropertyId(null);
     }
   };
 
-  const getStatusBadge = (status: PropertyStatus, rejectionReason?: string) => {
+  const handleDownloadCSV = () => {
+    if (!data?.properties || data.properties.length === 0) {
+      toast({
+        title: "No hay datos",
+        description: "No hay propiedades para exportar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Transform data for CSV export
+    const csvData = data.properties.map((property) => ({
+      ID: property.id,
+      Título: property.title,
+      Descripción: property.description,
+      Precio:
+        property.currency === "DOLLARS"
+          ? `$${property.price.toLocaleString()}`
+          : `Bs ${property.price.toLocaleString()}`,
+      Moneda: property.currency,
+      Tipo_Propiedad: property.propertyType,
+      Tipo_Transacción: property.transactionType,
+      Dirección: property.address,
+      Ciudad: property.city,
+      Estado: property.state,
+      Habitaciones: property.bedrooms,
+      Baños: property.bathrooms,
+      Área: property.area,
+      Estado_Aprobación: property.status,
+      Fecha_Creación: new Date(property.createdAt).toLocaleDateString(),
+      Fecha_Actualización: new Date(property.updatedAt).toLocaleDateString(),
+    }));
+
+    exportToCSV(csvData, "mis-propiedades");
+
+    toast({
+      title: "Descarga iniciada",
+      description: "El archivo CSV se está descargando",
+    });
+  };
+
+  const getStatusBadge = (status: PropertyStatus) => {
     const variants = {
       PENDING: "secondary",
       APPROVED: "default",
@@ -115,9 +148,6 @@ export function AgentPropertiesTable() {
     return (
       <div className="flex items-center gap-2">
         <Badge variant={variants[status]}>{labels[status]}</Badge>
-        {status === "REJECTED" && rejectionReason && (
-          <AlertCircle className="h-4 w-4 text-destructive cursor-help" />
-        )}
       </div>
     );
   };
@@ -143,43 +173,31 @@ export function AgentPropertiesTable() {
                 Gestiona tus listados de propiedades y rastrea su estado
               </CardDescription>
             </div>
-            <Button asChild>
-              <Link href="/properties/create">
-                <Plus className="mr-2 h-4 w-4" />
-                Agregar Propiedad
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleDownloadCSV}
+                disabled={!data?.properties || data.properties.length === 0}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Exportar CSV
+              </Button>
+              <Button asChild>
+                <Link href="/properties/create">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Agregar Propiedad
+                </Link>
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Buscar propiedades..."
-                value={search}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select
-              value={params.status || "all"}
-              onValueChange={(value) =>
-                handleStatusFilter(value as PropertyStatus | "all")
-              }
-            >
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filtrar por estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los Estados</SelectItem>
-                <SelectItem value="PENDING">Pendiente</SelectItem>
-                <SelectItem value="APPROVED">Aprobado</SelectItem>
-                <SelectItem value="REJECTED">Rechazado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <PropertyFilters
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            showStatusFilter={true}
+          />
 
           {/* Table */}
           {isLoading ? (
@@ -206,11 +224,11 @@ export function AgentPropertiesTable() {
                 No se encontraron propiedades
               </h3>
               <p className="text-muted-foreground mb-4">
-                {params.status || search
+                {Object.keys(filters).length > 0
                   ? "Ninguna propiedad coincide con tus filtros actuales"
                   : "Aún no has creado ninguna propiedad"}
               </p>
-              {!params.status && !search && (
+              {Object.keys(filters).length === 0 && (
                 <Button asChild>
                   <Link href="/properties/create">
                     <Plus className="mr-2 h-4 w-4" />
@@ -280,12 +298,7 @@ export function AgentPropertiesTable() {
                             </>
                           )}
                         </TableCell>
-                        <TableCell>
-                          {getStatusBadge(
-                            property.status,
-                            property.rejectionReason
-                          )}
-                        </TableCell>
+                        <TableCell>{getStatusBadge(property.status)}</TableCell>
                         <TableCell>
                           {new Date(property.createdAt).toLocaleDateString()}
                         </TableCell>

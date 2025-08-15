@@ -23,7 +23,6 @@ import { toast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import { uploadAvatar } from "@/lib/supabase/upload-avatar";
 import { useRouter } from "next/navigation";
-import { saltAndHashPassword } from "@/lib/auth/password-crypto";
 
 export function SignUpForm({ className, ...props }: SignUpFormProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -69,10 +68,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
       setIsLoading(true);
 
       // Send raw password to Supabase - it handles hashing automatically
-      const { success, user, session, error } = await signUp(
-        data.email,
-        data.password
-      );
+      const { success, user, error } = await signUp(data.email, data.password);
 
       if (!success || error) {
         throw error || new Error("Failed to sign up");
@@ -86,9 +82,9 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
           } catch (error) {
             console.error("Avatar upload failed:", error);
             toast({
-              title: "Warning",
+              title: "Aviso",
               description:
-                "Failed to upload avatar, you can add it later from your profile.",
+                "No se pudo subir el avatar, puedes agregarlo más tarde desde tu perfil.",
               variant: "default",
             });
           }
@@ -166,8 +162,8 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
         }
 
         toast({
-          title: "Success",
-          description: "Account created successfully!",
+          title: "Éxito",
+          description: "¡Cuenta creada correctamente!",
         });
 
         // Redirect directly to dashboard (no email verification needed)
@@ -178,7 +174,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
       const errorMessage =
         error instanceof Error
           ? error.message
-          : "Something went wrong. Please try again.";
+          : "Algo salió mal. Por favor intenta nuevamente.";
 
       toast({
         title: "Error",
@@ -194,10 +190,10 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
     <div className={cn("grid gap-6", className)} {...props}>
       <div className="mb-4 text-center">
         <h2 className="text-lg font-semibold text-primary">
-          Create Super Admin Account
+          Crear cuenta de Super Admin
         </h2>
         <p className="text-sm text-muted-foreground">
-          This will create a Super Admin account with full system access
+          Esto creará una cuenta de Super Admin con acceso completo al sistema
         </p>
       </div>
 
@@ -208,7 +204,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
               {avatarPreview ? (
                 <Image
                   src={avatarPreview}
-                  alt="Avatar preview"
+                  alt="Vista previa del avatar"
                   fill
                   className="rounded-full object-cover"
                 />
@@ -231,7 +227,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>Correo electrónico</FormLabel>
                 <FormControl>
                   <Input placeholder="admin@ubigroup.com" {...field} />
                 </FormControl>
@@ -246,7 +242,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
               name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>First Name</FormLabel>
+                  <FormLabel>Nombre</FormLabel>
                   <FormControl>
                     <Input placeholder="John" {...field} />
                   </FormControl>
@@ -259,7 +255,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
               name="lastName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Last Name</FormLabel>
+                  <FormLabel>Apellido</FormLabel>
                   <FormControl>
                     <Input placeholder="Doe" {...field} />
                   </FormControl>
@@ -275,7 +271,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone</FormLabel>
+                  <FormLabel>Teléfono</FormLabel>
                   <FormControl>
                     <Input placeholder="+1234567890" {...field} />
                   </FormControl>
@@ -303,7 +299,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
+                <FormLabel>Contraseña</FormLabel>
                 <FormControl>
                   <PasswordInput
                     placeholder="********"
@@ -322,7 +318,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
             name="confirmPassword"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Confirm Password</FormLabel>
+                <FormLabel>Confirmar contraseña</FormLabel>
                 <FormControl>
                   <PasswordInput placeholder="********" {...field} />
                 </FormControl>
@@ -332,7 +328,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
           />
 
           <Button className="w-full" disabled={isLoading}>
-            Create Super Admin Account
+            Crear cuenta de Super Admin
           </Button>
         </form>
       </Form>

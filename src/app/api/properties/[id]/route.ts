@@ -54,14 +54,6 @@ export async function GET(
       },
     });
 
-    console.log("Property found:", property ? "Yes" : "No");
-    if (property) {
-      console.log("Property title:", property.title);
-      console.log("Property status:", property.status);
-      console.log("Property agent:", property.agent);
-      console.log("Property agency:", property.agency);
-    }
-
     if (!property) {
       return NextResponse.json(
         { error: "Property not found" },
@@ -139,6 +131,13 @@ export async function PUT(
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
+    if (!updateData) {
+      return NextResponse.json(
+        { error: "Invalid request data" },
+        { status: 400 }
+      );
+    }
+
     // Map form fields to database fields
     const mappedData = {
       title: updateData.title,
@@ -167,7 +166,8 @@ export async function PUT(
       });
 
       if (currentProperty?.status === "REJECTED") {
-        (mappedData as any).status = "PENDING";
+        (mappedData as typeof mappedData & { status: string }).status =
+          "PENDING";
       }
     }
 

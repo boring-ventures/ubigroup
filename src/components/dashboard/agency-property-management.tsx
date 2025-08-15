@@ -9,7 +9,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -19,57 +18,90 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Eye,
-  Search,
-  Filter,
-  AlertCircle,
-  Clock,
-  CheckCircle,
-  XCircle,
-} from "lucide-react";
+import { Eye, Clock, CheckCircle, XCircle, Download } from "lucide-react";
 import {
   useAgencyProperties,
   type UseAgencyPropertiesParams,
 } from "@/hooks/use-agency-properties";
 import { PropertyStatus } from "@prisma/client";
 import Link from "next/link";
+import { exportToCSV } from "@/lib/utils";
+import { toast } from "@/components/ui/use-toast";
+import {
+  PropertyFilters,
+  type PropertyFilters as PropertyFiltersType,
+} from "./property-filters";
 
 export function AgencyPropertyManagement() {
   const [params, setParams] = useState<UseAgencyPropertiesParams>({
     page: 1,
     limit: 10,
   });
-  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<PropertyFiltersType>({});
 
-  const { data, isLoading, error } = useAgencyProperties(params);
-
-  const handleSearch = (value: string) => {
-    setSearch(value);
-    setParams((prev) => ({ ...prev, search: value, page: 1 }));
+  // Merge filters with params
+  const queryParams = {
+    ...params,
+    ...filters,
   };
 
-  const handleStatusFilter = (status: PropertyStatus | "all") => {
-    setParams((prev) => ({
-      ...prev,
-      status: status === "all" ? undefined : status,
-      page: 1,
-    }));
+  const { data, isLoading, error } = useAgencyProperties(queryParams);
+
+  const handleFiltersChange = (newFilters: PropertyFiltersType) => {
+    setFilters(newFilters);
+    setParams((prev) => ({ ...prev, page: 1 })); // Reset to first page when filters change
   };
 
   const handlePageChange = (page: number) => {
     setParams((prev) => ({ ...prev, page }));
   };
 
-  const getStatusBadge = (status: PropertyStatus, rejectionReason?: string) => {
+  const handleDownloadCSV = () => {
+    if (!data?.properties || data.properties.length === 0) {
+      toast({
+        title: "No hay datos",
+        description: "No hay propiedades para exportar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Transform data for CSV export
+    const csvData = data.properties.map((property) => ({
+      ID: property.id,
+      Título: property.title,
+      Descripción: property.description,
+      Agente:
+        `${property.agent?.firstName || ""} ${property.agent?.lastName || ""}`.trim() ||
+        "N/A",
+      Precio:
+        property.currency === "DOLLARS"
+          ? `$${property.price.toLocaleString()}`
+          : `Bs ${property.price.toLocaleString()}`,
+      Moneda: property.currency,
+      Tipo_Propiedad: property.type,
+      Tipo_Transacción: property.transactionType,
+      Dirección: property.address || property.locationNeigh,
+      Ciudad: property.locationCity,
+      Estado: property.locationState,
+      Habitaciones: property.bedrooms,
+      Baños: property.bathrooms,
+      Área: property.squareMeters,
+      Estado_Aprobación: property.status,
+      Fecha_Envío: new Date(property.createdAt).toLocaleDateString(),
+      Fecha_Actualización: new Date(property.updatedAt).toLocaleDateString(),
+    }));
+
+    exportToCSV(csvData, "propiedades-agencia");
+
+    toast({
+      title: "Descarga iniciada",
+      description: "El archivo CSV se está descargando",
+    });
+  };
+
+  const getStatusBadge = (status: PropertyStatus) => {
     const variants = {
       PENDING: "secondary",
       APPROVED: "default",
@@ -90,14 +122,6 @@ export function AgencyPropertyManagement() {
           <Icon className="h-3 w-3" />
           {status}
         </Badge>
-        {status === "REJECTED" && rejectionReason && (
-          <div className="relative">
-            <AlertCircle className="h-4 w-4 text-destructive cursor-help" />
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
-              {rejectionReason}
-            </div>
-          </div>
-        )}
       </div>
     );
   };
@@ -181,7 +205,19 @@ export function AgencyPropertyManagement() {
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
               <div className="p-2 bg-gray-100 rounded-full">
-                <Filter className="h-4 w-4 text-gray-600" />
+                <svg
+                  className="h-4 w-4 text-gray-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z"
+                  />
+                </svg>
               </div>
               <div>
                 <p className="text-2xl font-bold">{data?.totalCount || 0}</p>
@@ -203,45 +239,33 @@ export function AgencyPropertyManagement() {
                   View and manage all properties submitted by your agents
                 </CardDescription>
               </div>
-              {stats.pending > 0 && (
-                <Button asChild>
-                  <Link href="/properties/pending">
-                    <Clock className="mr-2 h-4 w-4" />
-                    Review Pending ({stats.pending})
-                  </Link>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadCSV}
+                  disabled={!data?.properties || data.properties.length === 0}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export CSV
                 </Button>
-              )}
+                {stats.pending > 0 && (
+                  <Button asChild>
+                    <Link href="/properties/pending">
+                      <Clock className="mr-2 h-4 w-4" />
+                      Review Pending ({stats.pending})
+                    </Link>
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search properties..."
-                  value={search}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select
-                value={params.status || "all"}
-                onValueChange={(value) =>
-                  handleStatusFilter(value as PropertyStatus | "all")
-                }
-              >
-                <SelectTrigger className="w-full sm:w-48">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="PENDING">Pending</SelectItem>
-                  <SelectItem value="APPROVED">Approved</SelectItem>
-                  <SelectItem value="REJECTED">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <PropertyFilters
+              filters={filters}
+              onFiltersChange={handleFiltersChange}
+              showStatusFilter={true}
+            />
 
             {/* Table */}
             {isLoading ? (
@@ -268,7 +292,7 @@ export function AgencyPropertyManagement() {
                   No properties found
                 </h3>
                 <p className="text-muted-foreground mb-4">
-                  {params.status || search
+                  {Object.keys(filters).length > 0
                     ? "No properties match your current filters"
                     : "No properties have been submitted yet"}
                 </p>
@@ -352,10 +376,7 @@ export function AgencyPropertyManagement() {
                             )}
                           </TableCell>
                           <TableCell>
-                            {getStatusBadge(
-                              property.status,
-                              property.rejectionReason
-                            )}
+                            {getStatusBadge(property.status)}
                           </TableCell>
                           <TableCell>
                             {new Date(property.createdAt).toLocaleDateString()}

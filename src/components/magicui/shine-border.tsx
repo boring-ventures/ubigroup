@@ -27,7 +27,7 @@ export function ShineBorder({
   borderRadius = 8,
   borderWidth = 1,
   duration = 14,
-  color = "#000000",
+  color = "hsl(var(--primary))",
   className,
   children,
 }: ShineBorderProps) {
@@ -40,7 +40,7 @@ export function ShineBorder({
       }
       className={cn(
         "relative min-h-[60px] w-fit min-w-[300px] place-items-center rounded-[--border-radius] p-3 bg-background border",
-        className,
+        className
       )}
     >
       <div

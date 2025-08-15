@@ -5,14 +5,15 @@ import prisma from "@/lib/prisma";
 import { PropertyDetailPage } from "@/components/dashboard/property-detail-page";
 
 interface PropertyPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function DashboardPropertyPage({
   params,
 }: PropertyPageProps) {
+  const { id } = await params;
   const cookieStore = cookies();
   const supabase = createServerComponentClient({ cookies: () => cookieStore });
   const {
@@ -34,7 +35,7 @@ export default async function DashboardPropertyPage({
 
   // Fetch property data directly from database
   const property = await prisma.property.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       agent: {
         select: {
@@ -56,7 +57,16 @@ export default async function DashboardPropertyPage({
     },
   });
 
-  if (!property) {
+  // Convert Date to string for createdAt and handle null values
+  const propertyWithStringDates = property
+    ? {
+        ...property,
+        createdAt: property.createdAt.toISOString(),
+        address: property.address || undefined,
+      }
+    : null;
+
+  if (!propertyWithStringDates) {
     redirect("/my-properties");
   }
 
@@ -67,10 +77,10 @@ export default async function DashboardPropertyPage({
       hasAccess = true; // Super admin can access any property
       break;
     case "AGENCY_ADMIN":
-      hasAccess = property.agencyId === userProfile.agencyId;
+      hasAccess = propertyWithStringDates!.agencyId === userProfile.agencyId;
       break;
     case "AGENT":
-      hasAccess = property.agentId === userProfile.id;
+      hasAccess = propertyWithStringDates!.agentId === userProfile.id;
       break;
   }
 
@@ -81,9 +91,9 @@ export default async function DashboardPropertyPage({
   return (
     <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <PropertyDetailPage
-        propertyId={params.id}
+        propertyId={id}
         userRole={userProfile.role}
-        initialProperty={property}
+        initialProperty={propertyWithStringDates}
       />
     </main>
   );
