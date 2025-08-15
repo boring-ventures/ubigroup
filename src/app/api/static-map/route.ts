@@ -94,7 +94,7 @@ export async function GET(req: NextRequest) {
         "Access-Control-Allow-Origin": "*",
       },
     });
-  } catch (error) {
+  } catch {
     return new Response("Unexpected error", { status: 500 });
   }
 }

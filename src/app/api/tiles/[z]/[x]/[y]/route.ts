@@ -44,7 +44,7 @@ export async function GET(
         "Access-Control-Allow-Origin": "*",
       },
     });
-  } catch (err) {
+  } catch {
     return new Response("Unexpected error", { status: 500 });
   }
 }
