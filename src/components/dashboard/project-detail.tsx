@@ -20,7 +20,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -178,11 +177,11 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
         (f) => f.number === data.number && f.id !== selectedFloor.id
       );
       if (exists) {
-      toast({
-        title: "Error",
+        toast({
+          title: "Error",
           description: `Ya existe un piso con el número ${data.number}`,
-        variant: "destructive",
-      });
+          variant: "destructive",
+        });
         return;
       }
       setLocalFloors((prev) =>
@@ -271,10 +270,10 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
         };
       })
     );
-      setShowQuadrantDialog(false);
+    setShowQuadrantDialog(false);
     setSelectedQuadrant(null);
-      quadrantForm.reset();
-      toast({
+    quadrantForm.reset();
+    toast({
       title: "Éxito",
       description: selectedQuadrant
         ? "Cuadrante actualizado localmente"
@@ -454,9 +453,9 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
             if (changed) {
               const res = await fetch(
                 `/api/floors/${persistedFloorId}/quadrants`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+                {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     quadrantId: q.id,
                     area: q.area,
@@ -549,9 +548,9 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-        <Badge variant={project.active ? "default" : "secondary"}>
-          {project.active ? "Activo" : "Inactivo"}
-        </Badge>
+          <Badge variant={project.active ? "default" : "secondary"}>
+            {project.active ? "Activo" : "Inactivo"}
+          </Badge>
           <Button size="sm" variant="outline" asChild>
             <Link href={`/projects/${project.id}/edit`}>Editar proyecto</Link>
           </Button>
@@ -666,7 +665,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
             </CardTitle>
             <ClientOnly>
               <div className="flex items-center gap-2">
-                        <Button
+                <Button
                   onClick={() => {
                     setSelectedFloor(null);
                     floorForm.reset({ number: 1 });
@@ -675,11 +674,11 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Pisos
-                        </Button>
+                </Button>
                 <Button size="sm" onClick={persistChanges} disabled={isSaving}>
                   {isSaving ? "Guardando..." : "Guardar"}
-                        </Button>
-                      </div>
+                </Button>
+              </div>
             </ClientOnly>
           </div>
         </CardHeader>
@@ -717,18 +716,18 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                       >
                         <Trash className="h-4 w-4" />
                       </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setSelectedFloor(floor);
-                        setSelectedQuadrant(null);
-                        quadrantForm.reset();
-                        setShowQuadrantDialog(true);
-                      }}
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Agregar cuadrante
-                    </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setSelectedFloor(floor);
+                          setSelectedQuadrant(null);
+                          quadrantForm.reset();
+                          setShowQuadrantDialog(true);
+                        }}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Agregar cuadrante
+                      </Button>
                     </div>
                   </div>
 
@@ -980,8 +979,8 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                   </Button>
                   <Button type="submit">
                     {selectedQuadrant
-                        ? "Actualizar cuadrante"
-                        : "Crear cuadrante"}
+                      ? "Actualizar cuadrante"
+                      : "Crear cuadrante"}
                   </Button>
                 </div>
               </form>

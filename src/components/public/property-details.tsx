@@ -160,7 +160,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
         variant={type === "SALE" ? "default" : "secondary"}
         className={`${
           type === "SALE"
-            ? "bg-blue-600 hover:bg-blue-700"
+            ? "bg-primary hover:bg-primary/90"
             : "bg-green-600 hover:bg-green-700 text-white"
         }`}
       >
@@ -254,11 +254,11 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground dark">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-background border-b border-border">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center space-x-4 mb-4">
+          <div className="flex flex-wrap items-center gap-2 mb-4">
             <Button
               variant="outline"
               size="sm"
@@ -267,7 +267,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Volver
             </Button>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <Button variant="outline" size="sm">
                 <Heart className="h-4 w-4 mr-2" />
                 Favorito
@@ -290,10 +290,12 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold mb-2">{property.title}</h1>
-              <div className="flex items-center space-x-4 text-muted-foreground">
+              <h1 className="text-2xl md:text-3xl font-bold mb-1 md:mb-2">
+                {property.title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground">
                 <div className="flex items-center">
                   <MapPin className="h-4 w-4 mr-1" />
                   <span>
@@ -301,7 +303,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                     {property.locationState}
                   </span>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2">
                   {getTransactionBadge(property.transactionType)}
                   <Badge variant="outline">
                     {getPropertyTypeLabel(property.type)}
@@ -309,8 +311,8 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                 </div>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-primary mb-1">
+            <div className="md:text-right">
+              <div className="text-2xl md:text-3xl font-bold text-primary mb-0.5 md:mb-1">
                 {formatPrice(
                   property.price,
                   property.currency,
@@ -318,7 +320,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                   property.transactionType
                 )}
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs md:text-sm text-muted-foreground">
                 {property.squareMeters}m² • Publicado el{" "}
                 {new Date(property.createdAt).toLocaleDateString()}
               </div>
@@ -373,14 +375,14 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                   )}
 
                   {/* Image Counter */}
-                  <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+                  <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium">
                     {currentImageIndex + 1} / {property.images.length}
                   </div>
                 </div>
               </div>
 
               {/* Thumbnail Grid */}
-              <div className="space-y-4">
+              <div className="hidden lg:flex lg:flex-col lg:space-y-4">
                 {property.images.slice(1, 3).map((image, index) => (
                   <div
                     key={index}
@@ -411,7 +413,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <span className="text-white font-semibold">
+                      <span className="text-white font-semibold text-sm">
                         +{property.images.length - 3} fotos
                       </span>
                     </div>
@@ -420,7 +422,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
               </div>
             </div>
           ) : (
-            <div className="aspect-[4/3] rounded-lg bg-muted flex items-center justify-center">
+            <div className="aspect-[4/3] rounded-lg bg-muted flex items-center justify-center border border-border">
               <div className="text-center">
                 <Home className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                 <p className="text-muted-foreground">
@@ -434,7 +436,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Property Information */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
             {/* Property Details */}
             <Card>
               <CardHeader>
@@ -511,7 +513,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                 <CardTitle>Descripción</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-line text-sm md:text-base">
                   {property.description}
                 </p>
               </CardContent>
@@ -577,7 +579,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-6 order-1 lg:order-2">
             {/* Agent Contact */}
             <Card>
               <CardHeader>
@@ -724,7 +726,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             )}
 
             {/* Counter */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full">
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full font-medium">
               {currentImageIndex + 1} / {property.images.length}
             </div>
           </div>

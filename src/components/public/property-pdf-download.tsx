@@ -125,10 +125,17 @@ export function PropertyPdfDownload({
         zoom: Math.max(1, Math.min(19, Math.round(mapView.zoom))),
       };
     }
-    if ((property as any).latitude && (property as any).longitude) {
+    if (
+      (property as Property & { latitude?: number; longitude?: number })
+        .latitude &&
+      (property as Property & { latitude?: number; longitude?: number })
+        .longitude
+    ) {
       return {
-        lat: (property as any).latitude as number,
-        lng: (property as any).longitude as number,
+        lat: (property as Property & { latitude?: number; longitude?: number })
+          .latitude!,
+        lng: (property as Property & { latitude?: number; longitude?: number })
+          .longitude!,
         zoom: 15,
       };
     }
@@ -185,7 +192,7 @@ export function PropertyPdfDownload({
             reader.readAsDataURL(blob);
           });
         }
-      } catch (_) {}
+      } catch {}
 
       // Create PDF content directly
       const pdfContent = `

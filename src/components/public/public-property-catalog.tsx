@@ -273,7 +273,14 @@ export function PublicPropertyCatalog() {
           />
 
           {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) =>
+              setActiveTab(
+                v as "venta" | "alquiler" | "anticretico" | "proyectos"
+              )
+            }
+          >
             <TabsList className="mb-4">
               <TabsTrigger value="venta" aria-label="Propiedades en venta">
                 Venta

@@ -144,6 +144,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ensure agent belongs to an agency
+    if (!userProfile.agencyId) {
+      return NextResponse.json(
+        { error: "Agent is not assigned to an agency" },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json();
     const validatedData = createProjectSchema.parse(body);
 
@@ -151,7 +159,7 @@ export async function POST(request: NextRequest) {
       data: {
         ...validatedData,
         agentId: userProfile.id,
-        agencyId: userProfile.agencyId!,
+        agencyId: userProfile.agencyId,
       },
       include: {
         agent: {

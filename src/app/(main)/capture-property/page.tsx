@@ -89,12 +89,12 @@ export default function CapturePropertyPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background dark">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="max-w-3xl mx-auto mb-4">
           <Button
-            variant="ghost"
-            className="inline-flex items-center"
+            variant="outline"
+            className="inline-flex items-center text-foreground border-border hover:bg-accent"
             onClick={() => router.back()}
             aria-label="Volver"
           >
@@ -102,15 +102,17 @@ export default function CapturePropertyPage() {
             Volver
           </Button>
         </div>
-        <Card className="max-w-3xl mx-auto">
+        <Card className="max-w-3xl mx-auto bg-card border-border">
           <CardHeader>
-            <CardTitle>Capturar propiedad</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-foreground">
+              Capturar propiedad
+            </CardTitle>
+            <CardDescription className="text-muted-foreground">
               Completa los datos y enviaremos la información por WhatsApp al
               equipo de UbiGroup.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="text-foreground">
             <Form {...form}>
               <form
                 className="grid grid-cols-1 md:grid-cols-2 gap-6"
@@ -121,9 +123,15 @@ export default function CapturePropertyPage() {
                   name="ownerName"
                   render={({ field }) => (
                     <FormItem className="md:col-span-1">
-                      <FormLabel>Tu nombre</FormLabel>
+                      <FormLabel className="text-foreground">
+                        Tu nombre
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="Juan Pérez" {...field} />
+                        <Input
+                          placeholder="Juan Pérez"
+                          className="bg-background border-border text-foreground placeholder:text-muted-foreground"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -135,11 +143,17 @@ export default function CapturePropertyPage() {
                   name="ownerPhone"
                   render={({ field }) => (
                     <FormItem className="md:col-span-1">
-                      <FormLabel>Tu WhatsApp</FormLabel>
+                      <FormLabel className="text-foreground">
+                        Tu WhatsApp
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="+591 70000000" {...field} />
+                        <Input
+                          placeholder="+591 70000000"
+                          className="bg-background border-border text-foreground placeholder:text-muted-foreground"
+                          {...field}
+                        />
                       </FormControl>
-                      <FormDescription>
+                      <FormDescription className="text-muted-foreground">
                         Incluye el código de país.
                       </FormDescription>
                       <FormMessage />
@@ -152,23 +166,43 @@ export default function CapturePropertyPage() {
                   name="propertyType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tipo de propiedad</FormLabel>
+                      <FormLabel className="text-foreground">
+                        Tipo de propiedad
+                      </FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="bg-background border-border text-foreground">
                             <SelectValue placeholder="Selecciona un tipo" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
-                          <SelectItem value="HOUSE">Casa</SelectItem>
-                          <SelectItem value="APARTMENT">
+                        <SelectContent className="bg-background border-border">
+                          <SelectItem
+                            value="HOUSE"
+                            className="text-foreground hover:bg-accent"
+                          >
+                            Casa
+                          </SelectItem>
+                          <SelectItem
+                            value="APARTMENT"
+                            className="text-foreground hover:bg-accent"
+                          >
                             Departamento
                           </SelectItem>
-                          <SelectItem value="OFFICE">Oficina</SelectItem>
-                          <SelectItem value="LAND">Terreno</SelectItem>
+                          <SelectItem
+                            value="OFFICE"
+                            className="text-foreground hover:bg-accent"
+                          >
+                            Oficina
+                          </SelectItem>
+                          <SelectItem
+                            value="LAND"
+                            className="text-foreground hover:bg-accent"
+                          >
+                            Terreno
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -181,9 +215,13 @@ export default function CapturePropertyPage() {
                   name="city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Ciudad</FormLabel>
+                      <FormLabel className="text-foreground">Ciudad</FormLabel>
                       <FormControl>
-                        <Input placeholder="Santa Cruz" {...field} />
+                        <Input
+                          placeholder="Santa Cruz"
+                          className="bg-background border-border text-foreground placeholder:text-muted-foreground"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -195,9 +233,15 @@ export default function CapturePropertyPage() {
                   name="neighborhood"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Barrio/Zona (opcional)</FormLabel>
+                      <FormLabel className="text-foreground">
+                        Barrio/Zona (opcional)
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="Equipetrol" {...field} />
+                        <Input
+                          placeholder="Equipetrol"
+                          className="bg-background border-border text-foreground placeholder:text-muted-foreground"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -209,9 +253,15 @@ export default function CapturePropertyPage() {
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Precio aproximado (opcional)</FormLabel>
+                      <FormLabel className="text-foreground">
+                        Precio aproximado (opcional)
+                      </FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. 120,000 USD" {...field} />
+                        <Input
+                          placeholder="e.g. 120,000 USD"
+                          className="bg-background border-border text-foreground placeholder:text-muted-foreground"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -223,11 +273,14 @@ export default function CapturePropertyPage() {
                   name="description"
                   render={({ field }) => (
                     <FormItem className="md:col-span-2">
-                      <FormLabel>Descripción (opcional)</FormLabel>
+                      <FormLabel className="text-foreground">
+                        Descripción (opcional)
+                      </FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Cuéntanos detalles importantes (m2, habitaciones, estado, etc.)"
                           rows={5}
+                          className="bg-background border-border text-foreground placeholder:text-muted-foreground"
                           {...field}
                         />
                       </FormControl>

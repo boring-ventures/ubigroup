@@ -387,6 +387,16 @@ export const PropertySingleMap = forwardRef<
     property.locationCity,
     property.locationNeigh,
     property.transactionType,
+    property.title,
+    property.address,
+    property.bedrooms,
+    property.bathrooms,
+    property.currency,
+    property.price,
+    property.squareMeters,
+    property.customId,
+    property.locationState,
+    onViewChange,
   ]);
 
   // Expose snapshot via ref

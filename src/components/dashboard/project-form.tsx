@@ -76,9 +76,9 @@ export function ProjectForm({
       location: initialData?.location || "",
       propertyType: initialData?.propertyType || PropertyType.APARTMENT,
       images: initialData?.images || [],
-      googleMapsUrl: (initialData as any)?.googleMapsUrl || "",
-      latitude: (initialData as any)?.latitude || undefined,
-      longitude: (initialData as any)?.longitude || undefined,
+      googleMapsUrl: initialData?.googleMapsUrl || "",
+      latitude: initialData?.latitude || undefined,
+      longitude: initialData?.longitude || undefined,
     },
   });
 

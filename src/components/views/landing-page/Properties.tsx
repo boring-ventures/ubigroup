@@ -116,9 +116,9 @@ export default function Properties() {
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
   const [activeTab, setActiveTab] = useState<
     "venta" | "alquiler" | "anticretico" | "proyectos" | "mapa"
-  >("venta");
+  >("mapa");
   const [pagination, setPagination] = useState<PaginationInfo>({
-    limit: 9,
+    limit: 6,
     offset: 0,
     page: 1,
     totalPages: 1,
@@ -149,6 +149,17 @@ export default function Properties() {
   };
 
   const [filters, setFilters] = useState<SearchFilters>(getInitialFilters());
+  const [debouncedSearch, setDebouncedSearch] = useState<string>(
+    getInitialFilters().searchTerm
+  );
+
+  // Debounce searchTerm to avoid fetching on every keystroke
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearch(filters.searchTerm);
+    }, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [filters.searchTerm]);
 
   // Projects state for "proyectos" tab
   interface PublicProject {
@@ -171,6 +182,10 @@ export default function Properties() {
   const [projects, setProjects] = useState<PublicProject[]>([]);
   const [projectsLoading, setProjectsLoading] = useState(false);
   const [projectsError, setProjectsError] = useState<string | null>(null);
+  const [showFiltersSheet, setShowFiltersSheet] = useState(false);
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
+    new Set()
+  );
 
   // Update URL with current filters
   const updateURL = (newFilters: SearchFilters) => {
@@ -196,7 +211,7 @@ export default function Properties() {
       const params = new URLSearchParams();
 
       // Add pagination params
-      const limit = 9;
+      const limit = 6;
       const offset = (page - 1) * limit;
       params.append("limit", limit.toString());
       params.append("offset", offset.toString());
@@ -323,20 +338,69 @@ export default function Properties() {
 
   // Initial load
   useEffect(() => {
+    // While typing, wait for debounce to settle
+    if (filters.searchTerm !== debouncedSearch) return;
+
+    const effectiveFilters = { ...filters, searchTerm: debouncedSearch };
+
     if (activeTab === "proyectos") {
       fetchProjects();
     } else if (activeTab === "mapa") {
       // Load both datasets for the map
-      fetchProperties(filters);
+      fetchProperties(effectiveFilters);
       fetchProjects();
     } else {
-      fetchProperties(filters);
+      fetchProperties(effectiveFilters);
     }
-  }, [filters, activeTab]);
+  }, [filters, activeTab, debouncedSearch, fetchProperties, fetchProjects]);
+
+  // Sync initial tab based on URL hash "#properties?tab=<value>" or query param "tab"
+  useEffect(() => {
+    const tabParam = (searchParams.get("tab") || "").toLowerCase();
+    if (
+      tabParam === "venta" ||
+      tabParam === "alquiler" ||
+      tabParam === "anticretico" ||
+      tabParam === "proyectos" ||
+      tabParam === "mapa"
+    ) {
+      setActiveTab(
+        tabParam as "venta" | "alquiler" | "anticretico" | "proyectos" | "mapa"
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // React to URL query changes triggered from the hero search (search/type/tab)
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") || "";
+    const urlType = searchParams.get("type") || "ALL";
+    const urlTab = (searchParams.get("tab") || "").toLowerCase();
+
+    setFilters((prev) => ({
+      ...prev,
+      searchTerm: urlSearch,
+      propertyType: urlType || "ALL",
+    }));
+
+    if (
+      urlTab === "venta" ||
+      urlTab === "alquiler" ||
+      urlTab === "anticretico" ||
+      urlTab === "proyectos" ||
+      urlTab === "mapa"
+    ) {
+      setActiveTab(
+        urlTab as "venta" | "alquiler" | "anticretico" | "proyectos" | "mapa"
+      );
+    }
+  }, [searchParams]);
 
   // Handle search button click
   const handleSearch = () => {
+    // Apply immediately, bypassing debounce
     updateURL(filters);
+    setDebouncedSearch(filters.searchTerm);
     fetchProperties(filters, 1);
   };
 
@@ -374,6 +438,18 @@ export default function Properties() {
     router.push(`/property/${propertyId}`);
   };
 
+  const toggleProjectExpansion = (projectId: string) => {
+    setExpandedProjects((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(projectId)) {
+        newSet.delete(projectId);
+      } else {
+        newSet.add(projectId);
+      }
+      return newSet;
+    });
+  };
+
   const formatPrice = (price: number, currency: string = "USD") => {
     const currencySymbol = currency === "DOLLARS" ? "$" : "Bs.";
     return `${currencySymbol} ${price.toLocaleString()}`;
@@ -409,6 +485,211 @@ export default function Properties() {
     }
   };
 
+  type FiltersSheetProps = {
+    filters: SearchFilters;
+    onChange: (key: keyof SearchFilters, value: string) => void;
+    onApply: () => void;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    locations: {
+      states?: string[];
+      cities?: Array<{ value: string; label: string }>;
+      municipalities?: Array<{ value: string; label: string }>;
+    };
+    locationsLoading: boolean;
+  };
+
+  const FiltersSheet = ({
+    filters,
+    onChange,
+    onApply,
+    open,
+    onOpenChange,
+    locations,
+    locationsLoading,
+  }: FiltersSheetProps) => {
+    return (
+      <div hidden={!open} className="fixed inset-0 z-50">
+        <div
+          className="absolute inset-0 bg-black/40"
+          onClick={() => onOpenChange(false)}
+        />
+        <div className="absolute bottom-0 left-0 right-0 bg-background rounded-t-2xl p-4 shadow-2xl">
+          <div className="mx-auto max-w-md">
+            <div className="h-1 w-10 bg-muted mx-auto rounded-full mb-4" />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                <Select
+                  value={filters.locationState}
+                  onValueChange={(value) => onChange("locationState", value)}
+                  disabled={locationsLoading}
+                >
+                  <SelectTrigger className="border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
+                    <SelectValue
+                      placeholder={locationsLoading ? "Cargando..." : "Estado"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                    <SelectItem
+                      value="ALL"
+                      className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                    >
+                      Todos los estados
+                    </SelectItem>
+                    {locations?.states?.map((state: string) => (
+                      <SelectItem
+                        key={state}
+                        value={state}
+                        className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                      >
+                        {state}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={filters.locationCity}
+                  onValueChange={(value) => onChange("locationCity", value)}
+                  disabled={locationsLoading}
+                >
+                  <SelectTrigger className="border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
+                    <SelectValue
+                      placeholder={locationsLoading ? "Cargando..." : "Ciudad"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                    <SelectItem
+                      value="ALL"
+                      className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                    >
+                      Todas las ciudades
+                    </SelectItem>
+                    {locations?.cities?.map(
+                      (city: { value: string; label: string }) => (
+                        <SelectItem
+                          key={city.value}
+                          value={city.value}
+                          className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          {city.label}
+                        </SelectItem>
+                      )
+                    )}
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  value={filters.municipality}
+                  onValueChange={(value) => onChange("municipality", value)}
+                  disabled={locationsLoading}
+                >
+                  <SelectTrigger className="border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
+                    <SelectValue
+                      placeholder={
+                        locationsLoading ? "Cargando..." : "Municipio"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                    <SelectItem
+                      value="ALL"
+                      className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                    >
+                      Todos los municipios
+                    </SelectItem>
+                    {locations?.municipalities?.map(
+                      (municipality: { value: string; label: string }) => (
+                        <SelectItem
+                          key={municipality.value}
+                          value={municipality.value}
+                          className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          {municipality.label}
+                        </SelectItem>
+                      )
+                    )}
+                  </SelectContent>
+                </Select>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Precio mín."
+                    inputMode="numeric"
+                    value={filters.minPrice}
+                    onChange={(e) => onChange("minPrice", e.target.value)}
+                    className="border-input bg-background text-foreground"
+                  />
+                  <Input
+                    placeholder="Precio máx."
+                    inputMode="numeric"
+                    value={filters.maxPrice}
+                    onChange={(e) => onChange("maxPrice", e.target.value)}
+                    className="border-input bg-background text-foreground"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Mín. hab."
+                    inputMode="numeric"
+                    value={filters.minBedrooms}
+                    onChange={(e) => onChange("minBedrooms", e.target.value)}
+                    className="border-input bg-background text-foreground"
+                  />
+                  <Input
+                    placeholder="Máx. hab."
+                    inputMode="numeric"
+                    value={filters.maxBedrooms}
+                    onChange={(e) => onChange("maxBedrooms", e.target.value)}
+                    className="border-input bg-background text-foreground"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Mín. baños"
+                    inputMode="numeric"
+                    value={filters.minBathrooms}
+                    onChange={(e) => onChange("minBathrooms", e.target.value)}
+                    className="border-input bg-background text-foreground"
+                  />
+                  <Input
+                    placeholder="Máx. baños"
+                    inputMode="numeric"
+                    value={filters.maxBathrooms}
+                    onChange={(e) => onChange("maxBathrooms", e.target.value)}
+                    className="border-input bg-background text-foreground"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button className="flex-1" onClick={onApply}>
+                  Aplicar filtros
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    onChange("minPrice", "");
+                    onChange("maxPrice", "");
+                    onChange("minBedrooms", "");
+                    onChange("maxBedrooms", "");
+                    onChange("minBathrooms", "");
+                    onChange("maxBathrooms", "");
+                  }}
+                >
+                  Limpiar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const getTransactionTypeLabel = (type: string) => {
     switch (type) {
       case "SALE":
@@ -432,11 +713,13 @@ export default function Properties() {
 
   if (loading) {
     return (
-      <section className="py-16 bg-gray-50">
+      <section className="py-8 sm:py-16 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando propiedades...</p>
+            <p className="mt-4 text-muted-foreground">
+              Cargando propiedades...
+            </p>
           </div>
         </div>
       </section>
@@ -444,16 +727,16 @@ export default function Properties() {
   }
 
   return (
-    <section className="py-16 bg-gray-50" id="properties">
+    <section className="py-8 sm:py-16 bg-background dark" id="properties">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className="text-2xl sm:text-4xl font-bold text-foreground mb-4">
             {activeTab === "proyectos"
               ? "Explora Proyectos"
               : "Encuentra tu Propiedad Ideal"}
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto">
             {activeTab === "proyectos"
               ? "Descubre proyectos activos y sus unidades disponibles."
               : "Explora nuestra selección de propiedades en venta, alquiler y anticrético."}
@@ -461,9 +744,16 @@ export default function Properties() {
         </div>
 
         {/* Tabs */}
-        <div className="flex justify-center mb-6">
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-            <TabsList>
+        <div className="flex justify-center mb-4 sm:mb-6">
+          <Tabs
+            value={activeTab}
+            onValueChange={(v: string) =>
+              setActiveTab(
+                v as "venta" | "alquiler" | "anticretico" | "proyectos" | "mapa"
+              )
+            }
+          >
+            <TabsList className="max-w-full overflow-x-auto whitespace-nowrap">
               <TabsTrigger value="mapa">Todos</TabsTrigger>
               <TabsTrigger value="venta">Venta</TabsTrigger>
               <TabsTrigger value="alquiler">Alquiler</TabsTrigger>
@@ -483,251 +773,466 @@ export default function Properties() {
 
         {/* Search Filters - only for properties tabs */}
         {activeTab !== "proyectos" && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Search className="h-5 w-5" />
-                Buscar Propiedades
-              </CardTitle>
-              <CardDescription>
-                Utiliza los filtros para encontrar la propiedad que mejor se
-                adapte a tus necesidades
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Search Term */}
-                <div className="lg:col-span-2">
-                  <Input
-                    placeholder="Buscar por título, descripción o ubicación..."
-                    value={filters.searchTerm}
-                    onChange={(e) =>
-                      handleFilterChange("searchTerm", e.target.value)
-                    }
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        handleSearch();
-                      }
-                    }}
-                  />
-                </div>
-
-                {/* Property Type */}
+          <>
+            {/* Compact top bar on mobile */}
+            <div className="sm:hidden mb-4 flex flex-col gap-2">
+              <div className="flex-1">
+                <Input
+                  placeholder="Buscar por título, descripción o ubicación..."
+                  value={filters.searchTerm}
+                  onChange={(e) =>
+                    handleFilterChange("searchTerm", e.target.value)
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSearch();
+                  }}
+                  className="border-input bg-background text-foreground"
+                />
+              </div>
+              <div className="flex gap-2">
                 <Select
                   value={filters.propertyType}
                   onValueChange={(value) =>
                     handleFilterChange("propertyType", value)
                   }
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Tipo de propiedad" />
+                  <SelectTrigger className="w-[140px] border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
+                    <SelectValue placeholder="Tipo" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Todos los tipos</SelectItem>
-                    <SelectItem value="HOUSE">Casa</SelectItem>
-                    <SelectItem value="APARTMENT">Apartamento</SelectItem>
-                    <SelectItem value="OFFICE">Oficina</SelectItem>
-                    <SelectItem value="LAND">Terreno</SelectItem>
+                  <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                    <SelectItem
+                      value="ALL"
+                      className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                    >
+                      Todos
+                    </SelectItem>
+                    <SelectItem
+                      value="HOUSE"
+                      className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                    >
+                      Casa
+                    </SelectItem>
+                    <SelectItem
+                      value="APARTMENT"
+                      className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                    >
+                      Departamento
+                    </SelectItem>
+                    <SelectItem
+                      value="OFFICE"
+                      className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                    >
+                      Oficina
+                    </SelectItem>
+                    <SelectItem
+                      value="LAND"
+                      className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                    >
+                      Terreno
+                    </SelectItem>
                   </SelectContent>
                 </Select>
-
-                {/* Transaction Type removed - controlled by tabs */}
-
-                {/* Location State */}
-                <Select
-                  value={filters.locationState}
-                  onValueChange={(value) =>
-                    handleFilterChange("locationState", value)
-                  }
-                  disabled={locationsLoading}
+                <Button
+                  variant="secondary"
+                  className="sm:hidden"
+                  onClick={() => setShowFiltersSheet(true)}
                 >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={locationsLoading ? "Cargando..." : "Estado"}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Todos los estados</SelectItem>
-                    {locations?.states?.map((state: string) => (
-                      <SelectItem key={state} value={state}>
-                        {state}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Location City */}
-                <Select
-                  value={filters.locationCity}
-                  onValueChange={(value) =>
-                    handleFilterChange("locationCity", value)
-                  }
-                  disabled={locationsLoading}
+                  <Search className="h-4 w-4 mr-1" /> Filtros
+                </Button>
+                <Button
+                  className="hidden sm:inline-flex"
+                  onClick={handleSearch}
+                  disabled={searchLoading}
                 >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={locationsLoading ? "Cargando..." : "Ciudad"}
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Todas las ciudades</SelectItem>
-                    {locations?.cities?.map(
-                      (city: { value: string; label: string }) => (
-                        <SelectItem key={city.value} value={city.value}>
-                          {city.label}
-                        </SelectItem>
-                      )
-                    )}
-                  </SelectContent>
-                </Select>
-
-                {/* Municipality */}
-                <Select
-                  value={filters.municipality}
-                  onValueChange={(value) =>
-                    handleFilterChange("municipality", value)
-                  }
-                  disabled={locationsLoading}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        locationsLoading ? "Cargando..." : "Municipio"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Todos los municipios</SelectItem>
-                    {locations?.municipalities?.map((municipality: string) => (
-                      <SelectItem key={municipality} value={municipality}>
-                        {municipality}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Price Range */}
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Precio mínimo"
-                    type="number"
-                    value={filters.minPrice}
-                    onChange={(e) =>
-                      handleFilterChange("minPrice", e.target.value)
-                    }
-                  />
-                  <Input
-                    placeholder="Precio máximo"
-                    type="number"
-                    value={filters.maxPrice}
-                    onChange={(e) =>
-                      handleFilterChange("maxPrice", e.target.value)
-                    }
-                  />
-                </div>
-
-                {/* Bedrooms */}
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Mín. habitaciones"
-                    type="number"
-                    value={filters.minBedrooms}
-                    onChange={(e) =>
-                      handleFilterChange("minBedrooms", e.target.value)
-                    }
-                  />
-                  <Input
-                    placeholder="Máx. habitaciones"
-                    type="number"
-                    value={filters.maxBedrooms}
-                    onChange={(e) =>
-                      handleFilterChange("maxBedrooms", e.target.value)
-                    }
-                  />
-                </div>
-
-                {/* Bathrooms */}
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Mín. baños"
-                    type="number"
-                    value={filters.minBathrooms}
-                    onChange={(e) =>
-                      handleFilterChange("minBathrooms", e.target.value)
-                    }
-                  />
-                  <Input
-                    placeholder="Máx. baños"
-                    type="number"
-                    value={filters.maxBathrooms}
-                    onChange={(e) =>
-                      handleFilterChange("maxBathrooms", e.target.value)
-                    }
-                  />
-                </div>
-
-                {/* Search and Clear Buttons */}
-                <div className="lg:col-span-4 flex justify-center gap-4">
-                  <Button
-                    onClick={handleSearch}
-                    disabled={searchLoading}
-                    className="flex items-center gap-2"
-                  >
-                    {searchLoading ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    ) : (
-                      <Search className="h-4 w-4" />
-                    )}
-                    {searchLoading ? "Buscando..." : "Buscar Propiedades"}
-                  </Button>
-                  <Button variant="outline" onClick={clearFilters}>
-                    Limpiar Filtros
-                  </Button>
-                </div>
+                  {searchLoading ? "Buscando..." : "Buscar"}
+                </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+
+            {/* Active filter chips */}
+            <div className="mb-4 flex flex-wrap gap-2 text-sm">
+              {filters.propertyType !== "ALL" && (
+                <Badge
+                  variant="secondary"
+                  onClick={() => handleFilterChange("propertyType", "ALL")}
+                  className="cursor-pointer"
+                >
+                  Tipo: {getPropertyTypeLabel(filters.propertyType)} ✕
+                </Badge>
+              )}
+              {filters.locationState !== "ALL" && (
+                <Badge
+                  variant="secondary"
+                  onClick={() => handleFilterChange("locationState", "ALL")}
+                  className="cursor-pointer"
+                >
+                  Estado: {filters.locationState} ✕
+                </Badge>
+              )}
+              {filters.locationCity !== "ALL" && (
+                <Badge
+                  variant="secondary"
+                  onClick={() => handleFilterChange("locationCity", "ALL")}
+                  className="cursor-pointer"
+                >
+                  Ciudad: {filters.locationCity} ✕
+                </Badge>
+              )}
+              {(filters.minPrice || filters.maxPrice) && (
+                <Badge
+                  variant="secondary"
+                  onClick={() => {
+                    handleFilterChange("minPrice", "");
+                    handleFilterChange("maxPrice", "");
+                  }}
+                  className="cursor-pointer"
+                >
+                  Precio: {filters.minPrice || 0} - {filters.maxPrice || "∞"} ✕
+                </Badge>
+              )}
+              {(filters.minBedrooms || filters.maxBedrooms) && (
+                <Badge
+                  variant="secondary"
+                  onClick={() => {
+                    handleFilterChange("minBedrooms", "");
+                    handleFilterChange("maxBedrooms", "");
+                  }}
+                  className="cursor-pointer"
+                >
+                  Habitaciones: {filters.minBedrooms || 0} -{" "}
+                  {filters.maxBedrooms || "∞"} ✕
+                </Badge>
+              )}
+              {(filters.minBathrooms || filters.maxBathrooms) && (
+                <Badge
+                  variant="secondary"
+                  onClick={() => {
+                    handleFilterChange("minBathrooms", "");
+                    handleFilterChange("maxBathrooms", "");
+                  }}
+                  className="cursor-pointer"
+                >
+                  Baños: {filters.minBathrooms || 0} -{" "}
+                  {filters.maxBathrooms || "∞"} ✕
+                </Badge>
+              )}
+              {/* Clear all (mobile only) */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="sm:hidden"
+              >
+                Limpiar todo
+              </Button>
+            </div>
+
+            {/* Advanced filters bottom sheet (mobile) or inline (desktop) */}
+            <div className="sm:hidden">
+              <FiltersSheet
+                filters={filters}
+                onChange={handleFilterChange}
+                onApply={() => handleSearch()}
+                locations={locations}
+                locationsLoading={locationsLoading}
+                open={showFiltersSheet}
+                onOpenChange={setShowFiltersSheet}
+              />
+            </div>
+            <div className="hidden sm:block">
+              {/* Full filter card on desktop */}
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Search className="h-5 w-5" />
+                    Buscar Propiedades
+                  </CardTitle>
+                  <CardDescription>
+                    Utiliza los filtros para encontrar la propiedad que mejor se
+                    adapte a tus necesidades
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Search Term */}
+                    <div className="lg:col-span-2">
+                      <Input
+                        placeholder="Buscar por título, descripción o ubicación..."
+                        value={filters.searchTerm}
+                        onChange={(e) =>
+                          handleFilterChange("searchTerm", e.target.value)
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSearch();
+                        }}
+                      />
+                    </div>
+
+                    {/* Property Type */}
+                    <Select
+                      value={filters.propertyType}
+                      onValueChange={(value) =>
+                        handleFilterChange("propertyType", value)
+                      }
+                    >
+                      <SelectTrigger className="border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
+                        <SelectValue placeholder="Tipo de propiedad" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                        <SelectItem
+                          value="ALL"
+                          className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          Todos los tipos
+                        </SelectItem>
+                        <SelectItem
+                          value="HOUSE"
+                          className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          Casa
+                        </SelectItem>
+                        <SelectItem
+                          value="APARTMENT"
+                          className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          Apartamento
+                        </SelectItem>
+                        <SelectItem
+                          value="OFFICE"
+                          className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          Oficina
+                        </SelectItem>
+                        <SelectItem
+                          value="LAND"
+                          className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          Terreno
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {/* Location State */}
+                    <Select
+                      value={filters.locationState}
+                      onValueChange={(value) =>
+                        handleFilterChange("locationState", value)
+                      }
+                      disabled={locationsLoading}
+                    >
+                      <SelectTrigger className="border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
+                        <SelectValue
+                          placeholder={
+                            locationsLoading ? "Cargando..." : "Estado"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                        <SelectItem
+                          value="ALL"
+                          className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          Todos los estados
+                        </SelectItem>
+                        {locations?.states?.map((state: string) => (
+                          <SelectItem
+                            key={state}
+                            value={state}
+                            className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                          >
+                            {state}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Location City */}
+                    <Select
+                      value={filters.locationCity}
+                      onValueChange={(value) =>
+                        handleFilterChange("locationCity", value)
+                      }
+                      disabled={locationsLoading}
+                    >
+                      <SelectTrigger className="border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
+                        <SelectValue
+                          placeholder={
+                            locationsLoading ? "Cargando..." : "Ciudad"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                        <SelectItem
+                          value="ALL"
+                          className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          Todas las ciudades
+                        </SelectItem>
+                        {locations?.cities?.map(
+                          (city: { value: string; label: string }) => (
+                            <SelectItem
+                              key={city.value}
+                              value={city.value}
+                              className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                            >
+                              {city.label}
+                            </SelectItem>
+                          )
+                        )}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Municipality */}
+                    <Select
+                      value={filters.municipality}
+                      onValueChange={(value) =>
+                        handleFilterChange("municipality", value)
+                      }
+                      disabled={locationsLoading}
+                    >
+                      <SelectTrigger className="border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
+                        <SelectValue
+                          placeholder={
+                            locationsLoading ? "Cargando..." : "Municipio"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                        <SelectItem
+                          value="ALL"
+                          className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          Todos los municipios
+                        </SelectItem>
+                        {locations?.municipalities?.map(
+                          (municipality: { value: string; label: string }) => (
+                            <SelectItem
+                              key={municipality.value}
+                              value={municipality.value}
+                              className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                            >
+                              {municipality.label}
+                            </SelectItem>
+                          )
+                        )}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Price Range */}
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Precio mínimo"
+                        type="number"
+                        value={filters.minPrice}
+                        onChange={(e) =>
+                          handleFilterChange("minPrice", e.target.value)
+                        }
+                      />
+                      <Input
+                        placeholder="Precio máximo"
+                        type="number"
+                        value={filters.maxPrice}
+                        onChange={(e) =>
+                          handleFilterChange("maxPrice", e.target.value)
+                        }
+                      />
+                    </div>
+
+                    {/* Bedrooms */}
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Mín. habitaciones"
+                        type="number"
+                        value={filters.minBedrooms}
+                        onChange={(e) =>
+                          handleFilterChange("minBedrooms", e.target.value)
+                        }
+                      />
+                      <Input
+                        placeholder="Máx. habitaciones"
+                        type="number"
+                        value={filters.maxBedrooms}
+                        onChange={(e) =>
+                          handleFilterChange("maxBedrooms", e.target.value)
+                        }
+                      />
+                    </div>
+
+                    {/* Bathrooms */}
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Mín. baños"
+                        type="number"
+                        value={filters.minBathrooms}
+                        onChange={(e) =>
+                          handleFilterChange("minBathrooms", e.target.value)
+                        }
+                      />
+                      <Input
+                        placeholder="Máx. baños"
+                        type="number"
+                        value={filters.maxBathrooms}
+                        onChange={(e) =>
+                          handleFilterChange("maxBathrooms", e.target.value)
+                        }
+                      />
+                    </div>
+
+                    {/* Search and Clear Buttons */}
+                    <div className="lg:col-span-4 flex justify-center gap-4">
+                      <Button
+                        onClick={handleSearch}
+                        disabled={searchLoading}
+                        className="flex items-center gap-2"
+                      >
+                        {searchLoading ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                        ) : (
+                          <Search className="h-4 w-4" />
+                        )}
+                        {searchLoading ? "Buscando..." : "Buscar Propiedades"}
+                      </Button>
+                      <Button variant="outline" onClick={clearFilters}>
+                        Limpiar Filtros
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </>
         )}
 
-        {/* Property Map */}
-        {(activeTab !== "proyectos" &&
-          activeTab !== "mapa" &&
-          properties.length > 0) ||
-        (activeTab === "proyectos" && projects.length > 0) ||
-        (activeTab === "mapa" &&
-          (properties.length > 0 || projects.length > 0)) ? (
-          <div className="mb-8">
-            <PropertyMap
-              properties={
-                activeTab === "proyectos"
-                  ? []
-                  : properties.filter((p) => p.latitude && p.longitude)
-              }
-              projects={
-                activeTab === "proyectos" || activeTab === "mapa"
-                  ? projects
-                      .filter((p) => p.latitude && p.longitude)
-                      .map((p) => ({
-                        id: p.id,
-                        name: p.name,
-                        location: p.location,
-                        latitude: (p.latitude ?? undefined) as
-                          | number
-                          | undefined,
-                        longitude: (p.longitude ?? undefined) as
-                          | number
-                          | undefined,
-                      }))
-                  : []
-              }
-              className="w-full"
-            />
-          </div>
-        ) : null}
+        {/* Property Map: keep mounted to avoid Leaflet re-init issues */}
+        <div className="mb-8">
+          <PropertyMap
+            properties={
+              activeTab === "proyectos"
+                ? []
+                : properties.filter((p) => p.latitude && p.longitude)
+            }
+            projects={
+              activeTab === "proyectos" || activeTab === "mapa"
+                ? projects
+                    .filter((p) => p.latitude && p.longitude)
+                    .map((p) => ({
+                      id: p.id,
+                      name: p.name,
+                      location: p.location,
+                      latitude: (p.latitude ?? undefined) as number | undefined,
+                      longitude: (p.longitude ?? undefined) as
+                        | number
+                        | undefined,
+                    }))
+                : []
+            }
+            className="w-full"
+          />
+        </div>
 
         {/* Results Count and View Toggle */}
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             {activeTab === "proyectos"
               ? `${projects.length} proyecto${projects.length !== 1 ? "s" : ""} encontrado${projects.length !== 1 ? "s" : ""}`
               : activeTab === "mapa"
@@ -737,48 +1242,51 @@ export default function Properties() {
               activeTab !== "mapa" &&
               pagination.totalPages > 1 && (
                 <span className="ml-2">
-                  (Página {pagination.page} de {pagination.totalPages})
+                  (Mostrando {(pagination.page - 1) * pagination.limit + 1} -{" "}
+                  {Math.min(
+                    pagination.page * pagination.limit,
+                    pagination.totalCount
+                  )}{" "}
+                  de {pagination.totalCount})
                 </span>
               )}
           </p>
 
           {/* View Toggle */}
-          {activeTab !== "proyectos" && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600">Vista:</span>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={viewMode === "cards" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("cards")}
-                  className="flex items-center gap-1"
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                  Tarjetas
-                </Button>
-                <Button
-                  variant={viewMode === "list" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("list")}
-                  className="flex items-center gap-1"
-                >
-                  <List className="h-4 w-4" />
-                  Lista
-                </Button>
-              </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-foreground">Vista:</span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === "cards" ? "default" : "secondary"}
+                size="sm"
+                onClick={() => setViewMode("cards")}
+                className="flex items-center gap-1"
+              >
+                <Grid3X3 className="h-4 w-4" />
+                Tarjetas
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "secondary"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+                className="flex items-center gap-1"
+              >
+                <List className="h-4 w-4" />
+                Lista
+              </Button>
             </div>
-          )}
+          </div>
         </div>
 
         {/* Properties Display */}
         {activeTab !== "proyectos" ? (
           properties.length === 0 ? (
             <div className="text-center py-12">
-              <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-foreground mb-2">
                 No se encontraron propiedades
               </h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Intenta ajustar los filtros de búsqueda
               </p>
             </div>
@@ -786,7 +1294,7 @@ export default function Properties() {
             <>
               {viewMode === "cards" ? (
                 /* Card View */
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {properties.map((property) => (
                     <Card
                       key={property.id}
@@ -794,7 +1302,7 @@ export default function Properties() {
                       onClick={() => handlePropertyClick(property.id)}
                     >
                       {/* Property Image */}
-                      <div className="relative h-48 bg-gray-200">
+                      <div className="relative h-48 bg-muted">
                         {property.images && property.images.length > 0 ? (
                           <Image
                             src={property.images[0]}
@@ -804,8 +1312,8 @@ export default function Properties() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                            <Home className="h-12 w-12 text-gray-400" />
+                          <div className="w-full h-full flex items-center justify-center bg-muted">
+                            <Home className="h-12 w-12 text-muted-foreground" />
                           </div>
                         )}
 
@@ -849,7 +1357,7 @@ export default function Properties() {
                         </div>
 
                         {/* Property Details */}
-                        <div className="grid grid-cols-3 gap-4 mb-4 text-sm text-gray-600">
+                        <div className="grid grid-cols-3 gap-4 mb-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
                             <Bed className="h-4 w-4" />
                             <span>{property.bedrooms} hab.</span>
@@ -865,7 +1373,7 @@ export default function Properties() {
                         </div>
 
                         {/* Square Meters */}
-                        <div className="mb-4 text-sm text-gray-600">
+                        <div className="mb-4 text-sm text-muted-foreground">
                           <span>{property.squareMeters} m²</span>
                         </div>
 
@@ -898,13 +1406,13 @@ export default function Properties() {
                         {/* Agent Info */}
                         <div className="mb-4">
                           <div className="flex items-center gap-2 mb-2">
-                            <Users className="h-4 w-4 text-gray-500" />
+                            <Users className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm font-medium">
                               {property.agent.firstName}{" "}
                               {property.agent.lastName}
                             </span>
                           </div>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-muted-foreground">
                             {property.agency.name}
                           </p>
                         </div>
@@ -948,35 +1456,34 @@ export default function Properties() {
                 </div>
               ) : (
                 /* List View */
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {properties.map((property) => (
                     <Card
                       key={property.id}
                       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
                       onClick={() => handlePropertyClick(property.id)}
                     >
-                      <div className="flex flex-col lg:flex-row">
+                      <div className="flex flex-row items-stretch gap-3 min-h-[6rem] sm:min-h-[8rem]">
                         {/* Property Image */}
-                        <div className="relative w-full lg:w-64 h-48 lg:h-auto bg-gray-200">
+                        <div className="relative w-28 sm:w-40 lg:w-64 self-stretch bg-muted flex-shrink-0 overflow-hidden rounded-md">
                           {property.images && property.images.length > 0 ? (
                             <Image
                               src={property.images[0]}
                               alt={property.title}
-                              width={256}
-                              height={192}
-                              className="w-full h-full object-cover"
+                              fill
+                              className="object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                              <Home className="h-12 w-12 text-gray-400" />
+                            <div className="w-full h-full flex items-center justify-center bg-muted">
+                              <Home className="h-12 w-12 text-muted-foreground" />
                             </div>
                           )}
 
                           {/* Badges */}
-                          <div className="absolute top-2 left-2 flex gap-2">
+                          <div className="absolute top-1 left-1 right-1 flex flex-wrap gap-1">
                             <Badge
                               variant="secondary"
-                              className="flex items-center gap-1"
+                              className="flex items-center gap-1 text-[10px] h-5 px-1.5"
                             >
                               {getPropertyTypeIcon(property.type)}
                               {getPropertyTypeLabel(property.type)}
@@ -987,6 +1494,7 @@ export default function Properties() {
                                   ? "default"
                                   : "secondary"
                               }
+                              className="text-[10px] h-5 px-1.5"
                             >
                               {getTransactionTypeLabel(
                                 property.transactionType
@@ -996,20 +1504,20 @@ export default function Properties() {
                         </div>
 
                         {/* Property Content */}
-                        <div className="flex-1 p-6">
-                          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                        <div className="flex-1 p-4 sm:p-5 lg:p-6">
+                          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3 sm:gap-4">
                             {/* Left Column - Property Info */}
                             <div className="flex-1">
-                              <div className="mb-4">
-                                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                              <div className="mb-2 sm:mb-3">
+                                <h3 className="text-base sm:text-lg lg:text-xl font-semibold text-foreground mb-1 sm:mb-2 line-clamp-1">
                                   {property.title}
                                 </h3>
-                                <p className="text-gray-600 flex items-center gap-1 mb-2">
+                                <p className="text-muted-foreground flex items-center gap-1 mb-1 sm:mb-2 text-sm">
                                   <MapPin className="h-4 w-4" />
                                   {property.locationCity},{" "}
                                   {property.locationState}
                                 </p>
-                                <p className="text-2xl font-bold text-primary">
+                                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-primary">
                                   {formatPrice(
                                     property.price,
                                     property.currency
@@ -1018,7 +1526,7 @@ export default function Properties() {
                               </div>
 
                               {/* Property Details */}
-                              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4 text-sm text-gray-600">
+                              <div className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mb-3 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-1">
                                   <Bed className="h-4 w-4" />
                                   <span>{property.bedrooms} habitaciones</span>
@@ -1037,11 +1545,29 @@ export default function Properties() {
                                   </span>
                                 </div>
                               </div>
+                              {/* Condensed details for mobile */}
+                              <div className="flex sm:hidden items-center gap-3 mb-2 text-xs text-muted-foreground">
+                                <span className="inline-flex items-center gap-1">
+                                  <Bed className="h-3.5 w-3.5" />{" "}
+                                  {property.bedrooms}
+                                </span>
+                                <span className="inline-flex items-center gap-1">
+                                  <Bath className="h-3.5 w-3.5" />{" "}
+                                  {property.bathrooms}
+                                </span>
+                                <span className="inline-flex items-center gap-1">
+                                  <Car className="h-3.5 w-3.5" />{" "}
+                                  {property.garageSpaces}
+                                </span>
+                                <span className="inline-flex items-center gap-1">
+                                  {property.squareMeters} m²
+                                </span>
+                              </div>
 
                               {/* Features */}
                               {property.features &&
                                 property.features.length > 0 && (
-                                  <div className="mb-4">
+                                  <div className="hidden sm:block mb-3">
                                     <div className="flex flex-wrap gap-1">
                                       {property.features
                                         .slice(0, 5)
@@ -1069,21 +1595,21 @@ export default function Properties() {
 
                             {/* Right Column - Agent Info and Actions */}
                             <div className="lg:w-48">
-                              <div className="mb-4">
+                              <div className="hidden sm:block mb-4">
                                 <div className="flex items-center gap-2 mb-2">
-                                  <Users className="h-4 w-4 text-gray-500" />
+                                  <Users className="h-4 w-4 text-muted-foreground" />
                                   <span className="text-sm font-medium">
                                     {property.agent.firstName}{" "}
                                     {property.agent.lastName}
                                   </span>
                                 </div>
-                                <p className="text-xs text-gray-500 mb-4">
+                                <p className="text-xs text-muted-foreground mb-4">
                                   {property.agency.name}
                                 </p>
                               </div>
 
                               {/* Contact Buttons */}
-                              <div className="flex flex-col gap-2">
+                              <div className="hidden sm:flex flex-col gap-2">
                                 {property.agent.phone && (
                                   <Button
                                     size="sm"
@@ -1115,6 +1641,39 @@ export default function Properties() {
                               </div>
                             </div>
                           </div>
+
+                          {/* Mobile contact row */}
+                          <div className="flex sm:hidden gap-2 mt-2">
+                            {property.agent.phone && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="flex-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleContactAgent(property.agent.phone);
+                                }}
+                              >
+                                <Phone className="h-4 w-4 mr-1" /> Llamar
+                              </Button>
+                            )}
+                            {property.agent.whatsapp && (
+                              <Button
+                                size="sm"
+                                className="flex-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleContactAgent(
+                                    undefined,
+                                    property.agent.whatsapp
+                                  );
+                                }}
+                              >
+                                <MessageCircle className="h-4 w-4 mr-1" />{" "}
+                                WhatsApp
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </Card>
@@ -1124,63 +1683,84 @@ export default function Properties() {
 
               {/* Pagination */}
               {pagination.totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2 mt-8">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page <= 1}
-                  >
-                    <ChevronLeft className="h-4 w-4 mr-1" />
-                    Anterior
-                  </Button>
-
-                  <div className="flex items-center gap-1">
-                    {Array.from(
-                      { length: Math.min(5, pagination.totalPages) },
-                      (_, i) => {
-                        let pageNum;
-                        if (pagination.totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (pagination.page <= 3) {
-                          pageNum = i + 1;
-                        } else if (
-                          pagination.page >=
-                          pagination.totalPages - 2
-                        ) {
-                          pageNum = pagination.totalPages - 4 + i;
-                        } else {
-                          pageNum = pagination.page - 2 + i;
-                        }
-
-                        return (
-                          <Button
-                            key={pageNum}
-                            variant={
-                              pagination.page === pageNum
-                                ? "default"
-                                : "outline"
-                            }
-                            size="sm"
-                            onClick={() => handlePageChange(pageNum)}
-                            className="w-10 h-10"
-                          >
-                            {pageNum}
-                          </Button>
-                        );
-                      }
-                    )}
+                <div className="flex flex-col items-center gap-4 mt-8">
+                  {/* Page info */}
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Mostrando {(pagination.page - 1) * pagination.limit + 1} -{" "}
+                      {Math.min(
+                        pagination.page * pagination.limit,
+                        pagination.totalCount
+                      )}{" "}
+                      de {pagination.totalCount} propiedades
+                    </p>
                   </div>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page >= pagination.totalPages}
-                  >
-                    Siguiente
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
+                  {/* Pagination controls */}
+                  <div className="flex justify-center items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(pagination.page - 1)}
+                      disabled={pagination.page <= 1}
+                      className="flex items-center gap-1 text-foreground border-border hover:bg-accent"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Anterior
+                    </Button>
+
+                    <div className="flex items-center gap-1">
+                      {Array.from(
+                        { length: Math.min(5, pagination.totalPages) },
+                        (_, i) => {
+                          let pageNum;
+                          if (pagination.totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (pagination.page <= 3) {
+                            pageNum = i + 1;
+                          } else if (
+                            pagination.page >=
+                            pagination.totalPages - 2
+                          ) {
+                            pageNum = pagination.totalPages - 4 + i;
+                          } else {
+                            pageNum = pagination.page - 2 + i;
+                          }
+
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={
+                                pagination.page === pageNum
+                                  ? "default"
+                                  : "outline"
+                              }
+                              size="sm"
+                              onClick={() => handlePageChange(pageNum)}
+                              className={`w-10 h-10 ${
+                                pagination.page === pageNum
+                                  ? "bg-primary text-primary-foreground"
+                                  : "text-foreground border-border hover:bg-accent"
+                              }`}
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        }
+                      )}
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(pagination.page + 1)}
+                      disabled={pagination.page >= pagination.totalPages}
+                      className="flex items-center gap-1 text-foreground border-border hover:bg-accent"
+                    >
+                      Siguiente
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               )}
             </>
@@ -1192,75 +1772,523 @@ export default function Properties() {
               <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, i) => (
                   <Card key={i} className="overflow-hidden">
-                    <div className="h-48 bg-gray-200 animate-pulse" />
+                    <div className="h-48 bg-muted animate-pulse" />
                     <div className="p-4 space-y-3">
-                      <div className="h-6 w-32 bg-gray-200 animate-pulse" />
-                      <div className="h-4 w-full bg-gray-200 animate-pulse" />
-                      <div className="h-4 w-3/4 bg-gray-200 animate-pulse" />
+                      <div className="h-6 w-32 bg-muted animate-pulse" />
+                      <div className="h-4 w-full bg-muted animate-pulse" />
+                      <div className="h-4 w-3/4 bg-muted animate-pulse" />
                     </div>
                   </Card>
                 ))}
               </div>
             ) : projectsError ? (
               <div className="text-center py-12">
-                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-foreground mb-2">
                   Error al cargar proyectos
                 </h3>
-                <p className="text-gray-600">{projectsError}</p>
+                <p className="text-muted-foreground">{projectsError}</p>
               </div>
             ) : projects.length === 0 ? (
               <div className="text-center py-12">
-                <Layers className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <Layers className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-foreground mb-2">
                   No se encontraron proyectos
                 </h3>
-                <p className="text-gray-600">Intenta ajustar tu búsqueda</p>
+                <p className="text-muted-foreground">
+                  Intenta ajustar tu búsqueda
+                </p>
               </div>
             ) : (
-              <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                {projects.map((project) => (
-                  <Card key={project.id} className="overflow-hidden">
-                    <div className="relative h-48 bg-gray-100">
-                      {project.images && project.images.length > 0 ? (
-                        <Image
-                          src={project.images[0]}
-                          alt={project.name}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <Building2 className="h-10 w-10 text-gray-400" />
+              <>
+                {viewMode === "cards" ? (
+                  /* Projects Card View */
+                  <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                    {projects.map((project) => (
+                      <Card
+                        key={project.id}
+                        className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+                        onClick={() => router.push(`/project/${project.id}`)}
+                      >
+                        <div className="relative h-48 bg-muted">
+                          {project.images && project.images.length > 0 ? (
+                            <Image
+                              src={project.images[0]}
+                              alt={project.name}
+                              fill
+                              className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-muted flex items-center justify-center">
+                              <Building2 className="h-10 w-10 text-muted-foreground" />
+                            </div>
+                          )}
+
+                          {/* Status Badge */}
+                          <div className="absolute top-2 left-2">
+                            <Badge
+                              variant={project.active ? "default" : "secondary"}
+                              className="flex items-center gap-1"
+                            >
+                              <div
+                                className={`w-2 h-2 rounded-full ${project.active ? "bg-green-400" : "bg-gray-400"}`}
+                              />
+                              {project.active ? "Activo" : "Inactivo"}
+                            </Badge>
+                          </div>
+
+                          {/* Property Type Badge */}
+                          <div className="absolute top-2 right-2">
+                            <Badge
+                              variant="outline"
+                              className="bg-background/80 backdrop-blur-sm"
+                            >
+                              {project.propertyType === "HOUSE"
+                                ? "Casa"
+                                : project.propertyType === "APARTMENT"
+                                  ? "Apartamento"
+                                  : project.propertyType === "OFFICE"
+                                    ? "Oficina"
+                                    : "Terreno"}
+                            </Badge>
+                          </div>
+
+                          {/* Image Count Indicator */}
+                          {project.images && project.images.length > 1 && (
+                            <div className="absolute bottom-2 right-2">
+                              <Badge
+                                variant="secondary"
+                                className="bg-black/60 text-white"
+                              >
+                                {project.images.length} fotos
+                              </Badge>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                    <div className="p-4">
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="font-semibold text-lg line-clamp-1">
-                          {project.name}
-                        </h3>
-                        <Badge variant="secondary">
-                          {project.active ? "Activo" : "Inactivo"}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                        {project.description}
-                      </p>
-                      <div className="flex items-center text-sm text-gray-600 mb-2">
-                        <MapPin className="mr-1 h-4 w-4" />
-                        {project.location}
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Pisos:</span>
-                        <span className="font-medium">
-                          {project.floors?.length || 0}
-                        </span>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+
+                        <div className="p-4">
+                          <div className="mb-3">
+                            <h3 className="font-semibold text-lg line-clamp-1 mb-1">
+                              {project.name}
+                            </h3>
+                            <p className="text-sm text-muted-foreground line-clamp-2">
+                              {project.description}
+                            </p>
+                          </div>
+
+                          <div className="space-y-2 mb-4">
+                            <div className="flex items-center text-sm text-muted-foreground">
+                              <MapPin className="mr-2 h-4 w-4" />
+                              <span className="line-clamp-1">
+                                {project.location}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">
+                                  Pisos:
+                                </span>
+                                <span className="font-medium">
+                                  {project.floors?.length || 0}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                <span className="text-muted-foreground">
+                                  Unidades:
+                                </span>
+                                <span className="font-medium">
+                                  {project.floors?.reduce(
+                                    (total, floor) =>
+                                      total + (floor.quadrants?.length || 0),
+                                    0
+                                  ) || 0}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <Separator className="my-3" />
+
+                          <div className="flex items-center justify-between">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleProjectExpansion(project.id);
+                              }}
+                            >
+                              {expandedProjects.has(project.id)
+                                ? "Ver menos"
+                                : "Ver más"}
+                            </Button>
+                            {project.latitude && project.longitude && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // TODO: Open map view
+                                }}
+                              >
+                                <MapPin className="h-3 w-3 mr-1" />
+                                Mapa
+                              </Button>
+                            )}
+                          </div>
+
+                          {/* Expanded Content */}
+                          {expandedProjects.has(project.id) && (
+                            <div className="mt-4 pt-4 border-t">
+                              <div className="space-y-3">
+                                {/* Floors Information */}
+                                {project.floors &&
+                                  project.floors.length > 0 && (
+                                    <div>
+                                      <h4 className="font-medium text-sm mb-2">
+                                        Pisos del proyecto:
+                                      </h4>
+                                      <div className="grid grid-cols-2 gap-2">
+                                        {project.floors.map((floor) => (
+                                          <div
+                                            key={floor.id}
+                                            className="flex items-center justify-between p-2 bg-muted/50 rounded-md"
+                                          >
+                                            <span className="text-sm">
+                                              {floor.name ||
+                                                `Piso ${floor.number}`}
+                                            </span>
+                                            <Badge
+                                              variant="outline"
+                                              className="text-xs"
+                                            >
+                                              {floor.quadrants?.length || 0}{" "}
+                                              unidades
+                                            </Badge>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                {/* Additional Details */}
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      Tipo:
+                                    </span>
+                                    <p className="font-medium">
+                                      {project.propertyType === "HOUSE"
+                                        ? "Casa"
+                                        : project.propertyType === "APARTMENT"
+                                          ? "Apartamento"
+                                          : project.propertyType === "OFFICE"
+                                            ? "Oficina"
+                                            : "Terreno"}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <span className="text-muted-foreground">
+                                      Estado:
+                                    </span>
+                                    <p className="font-medium">
+                                      {project.active ? "Activo" : "Inactivo"}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Location Details */}
+                                {project.latitude && project.longitude && (
+                                  <div className="p-3 bg-muted/30 rounded-md">
+                                    <div className="flex items-center gap-2 text-sm">
+                                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                                      <span className="font-medium">
+                                        Ubicación disponible
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      Coordenadas: {project.latitude.toFixed(4)}
+                                      , {project.longitude.toFixed(4)}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {/* Full Description */}
+                                <div>
+                                  <h4 className="font-medium text-sm mb-2">
+                                    Descripción completa:
+                                  </h4>
+                                  <p className="text-sm text-muted-foreground leading-relaxed">
+                                    {project.description}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  /* Projects List View */
+                  <div className="space-y-4">
+                    {projects.map((project) => (
+                      <Card
+                        key={project.id}
+                        className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+                        onClick={() => router.push(`/project/${project.id}`)}
+                      >
+                        <div className="flex flex-col md:flex-row">
+                          {/* Project Image */}
+                          <div className="relative w-full md:w-48 h-48 md:h-auto bg-muted flex-shrink-0">
+                            {project.images && project.images.length > 0 ? (
+                              <Image
+                                src={project.images[0]}
+                                alt={project.name}
+                                fill
+                                className="object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-muted flex items-center justify-center">
+                                <Building2 className="h-10 w-10 text-muted-foreground" />
+                              </div>
+                            )}
+
+                            {/* Status Badge */}
+                            <div className="absolute top-2 left-2">
+                              <Badge
+                                variant={
+                                  project.active ? "default" : "secondary"
+                                }
+                                className="flex items-center gap-1"
+                              >
+                                <div
+                                  className={`w-2 h-2 rounded-full ${project.active ? "bg-green-400" : "bg-gray-400"}`}
+                                />
+                                {project.active ? "Activo" : "Inactivo"}
+                              </Badge>
+                            </div>
+                          </div>
+
+                          {/* Project Details */}
+                          <div className="flex-1 p-4">
+                            <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-3">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h3 className="font-semibold text-xl">
+                                    {project.name}
+                                  </h3>
+                                  <Badge variant="outline">
+                                    {project.propertyType === "HOUSE"
+                                      ? "Casa"
+                                      : project.propertyType === "APARTMENT"
+                                        ? "Apartamento"
+                                        : project.propertyType === "OFFICE"
+                                          ? "Oficina"
+                                          : "Terreno"}
+                                  </Badge>
+                                </div>
+                                <p className="text-muted-foreground mb-3 line-clamp-2">
+                                  {project.description}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                              <div className="flex items-center text-sm">
+                                <MapPin className="mr-2 h-4 w-4 text-muted-foreground" />
+                                <span className="line-clamp-1">
+                                  {project.location}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">
+                                  Pisos:
+                                </span>
+                                <span className="font-medium">
+                                  {project.floors?.length || 0}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">
+                                  Unidades:
+                                </span>
+                                <span className="font-medium">
+                                  {project.floors?.reduce(
+                                    (total, floor) =>
+                                      total + (floor.quadrants?.length || 0),
+                                    0
+                                  ) || 0}
+                                </span>
+                              </div>
+                            </div>
+
+                            <Separator className="my-3" />
+
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                {project.images &&
+                                  project.images.length > 0 && (
+                                    <span>{project.images.length} fotos</span>
+                                  )}
+                                {project.latitude && project.longitude && (
+                                  <span>• Ubicación disponible</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleProjectExpansion(project.id);
+                                  }}
+                                >
+                                  {expandedProjects.has(project.id)
+                                    ? "Ver menos"
+                                    : "Ver más"}
+                                </Button>
+                                {project.latitude && project.longitude && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      // TODO: Open map view
+                                    }}
+                                  >
+                                    <MapPin className="h-3 w-3 mr-1" />
+                                    Mapa
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Expanded Content for List View */}
+                            {expandedProjects.has(project.id) && (
+                              <div className="mt-4 pt-4 border-t">
+                                <div className="space-y-4">
+                                  {/* Floors Information */}
+                                  {project.floors &&
+                                    project.floors.length > 0 && (
+                                      <div>
+                                        <h4 className="font-medium text-sm mb-3">
+                                          Pisos del proyecto:
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                          {project.floors.map((floor) => (
+                                            <div
+                                              key={floor.id}
+                                              className="flex items-center justify-between p-3 bg-muted/50 rounded-md"
+                                            >
+                                              <span className="text-sm font-medium">
+                                                {floor.name ||
+                                                  `Piso ${floor.number}`}
+                                              </span>
+                                              <Badge
+                                                variant="outline"
+                                                className="text-xs"
+                                              >
+                                                {floor.quadrants?.length || 0}{" "}
+                                                unidades
+                                              </Badge>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                  {/* Additional Details */}
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                      <span className="text-muted-foreground text-sm">
+                                        Tipo de propiedad:
+                                      </span>
+                                      <p className="font-medium">
+                                        {project.propertyType === "HOUSE"
+                                          ? "Casa"
+                                          : project.propertyType === "APARTMENT"
+                                            ? "Apartamento"
+                                            : project.propertyType === "OFFICE"
+                                              ? "Oficina"
+                                              : "Terreno"}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground text-sm">
+                                        Estado del proyecto:
+                                      </span>
+                                      <p className="font-medium">
+                                        {project.active ? "Activo" : "Inactivo"}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <span className="text-muted-foreground text-sm">
+                                        Total de unidades:
+                                      </span>
+                                      <p className="font-medium">
+                                        {project.floors?.reduce(
+                                          (total, floor) =>
+                                            total +
+                                            (floor.quadrants?.length || 0),
+                                          0
+                                        ) || 0}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {/* Location Details */}
+                                  {project.latitude && project.longitude && (
+                                    <div className="p-4 bg-muted/30 rounded-md">
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                                        <span className="font-medium">
+                                          Información de ubicación
+                                        </span>
+                                      </div>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                        <div>
+                                          <span className="text-muted-foreground">
+                                            Latitud:
+                                          </span>
+                                          <p className="font-mono">
+                                            {project.latitude.toFixed(6)}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <span className="text-muted-foreground">
+                                            Longitud:
+                                          </span>
+                                          <p className="font-mono">
+                                            {project.longitude.toFixed(6)}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Full Description */}
+                                  <div>
+                                    <h4 className="font-medium text-sm mb-2">
+                                      Descripción completa del proyecto:
+                                    </h4>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
+                                      {project.description}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </>
         )}

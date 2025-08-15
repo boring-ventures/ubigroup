@@ -12,7 +12,7 @@ interface PropertyPageProps {
 export default async function PropertyPage({ params }: PropertyPageProps) {
   const { id } = await params;
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background text-foreground dark">
       <Suspense
         fallback={
           <div className="container mx-auto px-4 py-8">
