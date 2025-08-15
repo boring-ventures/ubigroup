@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,10 +11,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -30,31 +31,31 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
-import { Loader } from "@/components/ui/loader";
-import {
-  X,
-  Plus,
-  Home,
-  MapPin,
-  DollarSign,
-  Bed,
-  Bath,
-  Ruler,
-  Star,
-  Image,
-  Video,
-  CheckCircle,
-  Circle,
-} from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 import {
   createPropertySchema,
   type CreatePropertyInput,
 } from "@/lib/validations/property";
 import { PropertyType, TransactionType } from "@prisma/client";
-import { useAuth } from "@/providers/auth-provider";
+import {
+  MapPin,
+  Home,
+  DollarSign,
+  Image as ImageIcon,
+  Video,
+  X,
+  Plus,
+  CheckCircle,
+  Circle,
+  Ruler,
+  Bed,
+  Bath,
+  Star,
+} from "lucide-react";
+import Image from "next/image";
 import { uploadFiles, validateFile } from "@/lib/upload";
+import { Loader } from "@/components/ui/loader";
 
 // Define currency enum locally since it's not exported from Prisma client
 enum Currency {
@@ -94,7 +95,7 @@ export function PropertyForm({
   const [exchangeRate, setExchangeRate] = useState<number | undefined>(
     initialData?.exchangeRate
   );
-  const { user, session, profile } = useAuth();
+  const {} = useAuth();
 
   const form = useForm<CreatePropertyInput>({
     resolver: zodResolver(createPropertySchema),
@@ -293,19 +294,19 @@ export function PropertyForm({
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
               <CheckCircle className="h-5 w-5 text-green-500" />
-              <span className="text-sm text-gray-600">Basic Info</span>
+              <span className="text-sm text-gray-600">Información básica</span>
             </div>
             <div className="flex items-center space-x-2">
               <Circle className="h-5 w-5 text-gray-300" />
-              <span className="text-sm text-gray-600">Location</span>
+              <span className="text-sm text-gray-600">Ubicación</span>
             </div>
             <div className="flex items-center space-x-2">
               <Circle className="h-5 w-5 text-gray-300" />
-              <span className="text-sm text-gray-600">Details</span>
+              <span className="text-sm text-gray-600">Detalles</span>
             </div>
             <div className="flex items-center space-x-2">
               <Circle className="h-5 w-5 text-gray-300" />
-              <span className="text-sm text-gray-600">Media</span>
+              <span className="text-sm text-gray-600">Multimedia</span>
             </div>
           </div>
         </div>
@@ -338,10 +339,10 @@ export function PropertyForm({
                 </div>
                 <div>
                   <CardTitle className="text-xl text-blue-900">
-                    Basic Information
+                    Información básica
                   </CardTitle>
                   <CardDescription className="text-blue-700">
-                    Tell us about your property
+                    Cuéntanos sobre tu propiedad
                   </CardDescription>
                 </div>
               </div>
@@ -353,11 +354,11 @@ export function PropertyForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base font-semibold">
-                      Property Title *
+                      Título de la propiedad *
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="e.g., Modern 2BR Apartment in Downtown"
+                        placeholder="Ej: Departamento moderno de 2 dormitorios en el centro"
                         className="h-12 text-lg"
                         {...field}
                       />
@@ -373,11 +374,11 @@ export function PropertyForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base font-semibold">
-                      Description *
+                      Descripción *
                     </FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Describe your property in detail. Include key features, amenities, and what makes this property special..."
+                        placeholder="Describe tu propiedad en detalle. Incluye características clave, comodidades y qué hace especial a esta propiedad..."
                         rows={5}
                         className="text-base"
                         {...field}
@@ -395,7 +396,7 @@ export function PropertyForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base font-semibold">
-                        Property Type *
+                        Tipo de propiedad *
                       </FormLabel>
                       <Select
                         onValueChange={field.onChange}
@@ -403,21 +404,21 @@ export function PropertyForm({
                       >
                         <FormControl>
                           <SelectTrigger className="h-12 text-base">
-                            <SelectValue placeholder="Select property type" />
+                            <SelectValue placeholder="Selecciona el tipo de propiedad" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value={PropertyType.APARTMENT}>
-                            🏢 Apartment
+                            🏢 Departamento
                           </SelectItem>
                           <SelectItem value={PropertyType.HOUSE}>
-                            🏠 House
+                            🏠 Casa
                           </SelectItem>
                           <SelectItem value={PropertyType.OFFICE}>
-                            🏢 Office
+                            🏢 Oficina
                           </SelectItem>
                           <SelectItem value={PropertyType.LAND}>
-                            🌱 Land
+                            🌱 Terreno
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -432,7 +433,7 @@ export function PropertyForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base font-semibold">
-                        Transaction Type *
+                        Tipo de transacción *
                       </FormLabel>
                       <Select
                         onValueChange={field.onChange}
@@ -440,15 +441,15 @@ export function PropertyForm({
                       >
                         <FormControl>
                           <SelectTrigger className="h-12 text-base">
-                            <SelectValue placeholder="Select transaction type" />
+                            <SelectValue placeholder="Selecciona el tipo de transacción" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value={TransactionType.SALE}>
-                            💰 For Sale
+                            💰 En venta
                           </SelectItem>
                           <SelectItem value={TransactionType.RENT}>
-                            📋 For Rent
+                            📋 En alquiler
                           </SelectItem>
                           <SelectItem value={TransactionType.ANTICRÉTICO}>
                             🔄 Anticrético
@@ -472,10 +473,10 @@ export function PropertyForm({
                 </div>
                 <div>
                   <CardTitle className="text-xl text-green-900">
-                    Pricing Information
+                    Información de precios
                   </CardTitle>
                   <CardDescription className="text-green-700">
-                    Set your property's price
+                    Establece el precio de tu propiedad
                   </CardDescription>
                 </div>
               </div>
@@ -483,7 +484,7 @@ export function PropertyForm({
             <CardContent className="pt-6 space-y-6">
               <div className="bg-white p-6 rounded-lg border border-green-200">
                 <h4 className="text-lg font-semibold mb-4 text-gray-800">
-                  Currency Selection
+                  Selección de moneda
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center space-x-3 p-4 border-2 border-green-200 rounded-lg bg-green-50">
@@ -517,7 +518,7 @@ export function PropertyForm({
                       htmlFor="currency-dollars"
                       className="text-lg font-medium cursor-pointer"
                     >
-                      🇺🇸 US Dollars ($)
+                      🇺🇸 Dólares estadounidenses ($)
                     </Label>
                   </div>
                 </div>
@@ -530,7 +531,7 @@ export function PropertyForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base font-semibold">
-                        Price *
+                        Precio *
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
@@ -550,10 +551,10 @@ export function PropertyForm({
                         </div>
                       </FormControl>
                       <FormDescription className="text-sm">
-                        Enter the price in{" "}
+                        Ingresa el precio en{" "}
                         {currency === Currency.BOLIVIANOS
                           ? "Bolivianos (Bs)"
-                          : "US Dollars ($)"}
+                          : "Dólares estadounidenses ($)"}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -564,10 +565,10 @@ export function PropertyForm({
                   <FormField
                     control={form.control}
                     name="exchangeRate"
-                    render={({ field }) => (
+                    render={() => (
                       <FormItem>
                         <FormLabel className="text-base font-semibold">
-                          Exchange Rate (Bs/$) *
+                          Tipo de cambio (Bs/$) *
                         </FormLabel>
                         <FormControl>
                           <Input
@@ -583,7 +584,7 @@ export function PropertyForm({
                           />
                         </FormControl>
                         <FormDescription className="text-sm">
-                          Current exchange rate from US Dollars to Bolivianos
+                          Tipo de cambio actual de dólares a bolivianos
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -603,10 +604,10 @@ export function PropertyForm({
                 </div>
                 <div>
                   <CardTitle className="text-xl text-purple-900">
-                    Location Details
+                    Detalles de ubicación
                   </CardTitle>
                   <CardDescription className="text-purple-700">
-                    Where is your property located?
+                    ¿Dónde está ubicada tu propiedad?
                   </CardDescription>
                 </div>
               </div>
@@ -618,11 +619,11 @@ export function PropertyForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base font-semibold">
-                      Street Address *
+                      Dirección *
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="e.g., 123 Main Street, Downtown"
+                        placeholder="Ej: Calle Principal 123, Centro"
                         className="h-12 text-lg"
                         {...field}
                       />
@@ -639,11 +640,11 @@ export function PropertyForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base font-semibold">
-                        City *
+                        Ciudad *
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="e.g., La Paz"
+                          placeholder="Ej: La Paz"
                           className="h-12 text-lg"
                           {...field}
                         />
@@ -659,11 +660,11 @@ export function PropertyForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base font-semibold">
-                        State *
+                        Estado/Departamento *
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="e.g., La Paz"
+                          placeholder="Ej: La Paz"
                           className="h-12 text-lg"
                           {...field}
                         />
@@ -679,11 +680,11 @@ export function PropertyForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base font-semibold">
-                        Municipality *
+                        Municipio *
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="e.g., Centro"
+                          placeholder="Ej: Centro"
                           className="h-12 text-lg"
                           {...field}
                         />
@@ -696,10 +697,10 @@ export function PropertyForm({
 
               <div className="bg-white p-6 rounded-lg border border-purple-200">
                 <h4 className="text-lg font-semibold mb-4 text-gray-800">
-                  📍 Map Location (Optional)
+                  📍 Ubicación en mapa (opcional)
                 </h4>
                 <p className="text-sm text-gray-600 mb-4">
-                  Add coordinates to display your property on the map
+                  Agrega coordenadas para mostrar tu propiedad en el mapa
                 </p>
 
                 <FormField
@@ -708,7 +709,7 @@ export function PropertyForm({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base font-semibold">
-                        Google Maps URL
+                        URL de Google Maps
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -718,7 +719,7 @@ export function PropertyForm({
                         />
                       </FormControl>
                       <FormDescription className="text-sm">
-                        Paste the Google Maps URL for this property location
+                        Pega la URL de Google Maps para esta ubicación
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -732,7 +733,7 @@ export function PropertyForm({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-base font-semibold">
-                          Latitude
+                          Latitud
                         </FormLabel>
                         <FormControl>
                           <Input
@@ -748,7 +749,7 @@ export function PropertyForm({
                           />
                         </FormControl>
                         <FormDescription className="text-sm">
-                          Latitude coordinate for map pin placement
+                          Coordenada de latitud para el pin del mapa
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -761,7 +762,7 @@ export function PropertyForm({
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-base font-semibold">
-                          Longitude
+                          Longitud
                         </FormLabel>
                         <FormControl>
                           <Input
@@ -777,7 +778,7 @@ export function PropertyForm({
                           />
                         </FormControl>
                         <FormDescription className="text-sm">
-                          Longitude coordinate for map pin placement
+                          Coordenada de longitud para el pin del mapa
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -797,10 +798,10 @@ export function PropertyForm({
                 </div>
                 <div>
                   <CardTitle className="text-xl text-orange-900">
-                    Property Details
+                    Detalles de la propiedad
                   </CardTitle>
                   <CardDescription className="text-orange-700">
-                    Key specifications of your property
+                    Especificaciones clave de tu propiedad
                   </CardDescription>
                 </div>
               </div>
@@ -814,7 +815,7 @@ export function PropertyForm({
                     <FormItem>
                       <FormLabel className="text-base font-semibold flex items-center space-x-2">
                         <Bed className="h-5 w-5" />
-                        <span>Bedrooms *</span>
+                        <span>Dormitorios *</span>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -841,7 +842,7 @@ export function PropertyForm({
                     <FormItem>
                       <FormLabel className="text-base font-semibold flex items-center space-x-2">
                         <Bath className="h-5 w-5" />
-                        <span>Bathrooms *</span>
+                        <span>Baños *</span>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -869,7 +870,7 @@ export function PropertyForm({
                     <FormItem>
                       <FormLabel className="text-base font-semibold flex items-center space-x-2">
                         <Ruler className="h-5 w-5" />
-                        <span>Area (sq ft) *</span>
+                        <span>Área (m²) *</span>
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -901,10 +902,10 @@ export function PropertyForm({
                 </div>
                 <div>
                   <CardTitle className="text-xl text-yellow-900">
-                    Features & Amenities
+                    Características y amenidades
                   </CardTitle>
                   <CardDescription className="text-yellow-700">
-                    What makes your property special?
+                    ¿Qué hace especial tu propiedad?
                   </CardDescription>
                 </div>
               </div>
@@ -912,12 +913,12 @@ export function PropertyForm({
             <CardContent className="pt-6 space-y-6">
               <div className="bg-white p-6 rounded-lg border border-yellow-200">
                 <h4 className="text-lg font-semibold mb-4 text-gray-800">
-                  Current Features
+                  Características actuales
                 </h4>
                 <div className="flex flex-wrap gap-3 mb-6">
                   {features.length === 0 ? (
                     <p className="text-gray-500 italic">
-                      No features added yet
+                      Aún no se agregaron características
                     </p>
                   ) : (
                     features.map((feature) => (
@@ -941,7 +942,7 @@ export function PropertyForm({
 
                 <div className="flex gap-3">
                   <Input
-                    placeholder="Add a feature (e.g., Swimming Pool, Garage, Balcony)"
+                    placeholder="Agrega una característica (ej.: Piscina, Garaje, Balcón)"
                     value={newFeature}
                     onChange={(e) => setNewFeature(e.target.value)}
                     onKeyPress={(e) =>
@@ -956,7 +957,7 @@ export function PropertyForm({
                     className="h-12 px-6 border-yellow-300 text-yellow-700 hover:bg-yellow-50"
                   >
                     <Plus className="h-5 w-5 mr-2" />
-                    Add
+                    Agregar
                   </Button>
                 </div>
               </div>
@@ -968,14 +969,14 @@ export function PropertyForm({
             <CardHeader className="bg-indigo-50 border-b border-indigo-200">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-indigo-100 rounded-lg">
-                  <Image className="h-6 w-6 text-indigo-600" />
+                  <ImageIcon className="h-6 w-6 text-indigo-600" />
                 </div>
                 <div>
                   <CardTitle className="text-xl text-indigo-900">
-                    Images & Videos
+                    Imágenes y videos
                   </CardTitle>
                   <CardDescription className="text-indigo-700">
-                    Show your property in the best light
+                    Muestra tu propiedad de la mejor manera
                   </CardDescription>
                 </div>
               </div>
@@ -984,14 +985,14 @@ export function PropertyForm({
               {/* Images Section */}
               <div className="bg-white p-6 rounded-lg border border-indigo-200">
                 <div className="flex items-center space-x-2 mb-4">
-                  <Image className="h-5 w-5 text-indigo-600" />
+                  <ImageIcon className="h-5 w-5 text-indigo-600" />
                   <h4 className="text-lg font-semibold text-gray-800">
-                    Images
+                    Imágenes
                   </h4>
                 </div>
                 <p className="text-sm text-gray-600 mb-4">
-                  Maximum file size: 50MB per file. Supported formats: JPG, PNG,
-                  GIF
+                  Tamaño máximo por archivo: 50MB. Formatos soportados: JPG,
+                  PNG, GIF
                 </p>
 
                 {/* Existing uploaded images */}
@@ -1002,10 +1003,11 @@ export function PropertyForm({
                         key={`uploaded-${index}`}
                         className="relative group border-2 border-gray-200 rounded-lg p-2 bg-gray-50 hover:border-indigo-300 transition-colors"
                       >
-                        <img
+                        <Image
                           src={imageUrl}
-                          alt={`Uploaded image ${index + 1}`}
-                          className="w-full h-24 object-cover rounded"
+                          alt={`Imagen subida ${index + 1}`}
+                          fill
+                          className="object-cover rounded"
                         />
                         <button
                           type="button"
@@ -1027,10 +1029,11 @@ export function PropertyForm({
                         key={`new-${index}`}
                         className="relative group border-2 border-indigo-200 rounded-lg p-2 bg-indigo-50 hover:border-indigo-300 transition-colors"
                       >
-                        <img
+                        <Image
                           src={URL.createObjectURL(file)}
-                          alt={`New image ${index + 1}`}
-                          className="w-full h-24 object-cover rounded"
+                          alt={`Imagen nueva ${index + 1}`}
+                          fill
+                          className="object-cover rounded"
                         />
                         <button
                           type="button"
@@ -1064,8 +1067,8 @@ export function PropertyForm({
                   </h4>
                 </div>
                 <p className="text-sm text-gray-600 mb-4">
-                  Maximum file size: 50MB per file. Supported formats: MP4, AVI,
-                  MOV
+                  Tamaño máximo por archivo: 50MB. Formatos soportados: MP4,
+                  AVI, MOV
                 </p>
 
                 {/* Existing uploaded videos */}
@@ -1144,7 +1147,7 @@ export function PropertyForm({
                 {isSubmitting && (
                   <Loader className="mr-3 h-5 w-5 animate-spin" />
                 )}
-                {propertyId ? "Update Property" : "Create Property"}
+                {propertyId ? "Actualizar propiedad" : "Crear propiedad"}
               </Button>
               {onCancel && (
                 <Button
@@ -1153,14 +1156,14 @@ export function PropertyForm({
                   onClick={onCancel}
                   className="h-14 px-8 text-lg font-semibold border-2 border-gray-300 hover:bg-gray-50"
                 >
-                  Cancel
+                  Cancelar
                 </Button>
               )}
             </div>
             <p className="text-sm text-gray-600 mt-4 text-center">
               {propertyId
-                ? "Your changes will be saved immediately"
-                : "Your property will be submitted for approval after creation"}
+                ? "Tus cambios se guardarán inmediatamente"
+                : "Tu propiedad se enviará para aprobación después de crearla"}
             </p>
           </div>
         </form>

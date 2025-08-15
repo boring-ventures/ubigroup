@@ -16,6 +16,8 @@ import {
   XCircle,
   Plus,
   DollarSign,
+  Layers,
+  Building2,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -139,6 +141,18 @@ export function AgentDashboard() {
               <Link href="/my-properties">
                 <Home className="mr-2 h-4 w-4" />
                 View All Properties
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full justify-start">
+              <Link href="/projects/create">
+                <Layers className="mr-2 h-4 w-4" />
+                Create New Project
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full justify-start">
+              <Link href="/projects">
+                <Building2 className="mr-2 h-4 w-4" />
+                View All Projects
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">

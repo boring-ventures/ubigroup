@@ -18,6 +18,7 @@ import {
   Car,
   Building2,
 } from "lucide-react";
+import Image from "next/image";
 
 interface PropertyCardProps {
   property: {
@@ -61,7 +62,6 @@ interface PropertyCardProps {
 export function PropertyCard({
   property,
   onViewDetails,
-  onContactAgent,
   className = "",
 }: PropertyCardProps) {
   const formatPrice = (
@@ -119,7 +119,7 @@ export function PropertyCard({
             : "bg-green-600 hover:bg-green-700 text-white"
         }`}
       >
-        {type === "SALE" ? "Venda" : "Aluguel"}
+        {type === "SALE" ? "Venta" : "Alquiler"}
       </Badge>
     );
   };
@@ -142,7 +142,7 @@ export function PropertyCard({
   const handleContactWhatsApp = () => {
     if (property.agent.whatsapp) {
       const message = encodeURIComponent(
-        `Olá! Tenho interesse no imóvel "${property.title}" (ID: ${property.id}). Poderia me fornecer mais informações?`
+        `¡Hola! Tengo interés en la propiedad "${property.title}" (ID: ${property.id}). ¿Podrías darme más información?`
       );
       const whatsappUrl = `https://wa.me/${property.agent.whatsapp.replace(/\D/g, "")}?text=${message}`;
       window.open(whatsappUrl, "_blank");
@@ -171,10 +171,11 @@ export function PropertyCard({
         <div className="relative aspect-[4/3] overflow-hidden">
           {getTransactionBadge(property.transactionType)}
 
-          <img
+          <Image
             src={property.images[0] || "/placeholder-property.jpg"}
             alt={property.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
 
           {/* Image Navigation Dots */}
@@ -360,7 +361,7 @@ export function PropertyCard({
               handleViewDetails();
             }}
           >
-            Ver Detalhes
+            Ver detalles
           </Button>
         </CardContent>
       </Card>

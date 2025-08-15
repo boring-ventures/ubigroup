@@ -7,7 +7,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { PropertyPdfDownload } from "./property-pdf-download";
+import {
+  PropertySingleMap,
+  type PropertySingleMapHandle,
+} from "./property-single-map";
+import Image from "next/image";
+import type { PropertyType, TransactionType } from "@prisma/client";
 import {
   MapPin,
   Bed,
@@ -29,11 +41,14 @@ interface Property {
   id: string;
   title: string;
   description: string;
-  type: string;
+  type: PropertyType;
   locationState: string;
   locationCity: string;
   locationNeigh: string;
   address: string | null;
+  latitude?: number;
+  longitude?: number;
+  googleMapsUrl?: string;
   price: number;
   currency: string;
   exchangeRate: number | null;
@@ -41,8 +56,10 @@ interface Property {
   bathrooms: number;
   garageSpaces: number;
   squareMeters: number;
-  transactionType: string;
+  transactionType: TransactionType;
+  status: string;
   images: string[];
+  videos: string[];
   features: string[];
   createdAt: string;
   agent: {
@@ -67,6 +84,13 @@ interface PropertyDetailsProps {
 export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageGallery, setShowImageGallery] = useState(false);
+  const [mapView, setMapView] = useState<{
+    centerLat: number;
+    centerLng: number;
+    zoom: number;
+  } | null>(null);
+  const mapRef = React.useRef<PropertySingleMapHandle | null>(null);
+  const [mapSnapshot, setMapSnapshot] = useState<string | null>(null);
 
   // Fetch property details
   const {
@@ -136,11 +160,11 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
         variant={type === "SALE" ? "default" : "secondary"}
         className={`${
           type === "SALE"
-            ? "bg-blue-600 hover:bg-blue-700"
+            ? "bg-primary hover:bg-primary/90"
             : "bg-green-600 hover:bg-green-700 text-white"
         }`}
       >
-        {type === "SALE" ? "Venda" : "Aluguel"}
+        {type === "SALE" ? "Venta" : "Alquiler"}
       </Badge>
     );
   };
@@ -152,7 +176,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
       case "APARTMENT":
         return "Apartamento";
       case "OFFICE":
-        return "Escritório";
+        return "Oficina";
       case "LAND":
         return "Terreno";
       default:
@@ -163,7 +187,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
   const handleContactWhatsApp = () => {
     if (property?.agent.whatsapp) {
       const message = encodeURIComponent(
-        `Olá! Tenho interesse no imóvel "${property.title}" (ID: ${property.id}). Poderia me fornecer mais informações?`
+        `¡Hola! Tengo interés en la propiedad "${property.title}" (ID: ${property.id}). ¿Podrías darme más información?`
       );
       const whatsappUrl = `https://wa.me/${property.agent.whatsapp.replace(/\D/g, "")}?text=${message}`;
       window.open(whatsappUrl, "_blank");
@@ -173,6 +197,17 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
   const handleContactPhone = () => {
     if (property?.agent.phone) {
       window.location.href = `tel:${property.agent.phone}`;
+    }
+  };
+
+  const captureMapSnapshot = async () => {
+    try {
+      await mapRef.current?.awaitReady();
+      const dataUrl = await mapRef.current?.getSnapshot();
+      if (dataUrl) setMapSnapshot(dataUrl);
+      return dataUrl ?? null;
+    } catch {
+      return null;
     }
   };
 
@@ -203,15 +238,14 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
           <CardContent>
             <Home className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">
-              Imóvel não encontrado
+              Propiedad no encontrada
             </h3>
             <p className="text-muted-foreground mb-4">
-              O imóvel solicitado não foi encontrado ou não está mais
-              disponível.
+              La propiedad solicitada no fue encontrada o ya no está disponible.
             </p>
             <Button onClick={() => (window.location.href = "/")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar para a busca
+              Volver a la búsqueda
             </Button>
           </CardContent>
         </Card>
@@ -220,35 +254,48 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground dark">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-background border-b border-border">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center space-x-4 mb-4">
+          <div className="flex flex-wrap items-center gap-2 mb-4">
             <Button
               variant="outline"
               size="sm"
               onClick={() => window.history.back()}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar
+              Volver
             </Button>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
               <Button variant="outline" size="sm">
                 <Heart className="h-4 w-4 mr-2" />
-                Favoritar
+                Favorito
               </Button>
               <Button variant="outline" size="sm">
                 <Share2 className="h-4 w-4 mr-2" />
-                Compartilhar
+                Compartir
               </Button>
+              {property && (
+                <div className="flex items-center gap-2">
+                  <PropertyPdfDownload
+                    property={property}
+                    variant="header"
+                    mapView={mapView}
+                    mapSnapshotDataUrl={mapSnapshot}
+                    onBeforeGenerate={captureMapSnapshot}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold mb-2">{property.title}</h1>
-              <div className="flex items-center space-x-4 text-muted-foreground">
+              <h1 className="text-2xl md:text-3xl font-bold mb-1 md:mb-2">
+                {property.title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground">
                 <div className="flex items-center">
                   <MapPin className="h-4 w-4 mr-1" />
                   <span>
@@ -256,7 +303,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                     {property.locationState}
                   </span>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2">
                   {getTransactionBadge(property.transactionType)}
                   <Badge variant="outline">
                     {getPropertyTypeLabel(property.type)}
@@ -264,8 +311,8 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                 </div>
               </div>
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-primary mb-1">
+            <div className="md:text-right">
+              <div className="text-2xl md:text-3xl font-bold text-primary mb-0.5 md:mb-1">
                 {formatPrice(
                   property.price,
                   property.currency,
@@ -273,8 +320,8 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                   property.transactionType
                 )}
               </div>
-              <div className="text-sm text-muted-foreground">
-                {property.squareMeters}m² • Publicado em{" "}
+              <div className="text-xs md:text-sm text-muted-foreground">
+                {property.squareMeters}m² • Publicado el{" "}
                 {new Date(property.createdAt).toLocaleDateString()}
               </div>
             </div>
@@ -291,10 +338,11 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
               {/* Main Image */}
               <div className="lg:col-span-2">
                 <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted group cursor-pointer">
-                  <img
+                  <Image
                     src={property.images[currentImageIndex]}
-                    alt={`${property.title} - Imagem ${currentImageIndex + 1}`}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    alt={`${property.title} - Imagen ${currentImageIndex + 1}`}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
                     onClick={() => setShowImageGallery(true)}
                   />
 
@@ -327,27 +375,28 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                   )}
 
                   {/* Image Counter */}
-                  <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+                  <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium">
                     {currentImageIndex + 1} / {property.images.length}
                   </div>
                 </div>
               </div>
 
               {/* Thumbnail Grid */}
-              <div className="space-y-4">
+              <div className="hidden lg:flex lg:flex-col lg:space-y-4">
                 {property.images.slice(1, 3).map((image, index) => (
                   <div
                     key={index}
-                    className="aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer group"
+                    className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer group"
                     onClick={() => {
                       setCurrentImageIndex(index + 1);
                       setShowImageGallery(true);
                     }}
                   >
-                    <img
+                    <Image
                       src={image}
-                      alt={`${property.title} - Imagem ${index + 2}`}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      alt={`${property.title} - Imagen ${index + 2}`}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
                 ))}
@@ -357,13 +406,14 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                     className="aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer group relative"
                     onClick={() => setShowImageGallery(true)}
                   >
-                    <img
+                    <Image
                       src={property.images[3]}
-                      alt={`${property.title} - Mais imagens`}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      alt={`${property.title} - Más imágenes`}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <span className="text-white font-semibold">
+                      <span className="text-white font-semibold text-sm">
                         +{property.images.length - 3} fotos
                       </span>
                     </div>
@@ -372,10 +422,12 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
               </div>
             </div>
           ) : (
-            <div className="aspect-[4/3] rounded-lg bg-muted flex items-center justify-center">
+            <div className="aspect-[4/3] rounded-lg bg-muted flex items-center justify-center border border-border">
               <div className="text-center">
                 <Home className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">Sem imagens disponíveis</p>
+                <p className="text-muted-foreground">
+                  Sin imágenes disponibles
+                </p>
               </div>
             </div>
           )}
@@ -384,11 +436,11 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Property Information */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
             {/* Property Details */}
             <Card>
               <CardHeader>
-                <CardTitle>Detalhes do Imóvel</CardTitle>
+                <CardTitle>Detalles de la Propiedad</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
@@ -399,7 +451,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                       </div>
                       <div className="font-semibold">{property.bedrooms}</div>
                       <div className="text-sm text-muted-foreground">
-                        Quartos
+                        Habitaciones
                       </div>
                     </div>
                   )}
@@ -410,9 +462,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                         <Bath className="h-6 w-6 text-primary" />
                       </div>
                       <div className="font-semibold">{property.bathrooms}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Banheiros
-                      </div>
+                      <div className="text-sm text-muted-foreground">Baños</div>
                     </div>
                   )}
 
@@ -434,7 +484,9 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                       <div className="font-semibold">
                         {property.garageSpaces}
                       </div>
-                      <div className="text-sm text-muted-foreground">Vagas</div>
+                      <div className="text-sm text-muted-foreground">
+                        Parqueos
+                      </div>
                     </div>
                   )}
                 </div>
@@ -458,10 +510,10 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             {/* Description */}
             <Card>
               <CardHeader>
-                <CardTitle>Descrição</CardTitle>
+                <CardTitle>Descripción</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-line text-sm md:text-base">
                   {property.description}
                 </p>
               </CardContent>
@@ -472,46 +524,66 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <MapPin className="h-5 w-5 mr-2" />
-                  Localização
+                  Ubicación
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 mb-4">
                   <div>
-                    <strong>Bairro:</strong> {property.locationNeigh}
+                    <strong>Barrio:</strong> {property.locationNeigh}
                   </div>
                   <div>
-                    <strong>Cidade:</strong> {property.locationCity}
+                    <strong>Ciudad:</strong> {property.locationCity}
                   </div>
                   <div>
-                    <strong>Estado:</strong> {property.locationState}
+                    <strong>Departamento:</strong> {property.locationState}
                   </div>
                   {property.address && (
                     <div>
-                      <strong>Endereço:</strong> {property.address}
+                      <strong>Dirección:</strong> {property.address}
                     </div>
                   )}
                 </div>
 
-                {/* Map Placeholder */}
-                <div className="aspect-[16/9] bg-muted rounded-lg flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      Mapa em desenvolvimento
-                    </p>
-                  </div>
-                </div>
+                {/* Map */}
+                <PropertySingleMap
+                  ref={mapRef}
+                  property={{
+                    ...property,
+                    customId: property.id, // Use id as customId if not available
+                    latitude: property.latitude || undefined,
+                    longitude: property.longitude || undefined,
+                    municipality: property.locationCity, // Use locationCity as municipality
+                    address: property.address || undefined,
+                    exchangeRate: property.exchangeRate || undefined,
+                    googleMapsUrl: property.googleMapsUrl || undefined,
+                    status: property.status as
+                      | "PENDING"
+                      | "APPROVED"
+                      | "REJECTED",
+                    agent: {
+                      firstName: property.agent.firstName || undefined,
+                      lastName: property.agent.lastName || undefined,
+                      phone: property.agent.phone || undefined,
+                      whatsapp: property.agent.whatsapp || undefined,
+                    },
+                    agency: {
+                      name: property.agency.name,
+                      logoUrl: property.agency.logoUrl || undefined,
+                    },
+                  }}
+                  onViewChange={setMapView}
+                />
               </CardContent>
             </Card>
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-6 order-1 lg:order-2">
             {/* Agent Contact */}
             <Card>
               <CardHeader>
-                <CardTitle>Entre em Contato</CardTitle>
+                <CardTitle>Contacta al agente</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -556,14 +628,13 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                         className="w-full"
                       >
                         <Phone className="mr-2 h-4 w-4" />
-                        Ligar
+                        Llamar
                       </Button>
                     )}
                   </div>
 
                   <div className="text-xs text-muted-foreground text-center pt-2">
-                    Ao entrar em contato, mencione que viu este imóvel no
-                    UbiGroup
+                    Al contactar, menciona que viste esta propiedad en UbiGroup
                   </div>
                 </div>
               </CardContent>
@@ -572,7 +643,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             {/* Quick Info */}
             <Card>
               <CardHeader>
-                <CardTitle>Informações Rápidas</CardTitle>
+                <CardTitle>Información rápida</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
@@ -582,13 +653,15 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Transação:</span>
+                  <span className="text-muted-foreground">Transacción:</span>
                   <span className="font-medium">
-                    {property.transactionType === "SALE" ? "Venda" : "Aluguel"}
+                    {property.transactionType === "SALE" ? "Venta" : "Alquiler"}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">ID do Imóvel:</span>
+                  <span className="text-muted-foreground">
+                    ID de la Propiedad:
+                  </span>
                   <span className="font-medium font-mono text-sm">
                     {property.id}
                   </span>
@@ -599,6 +672,17 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                     {new Date(property.createdAt).toLocaleDateString()}
                   </span>
                 </div>
+
+                {/* PDF Download Button */}
+                <div className="pt-3 border-t">
+                  <PropertyPdfDownload
+                    property={property}
+                    variant="sidebar"
+                    mapView={mapView}
+                    mapSnapshotDataUrl={mapSnapshot}
+                    onBeforeGenerate={captureMapSnapshot}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -608,11 +692,15 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
       {/* Image Gallery Modal */}
       <Dialog open={showImageGallery} onOpenChange={setShowImageGallery}>
         <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{property.title}</DialogTitle>
+          </DialogHeader>
           <div className="relative w-full h-full flex items-center justify-center bg-black">
-            <img
+            <Image
               src={property.images[currentImageIndex]}
-              alt={`${property.title} - Imagem ${currentImageIndex + 1}`}
-              className="max-w-full max-h-full object-contain"
+              alt={`${property.title} - Imagen ${currentImageIndex + 1}`}
+              fill
+              className="object-contain"
             />
 
             {/* Navigation */}
@@ -638,7 +726,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             )}
 
             {/* Counter */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full">
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full font-medium">
               {currentImageIndex + 1} / {property.images.length}
             </div>
           </div>

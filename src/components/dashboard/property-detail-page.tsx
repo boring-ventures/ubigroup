@@ -22,7 +22,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   MapPin,
@@ -36,7 +35,6 @@ import {
   ChevronRight,
   Home,
   Building2,
-  Eye,
   Edit,
   Save,
   X,
@@ -45,8 +43,10 @@ import {
   Coins,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { UserRole, Currency } from "@prisma/client";
+import { UserRole, Currency, TransactionType } from "@prisma/client";
 import Link from "next/link";
+import Image from "next/image";
+import { PropertySingleMap } from "./property-single-map";
 
 interface Property {
   id: string;
@@ -56,7 +56,7 @@ interface Property {
   locationState: string;
   locationCity: string;
   locationNeigh: string;
-  address: string | null;
+  address?: string;
   price: number;
   currency: Currency;
   exchangeRate: number | null;
@@ -64,7 +64,7 @@ interface Property {
   bathrooms: number;
   garageSpaces: number;
   squareMeters: number;
-  transactionType: string;
+  transactionType: TransactionType;
   status: string;
   images: string[];
   videos: string[];
@@ -580,9 +580,7 @@ export function PropertyDetailPage({
                       />
                     </div>
                     <div>
-                      <Label htmlFor="garageSpaces">
-                        Vagas de Estacionamiento
-                      </Label>
+                      <Label htmlFor="garageSpaces">Parqueos</Label>
                       <Input
                         id="garageSpaces"
                         type="number"
@@ -636,7 +634,9 @@ export function PropertyDetailPage({
                       <div className="font-semibold">
                         {property.garageSpaces}
                       </div>
-                      <div className="text-xs text-muted-foreground">Vagas</div>
+                      <div className="text-xs text-muted-foreground">
+                        Parqueos
+                      </div>
                     </div>
                     <div className="text-center">
                       <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-2 mx-auto">
@@ -695,6 +695,9 @@ export function PropertyDetailPage({
                 )}
               </CardContent>
             </Card>
+
+            {/* Property Map */}
+            <PropertySingleMap property={property} />
 
             {/* Features */}
             {property.features && property.features.length > 0 && (
@@ -823,16 +826,17 @@ export function PropertyDetailPage({
                 {property.images.map((image, index) => (
                   <div
                     key={index}
-                    className="aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer group"
+                    className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer group"
                     onClick={() => {
                       setCurrentImageIndex(index);
                       setShowImageGallery(true);
                     }}
                   >
-                    <img
+                    <Image
                       src={image}
                       alt={`${property.title} - Imagen ${index + 1}`}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
                 ))}
@@ -870,11 +874,15 @@ export function PropertyDetailPage({
       {/* Image Gallery Modal */}
       <Dialog open={showImageGallery} onOpenChange={setShowImageGallery}>
         <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
+          <DialogHeader>
+            <DialogTitle className="sr-only">Galería de Imágenes</DialogTitle>
+          </DialogHeader>
           <div className="relative w-full h-full flex items-center justify-center bg-black">
-            <img
+            <Image
               src={property.images[currentImageIndex]}
               alt={`${property.title} - Imagen ${currentImageIndex + 1}`}
-              className="max-w-full max-h-full object-contain"
+              fill
+              className="object-contain"
             />
 
             {/* Navigation */}

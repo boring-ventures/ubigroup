@@ -22,7 +22,6 @@ import type { SignInFormData, UserAuthFormProps } from "@/types/auth/sign-in";
 import { signInFormSchema } from "@/types/auth/sign-in";
 import { toast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
-import { saltAndHashPassword } from "@/lib/auth/password-crypto";
 
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -44,14 +43,14 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       // Send raw password to Supabase - it handles hashing automatically
       await signIn(data.email, data.password);
       toast({
-        title: "Success",
-        description: "You have been signed in.",
+        title: "Éxito",
+        description: "Has iniciado sesión.",
       });
       router.push("/dashboard");
     } catch {
       toast({
         title: "Error",
-        description: "Invalid email or password.",
+        description: "Correo o contraseña inválidos.",
         variant: "destructive",
       });
     } finally {
@@ -69,9 +68,9 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
               name="email"
               render={({ field }) => (
                 <FormItem className="space-y-1">
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Correo electrónico</FormLabel>
                   <FormControl>
-                    <Input placeholder="name@example.com" {...field} />
+                    <Input placeholder="nombre@ejemplo.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -83,12 +82,12 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
               render={({ field }) => (
                 <FormItem className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Contraseña</FormLabel>
                     <Link
                       href="/forgot-password"
                       className="text-sm font-medium text-muted-foreground hover:opacity-75"
                     >
-                      Forgot password?
+                      ¿Olvidaste tu contraseña?
                     </Link>
                   </div>
                   <FormControl>
@@ -99,7 +98,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
               )}
             />
             <Button className="mt-2" disabled={isLoading}>
-              Login
+              Iniciar sesión
             </Button>
           </div>
         </form>

@@ -29,12 +29,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/components/ui/use-toast";
 import {
   Home,
-  Users,
   Search,
-  Filter,
   CheckCircle,
   Clock,
   MapPin,
@@ -43,6 +40,7 @@ import {
   Building2,
 } from "lucide-react";
 import { PropertyDetailsModal } from "./property-details-modal";
+import Image from "next/image";
 
 interface Property {
   id: string;
@@ -84,8 +82,13 @@ interface PropertyStats {
   averagePrice: number;
 }
 
+interface Agency {
+  id: string;
+  name: string;
+  logoUrl: string | null;
+}
+
 export function SuperAdminAllProperties() {
-  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -165,7 +168,7 @@ export function SuperAdminAllProperties() {
             : "bg-green-600 hover:bg-green-700 text-white"
         }`}
       >
-        {type === "SALE" ? "Venda" : "Aluguel"}
+        {type === "SALE" ? "Venta" : "Alquiler"}
       </Badge>
     );
   };
@@ -194,9 +197,9 @@ export function SuperAdminAllProperties() {
   };
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("pt-BR", {
+    return new Intl.NumberFormat("es-BO", {
       style: "currency",
-      currency: "BRL",
+      currency: "BOB",
     }).format(price);
   };
 
@@ -242,7 +245,7 @@ export function SuperAdminAllProperties() {
                 <div>
                   <p className="text-2xl font-bold">{stats?.total || 0}</p>
                   <p className="text-xs text-muted-foreground">
-                    Total Properties
+                    Propiedades totales
                   </p>
                 </div>
               </div>
@@ -258,7 +261,7 @@ export function SuperAdminAllProperties() {
                 <div>
                   <p className="text-2xl font-bold">{stats?.pending || 0}</p>
                   <p className="text-xs text-muted-foreground">
-                    Pending Review
+                    Pendientes de revisión
                   </p>
                 </div>
               </div>
@@ -273,7 +276,7 @@ export function SuperAdminAllProperties() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{stats?.approved || 0}</p>
-                  <p className="text-xs text-muted-foreground">Approved</p>
+                  <p className="text-xs text-muted-foreground">Aprobadas</p>
                 </div>
               </div>
             </CardContent>
@@ -289,7 +292,7 @@ export function SuperAdminAllProperties() {
                   <p className="text-2xl font-bold">
                     {formatPrice(stats?.totalValue || 0)}
                   </p>
-                  <p className="text-xs text-muted-foreground">Total Value</p>
+                  <p className="text-xs text-muted-foreground">Valor total</p>
                 </div>
               </div>
             </CardContent>
@@ -299,14 +302,14 @@ export function SuperAdminAllProperties() {
         {/* Filters */}
         <Card>
           <CardHeader>
-            <CardTitle>Filters</CardTitle>
+            <CardTitle>Filtros</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
-                  placeholder="Search properties..."
+                  placeholder="Buscar propiedades..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -315,36 +318,36 @@ export function SuperAdminAllProperties() {
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Filter by status" />
+                  <SelectValue placeholder="Filtrar por estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="PENDING">Pending</SelectItem>
-                  <SelectItem value="APPROVED">Approved</SelectItem>
-                  <SelectItem value="REJECTED">Rejected</SelectItem>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="PENDING">Pendiente</SelectItem>
+                  <SelectItem value="APPROVED">Aprobado</SelectItem>
+                  <SelectItem value="REJECTED">Rechazado</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={typeFilter} onValueChange={setTypeFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Filter by type" />
+                  <SelectValue placeholder="Filtrar por tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="HOUSE">House</SelectItem>
-                  <SelectItem value="APARTMENT">Apartment</SelectItem>
-                  <SelectItem value="OFFICE">Office</SelectItem>
-                  <SelectItem value="LAND">Land</SelectItem>
+                  <SelectItem value="all">Todos los tipos</SelectItem>
+                  <SelectItem value="HOUSE">Casa</SelectItem>
+                  <SelectItem value="APARTMENT">Departamento</SelectItem>
+                  <SelectItem value="OFFICE">Oficina</SelectItem>
+                  <SelectItem value="LAND">Terreno</SelectItem>
                 </SelectContent>
               </Select>
 
               <Select value={agencyFilter} onValueChange={setAgencyFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Filter by agency" />
+                  <SelectValue placeholder="Filtrar por agencia" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Agencies</SelectItem>
-                  {agencies.map((agency: any) => (
+                  <SelectItem value="all">Todas las agencias</SelectItem>
+                  {agencies.map((agency: Agency) => (
                     <SelectItem key={agency.id} value={agency.id}>
                       {agency.name}
                     </SelectItem>
@@ -358,9 +361,9 @@ export function SuperAdminAllProperties() {
         {/* Properties Table */}
         <Card>
           <CardHeader>
-            <CardTitle>All Properties</CardTitle>
+            <CardTitle>Todas las propiedades</CardTitle>
             <CardDescription>
-              Platform-wide property management and oversight
+              Gestión y supervisión de propiedades de toda la plataforma
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -368,21 +371,21 @@ export function SuperAdminAllProperties() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Property</TableHead>
-                    <TableHead>Agent</TableHead>
-                    <TableHead>Agency</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Propiedad</TableHead>
+                    <TableHead>Agente</TableHead>
+                    <TableHead>Agencia</TableHead>
+                    <TableHead>Ubicación</TableHead>
+                    <TableHead>Precio</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Creada</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {properties.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-8">
-                        No properties found
+                        No se encontraron propiedades
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -392,9 +395,11 @@ export function SuperAdminAllProperties() {
                           <div className="flex items-center space-x-3">
                             <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center">
                               {property.images.length > 0 ? (
-                                <img
+                                <Image
                                   src={property.images[0]}
                                   alt={property.title}
+                                  width={24}
+                                  height={24}
                                   className="w-full h-full object-cover rounded-md"
                                 />
                               ) : (
@@ -406,8 +411,8 @@ export function SuperAdminAllProperties() {
                                 {property.title}
                               </div>
                               <div className="text-sm text-muted-foreground">
-                                {property.type} • {property.bedrooms}br{" "}
-                                {property.bathrooms}ba
+                                {property.type} • {property.bedrooms} hab{" "}
+                                {property.bathrooms} baños
                               </div>
                               <div className="flex space-x-1 mt-1">
                                 {getTransactionBadge(property.transactionType)}
@@ -463,7 +468,7 @@ export function SuperAdminAllProperties() {
                               size="sm"
                               variant="ghost"
                               onClick={() => handleViewProperty(property.id)}
-                              title="View Property Details"
+                              title="Ver detalles de la propiedad"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>

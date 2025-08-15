@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     // Use getUser() instead of getSession() for better security
@@ -19,17 +19,43 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get current user to check if they're a SUPER_ADMIN
+    // Get current user to check their role and agency
     const currentUser = await prisma.user.findUnique({
       where: { userId: user.id },
+      include: {
+        agency: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
-    if (!currentUser || currentUser.role !== "SUPER_ADMIN") {
+    if (!currentUser) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Fetch all users with their agency information
+    // Build where clause based on user role
+    const whereClause: { agencyId?: string } = {};
+
+    // Agency Admin can only see users from their agency
+    if (currentUser.role === "AGENCY_ADMIN") {
+      if (!currentUser.agencyId) {
+        return NextResponse.json(
+          { error: "Agency Admin must be assigned to an agency" },
+          { status: 403 }
+        );
+      }
+      whereClause.agencyId = currentUser.agencyId;
+    } else if (currentUser.role !== "SUPER_ADMIN") {
+      // Only SUPER_ADMIN and AGENCY_ADMIN can access this endpoint
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Fetch users with their agency information
     const users = await prisma.user.findMany({
+      where: whereClause,
       include: {
         agency: {
           select: {
@@ -55,7 +81,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     // Use getUser() instead of getSession() for better security
@@ -68,12 +94,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get current user to check if they're a SUPER_ADMIN
+    // Get current user to check their role and agency
     const currentUser = await prisma.user.findUnique({
       where: { userId: user.id },
+      include: {
+        agency: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
-    if (!currentUser || currentUser.role !== "SUPER_ADMIN") {
+    if (!currentUser) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Only SUPER_ADMIN and AGENCY_ADMIN can create users
+    if (
+      currentUser.role !== "SUPER_ADMIN" &&
+      currentUser.role !== "AGENCY_ADMIN"
+    ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -86,7 +128,7 @@ export async function POST(request: NextRequest) {
       role,
       phone,
       whatsapp,
-      agencyId,
+      agencyId: initialAgencyId,
     } = body;
 
     // Validate required fields
@@ -100,6 +142,43 @@ export async function POST(request: NextRequest) {
     // Validate role
     if (!["SUPER_ADMIN", "AGENCY_ADMIN", "AGENT"].includes(role)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+    }
+
+    // Initialize agencyId variable
+    let agencyId = initialAgencyId;
+
+    // Agency Admin restrictions
+    if (currentUser.role === "AGENCY_ADMIN") {
+      // Agency Admin cannot create SUPER_ADMIN users
+      if (role === "SUPER_ADMIN") {
+        return NextResponse.json(
+          { error: "Agency Admins cannot create Super Admin users" },
+          { status: 403 }
+        );
+      }
+
+      // Agency Admin can only create AGENT and AGENCY_ADMIN users
+      if (!["AGENT", "AGENCY_ADMIN"].includes(role)) {
+        return NextResponse.json(
+          {
+            error: "Agency Admins can only create Agent and Agency Admin users",
+          },
+          { status: 403 }
+        );
+      }
+
+      // Agency Admin can only create users for their own agency
+      if (initialAgencyId && initialAgencyId !== currentUser.agencyId) {
+        return NextResponse.json(
+          { error: "Agency Admins can only create users for their own agency" },
+          { status: 403 }
+        );
+      }
+
+      // Automatically assign to the same agency if not provided
+      if (!agencyId) {
+        agencyId = currentUser.agencyId;
+      }
     }
 
     // Check if agency is required for non-SUPER_ADMIN roles

@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { PropertyForm } from "@/components/dashboard/property-form";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Profile } from "@/types/profile";
 
 export default function CreatePropertyPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const [userProfile, setUserProfile] = useState<any>(null);
   const router = useRouter();
   const supabase = createClientComponentClient();
 
@@ -32,13 +32,12 @@ export default function CreatePropertyPage() {
           return;
         }
 
-        const profile = await response.json();
+        const profile: Profile = await response.json();
         if (profile.role !== "AGENT") {
           router.push("/dashboard");
           return;
         }
 
-        setUserProfile(profile);
         setIsLoading(false);
       } catch (error) {
         console.error("Auth check error:", error);

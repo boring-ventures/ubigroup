@@ -4,13 +4,30 @@ import { Suspense, useEffect, useState } from "react";
 import { UserManagement } from "@/components/user-management/user-management";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Shield, Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface UserMetrics {
   totalUsers: number;
   superAdmins: number;
   agencyAdmins: number;
   agents: number;
+}
+
+interface User {
+  id: string;
+  userId: string;
+  firstName: string | null;
+  lastName: string | null;
+  role: "SUPER_ADMIN" | "AGENCY_ADMIN" | "AGENT";
+  phone: string | null;
+  whatsapp: string | null;
+  avatarUrl: string | null;
+  active: boolean;
+  createdAt: string;
+  agencyId: string | null;
+  agency?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export default function UsersPage() {
@@ -31,12 +48,12 @@ export default function UsersPage() {
 
         const metrics = {
           totalUsers: users.length,
-          superAdmins: users.filter((user: any) => user.role === "SUPER_ADMIN")
+          superAdmins: users.filter((user: User) => user.role === "SUPER_ADMIN")
             .length,
           agencyAdmins: users.filter(
-            (user: any) => user.role === "AGENCY_ADMIN"
+            (user: User) => user.role === "AGENCY_ADMIN"
           ).length,
-          agents: users.filter((user: any) => user.role === "AGENT").length,
+          agents: users.filter((user: User) => user.role === "AGENT").length,
         };
 
         setMetrics(metrics);

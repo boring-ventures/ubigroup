@@ -21,7 +21,7 @@ export function AuthHeader() {
         href="/sign-in"
         className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
       >
-        Sign In
+        Iniciar sesión
       </Link>
     </div>
   );

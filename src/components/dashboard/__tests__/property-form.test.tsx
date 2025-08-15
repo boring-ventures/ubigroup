@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PropertyForm } from "../property-form";
 import { PropertyType, TransactionType } from "@prisma/client";
+import "@testing-library/jest-dom";
 
 // Mock the usePropertyCreate hook
 jest.mock("@/hooks/use-agent-properties", () => ({
@@ -27,9 +28,13 @@ const createWrapper = () => {
     },
   });
 
-  return ({ children }: { children: React.ReactNode }) => (
+  const TestWrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
+
+  TestWrapper.displayName = "TestWrapper";
+
+  return TestWrapper;
 };
 
 describe("PropertyForm", () => {
@@ -46,9 +51,11 @@ describe("PropertyForm", () => {
     });
 
     // Check for required form fields
-    expect(screen.getByLabelText(/título do imóvel/i)).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/título de la propiedad/i)
+    ).toBeInTheDocument();
     expect(screen.getByLabelText(/descrição/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/tipo de imóvel/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/tipo de propiedad/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/tipo de transação/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/estado/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/cidade/i)).toBeInTheDocument();
@@ -67,7 +74,9 @@ describe("PropertyForm", () => {
     });
 
     // Try to submit form without filling required fields
-    const submitButton = screen.getByRole("button", { name: /criar imóvel/i });
+    const submitButton = screen.getByRole("button", {
+      name: /crear propiedad/i,
+    });
     await user.click(submitButton);
 
     await waitFor(() => {
@@ -89,10 +98,12 @@ describe("PropertyForm", () => {
       wrapper: createWrapper(),
     });
 
-    const titleInput = screen.getByLabelText(/título do imóvel/i);
+    const titleInput = screen.getByLabelText(/título de la propiedad/i);
     await user.type(titleInput, "ABC"); // Less than 5 characters
 
-    const submitButton = screen.getByRole("button", { name: /criar imóvel/i });
+    const submitButton = screen.getByRole("button", {
+      name: /crear propiedad/i,
+    });
     await user.click(submitButton);
 
     await waitFor(() => {
@@ -112,7 +123,9 @@ describe("PropertyForm", () => {
     const descInput = screen.getByLabelText(/descrição/i);
     await user.type(descInput, "Short desc"); // Less than 20 characters
 
-    const submitButton = screen.getByRole("button", { name: /criar imóvel/i });
+    const submitButton = screen.getByRole("button", {
+      name: /crear propiedad/i,
+    });
     await user.click(submitButton);
 
     await waitFor(() => {
@@ -132,7 +145,9 @@ describe("PropertyForm", () => {
     const priceInput = screen.getByLabelText(/preço/i);
     await user.type(priceInput, "-1000"); // Negative price
 
-    const submitButton = screen.getByRole("button", { name: /criar imóvel/i });
+    const submitButton = screen.getByRole("button", {
+      name: /crear propiedad/i,
+    });
     await user.click(submitButton);
 
     await waitFor(() => {
@@ -157,7 +172,7 @@ describe("PropertyForm", () => {
     const initialData = {
       id: "property-123",
       title: "Casa em Vila Madalena",
-      description: "Linda casa com 3 quartos e jardim amplo",
+      description: "Hermosa casa con 3 habitaciones y jardín amplio",
       type: PropertyType.HOUSE,
       transactionType: TransactionType.SALE,
       locationState: "São Paulo",
@@ -169,7 +184,7 @@ describe("PropertyForm", () => {
       garageSpaces: 1,
       squareMeters: 150,
       images: ["https://example.com/image1.jpg"],
-      features: ["Jardim", "Varanda"],
+      features: ["Jardín", "Balcón"],
     };
 
     render(
@@ -187,14 +202,16 @@ describe("PropertyForm", () => {
       screen.getByDisplayValue("Casa em Vila Madalena")
     ).toBeInTheDocument();
     expect(
-      screen.getByDisplayValue("Linda casa com 3 quartos e jardim amplo")
+      screen.getByDisplayValue(
+        "Hermosa casa con 3 habitaciones y jardín amplio"
+      )
     ).toBeInTheDocument();
     expect(screen.getByDisplayValue("São Paulo")).toBeInTheDocument();
     expect(screen.getByDisplayValue("650000")).toBeInTheDocument();
 
     // Check that button text is for updating
     expect(
-      screen.getByRole("button", { name: /atualizar imóvel/i })
+      screen.getByRole("button", { name: /actualizar propiedad/i })
     ).toBeInTheDocument();
   });
 
@@ -284,7 +301,10 @@ describe("PropertyForm", () => {
     });
 
     // Fill out all other required fields but no images
-    await user.type(screen.getByLabelText(/título do imóvel/i), "Casa Teste");
+    await user.type(
+      screen.getByLabelText(/título de la propiedad/i),
+      "Casa Teste"
+    );
     await user.type(
       screen.getByLabelText(/descrição/i),
       "Esta é uma descrição de teste com mais de vinte caracteres"
@@ -294,7 +314,9 @@ describe("PropertyForm", () => {
     await user.type(screen.getByLabelText(/bairro/i), "Vila Madalena");
     await user.type(screen.getByLabelText(/preço/i), "500000");
 
-    const submitButton = screen.getByRole("button", { name: /criar imóvel/i });
+    const submitButton = screen.getByRole("button", {
+      name: /crear propiedad/i,
+    });
     await user.click(submitButton);
 
     await waitFor(() => {

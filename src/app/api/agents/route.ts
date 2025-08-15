@@ -2,18 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
 import { authenticateUser } from "@/lib/auth/server-auth";
-import {
-  validateRequestBody,
-  validateQueryParams,
-  canManageUsers,
-  belongsToAgency,
-} from "@/lib/auth/rbac";
+import { validateRequestBody, validateQueryParams } from "@/lib/auth/rbac";
 import {
   createAgentSchema,
   userQuerySchema,
   CreateAgentInput,
   UserQueryInput,
 } from "@/lib/validations/user";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 // GET - Fetch agents for Agency Admin
 export async function GET(request: NextRequest) {
@@ -49,8 +45,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
+    if (!queryParams) {
+      return NextResponse.json(
+        { error: "Invalid query parameters" },
+        { status: 400 }
+      );
+    }
+
     // Build where clause
-    let whereClause: any = {
+    const whereClause: {
+      role: UserRole;
+      agencyId?: string | null;
+      active?: boolean;
+      OR?: Array<{
+        firstName?: { contains: string; mode: "insensitive" };
+        lastName?: { contains: string; mode: "insensitive" };
+      }>;
+    } = {
       role: UserRole.AGENT, // Only agents
     };
 
@@ -150,6 +161,13 @@ export async function POST(request: NextRequest) {
 
     if (validationError) {
       return NextResponse.json({ error: validationError }, { status: 400 });
+    }
+
+    if (!agentData) {
+      return NextResponse.json(
+        { error: "Invalid request data" },
+        { status: 400 }
+      );
     }
 
     // Check if user with this email already exists

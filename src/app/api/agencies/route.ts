@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { UserRole } from "@prisma/client";
 import { authenticateUser } from "@/lib/auth/server-auth";
-import {
-  validateRequestBody,
-  validateQueryParams,
-  canAccessAgency,
-} from "@/lib/auth/rbac";
+import { validateRequestBody, validateQueryParams } from "@/lib/auth/rbac";
 import {
   createAgencySchema,
   agencyQuerySchema,
@@ -14,8 +10,7 @@ import {
   AgencyQueryInput,
 } from "@/lib/validations/agency";
 
-// Test endpoint to check authentication
-export async function HEAD(request: NextRequest) {
+export async function HEAD() {
   try {
     console.log("HEAD /api/agencies - Testing authentication");
 
@@ -78,8 +73,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
+    if (!queryParams) {
+      return NextResponse.json(
+        { error: "Invalid query parameters" },
+        { status: 400 }
+      );
+    }
+
     // Build where clause
-    let whereClause: any = {};
+    const whereClause: {
+      active?: boolean;
+      OR?: Array<{
+        name?: { contains: string; mode: "insensitive" };
+        email?: { contains: string; mode: "insensitive" };
+      }>;
+    } = {};
 
     if (queryParams.active !== undefined) {
       whereClause.active = queryParams.active;
@@ -169,6 +177,14 @@ export async function POST(request: NextRequest) {
     if (validationError) {
       console.log("Validation error:", validationError);
       return NextResponse.json({ error: validationError }, { status: 400 });
+    }
+
+    if (!agencyData) {
+      console.log("Invalid agency data");
+      return NextResponse.json(
+        { error: "Invalid request data" },
+        { status: 400 }
+      );
     }
 
     console.log("Validated agency data:", agencyData);

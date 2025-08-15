@@ -42,9 +42,33 @@ export const updatePropertyStatusSchema = z.object({
 export const propertyQuerySchema = z.object({
   // Search and filter parameters
   search: z.string().optional(),
-  status: z.nativeEnum(PropertyStatus).optional(),
-  type: z.nativeEnum(PropertyType).optional(),
-  transactionType: z.nativeEnum(TransactionType).optional(),
+  status: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (val === "APPROVED") return "APPROVED" as const;
+      if (val === "PENDING") return "PENDING" as const;
+      if (val === "REJECTED") return "REJECTED" as const;
+      return undefined;
+    }),
+  type: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (val === "HOUSE") return "HOUSE" as const;
+      if (val === "APARTMENT") return "APARTMENT" as const;
+      if (val === "OFFICE") return "OFFICE" as const;
+      if (val === "LAND") return "LAND" as const;
+      return undefined;
+    }),
+  transactionType: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (val === "SALE") return "SALE" as const;
+      if (val === "RENT") return "RENT" as const;
+      return undefined;
+    }),
 
   // Location filters
   locationState: z.string().optional(),
