@@ -1,7 +1,7 @@
 "use client";
 import "leaflet/dist/leaflet.css";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPropertyPinColor } from "@/lib/utils";
 import { TransactionType } from "@prisma/client";
@@ -75,6 +75,21 @@ export function PropertyMap({
   const switchedToFallbackRef = useRef(false);
   const [isVisible, setIsVisible] = useState(false);
 
+  // Create a simple hash of the data to detect changes efficiently
+  const propertiesHash = useMemo(() => {
+    return properties.length + "_" + properties.map((p) => p.id).join(",");
+  }, [properties]);
+
+  const projectsHash = useMemo(() => {
+    return projects.length + "_" + projects.map((p) => p.id).join(",");
+  }, [projects]);
+
+  // Track previous data to detect actual changes
+  const prevDataRef = useRef<{ properties: string; projects: string }>({
+    properties: "",
+    projects: "",
+  });
+
   // Observe visibility to initialize only when in viewport
   useEffect(() => {
     const el = mapRef.current;
@@ -95,9 +110,27 @@ export function PropertyMap({
 
   useEffect(() => {
     if (!isVisible) return;
+
+    // Check if data has actually changed
+    if (
+      prevDataRef.current.properties === propertiesHash &&
+      prevDataRef.current.projects === projectsHash &&
+      isInitializedRef.current
+    ) {
+      console.log("Data unchanged, skipping map reinitialization");
+      return;
+    }
+
+    // Update previous data reference
+    prevDataRef.current = {
+      properties: propertiesHash,
+      projects: projectsHash,
+    };
+
     // Reset cancellation and fallback flags for each re-run
     isCancelledRef.current = false;
     switchedToFallbackRef.current = false;
+
     // Only load Leaflet on client side
     const loadMap = async () => {
       if (typeof window === "undefined" || !mapRef.current) return;
@@ -175,6 +208,27 @@ export function PropertyMap({
             await new Promise((r) => setTimeout(r, 150));
           }
           if (!hasSize() || isCancelledRef.current) return;
+        }
+
+        // Check if the container already has a map instance
+        const containerWithLeaflet = mapRef.current as HTMLDivElement & {
+          _leaflet_id?: number;
+        };
+        if (containerWithLeaflet._leaflet_id) {
+          console.log("Container already has a map instance, removing...");
+          try {
+            // Try to remove any existing map from the container
+            const existingMap = L.map(mapRef.current);
+            existingMap.remove();
+            // Clear the leaflet ID
+            delete containerWithLeaflet._leaflet_id;
+          } catch (e) {
+            console.warn("Error removing existing map from container:", e);
+            // If we can't remove it properly, try to clear the ID manually
+            try {
+              delete containerWithLeaflet._leaflet_id;
+            } catch {}
+          }
         }
 
         // Create map instance
@@ -293,15 +347,15 @@ export function PropertyMap({
         console.log("Properties received:", properties);
         console.log(
           "Properties with coordinates:",
-          properties.filter((p) => p.latitude && p.longitude)
+          properties.filter((p: Property) => p.latitude && p.longitude)
         );
 
         const validProperties = properties.filter(
-          (p) => p.latitude && p.longitude
+          (p: Property) => p.latitude && p.longitude
         );
 
         const validProjects = (projects || []).filter(
-          (p) => p.latitude && p.longitude
+          (p: ProjectPin) => p.latitude && p.longitude
         );
 
         if (validProperties.length > 0 || validProjects.length > 0) {
@@ -456,7 +510,11 @@ export function PropertyMap({
       if (markersRef.current.length > 0) {
         markersRef.current.forEach((marker) => {
           if (marker && marker.remove) {
-            marker.remove();
+            try {
+              marker.remove();
+            } catch (e) {
+              console.warn("Error removing marker during cleanup:", e);
+            }
           }
         });
         markersRef.current = [];
@@ -464,18 +522,43 @@ export function PropertyMap({
 
       // Clear map
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try {
+          mapInstanceRef.current.remove();
+        } catch (e) {
+          console.warn("Error removing map during cleanup:", e);
+        }
         mapInstanceRef.current = null;
         isInitializedRef.current = false;
       }
 
+      // Clear any remaining leaflet ID from the container
+      if (mapRef.current) {
+        const containerWithLeaflet = mapRef.current as HTMLDivElement & {
+          _leaflet_id?: number;
+        };
+        if (containerWithLeaflet._leaflet_id) {
+          try {
+            delete containerWithLeaflet._leaflet_id;
+          } catch (e) {
+            console.warn("Error clearing leaflet ID during cleanup:", e);
+          }
+        }
+      }
+
       // Disconnect resize observer
       if (resizeObserverRef.current) {
-        resizeObserverRef.current.disconnect();
+        try {
+          resizeObserverRef.current.disconnect();
+        } catch (e) {
+          console.warn(
+            "Error disconnecting resize observer during cleanup:",
+            e
+          );
+        }
         resizeObserverRef.current = null;
       }
     };
-  }, [properties, projects, isVisible]);
+  }, [propertiesHash, projectsHash, isVisible]);
 
   return (
     <Card className={className}>
