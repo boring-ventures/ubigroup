@@ -230,7 +230,7 @@ export function PropertySearchBar({
                   setShowSuggestions(false);
                 }
               }}
-              className="pl-10 pr-20 h-12 text-base"
+              className="pl-10 pr-20 h-12 text-base border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] placeholder-[hsl(0_0%_65%)]"
             />
             <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
               {inputValue && (
@@ -257,18 +257,18 @@ export function PropertySearchBar({
         </PopoverTrigger>
 
         <PopoverContent
-          className="w-[--radix-popover-trigger-width] p-0"
+          className="w-[--radix-popover-trigger-width] p-0 bg-[hsl(0_0%_13%)] border-[hsl(0_0%_25%)]"
           align="start"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <Command className="rounded-lg border-none shadow-md">
+          <Command className="rounded-lg border-none shadow-md bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
             <CommandList className="max-h-80">
               {isLoading ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">
+                <div className="p-4 text-center text-sm text-[hsl(0_0%_65%)]">
                   Buscando sugerencias...
                 </div>
               ) : getAllSuggestions().length === 0 ? (
-                <CommandEmpty className="py-6 text-center text-sm">
+                <CommandEmpty className="py-6 text-center text-sm text-[hsl(0_0%_85%)]">
                   {inputValue.trim()
                     ? "No se encontraron sugerencias."
                     : "Escribe para buscar propiedades..."}
@@ -284,17 +284,20 @@ export function PropertySearchBar({
                             key={suggestion.id}
                             value={suggestion.label}
                             onSelect={() => handleSuggestionSelect(suggestion)}
-                            className="flex items-center space-x-3 px-3 py-2 cursor-pointer"
+                            className="flex items-center space-x-3 px-3 py-2 cursor-pointer hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)]"
                           >
-                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[hsl(0_0%_25%)]">
                               {getSuggestionIcon(suggestion)}
                             </div>
                             <div className="flex-1">
-                              <div className="font-medium">
+                              <div className="font-medium text-[hsl(0_0%_85%)]">
                                 {suggestion.label}
                               </div>
                             </div>
-                            <Badge variant="outline" className="text-xs">
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-[hsl(0_0%_25%)] text-[hsl(0_0%_85%)]"
+                            >
                               {getSuggestionTypeLabel(suggestion.type)}
                             </Badge>
                           </CommandItem>
@@ -314,28 +317,31 @@ export function PropertySearchBar({
                             key={suggestion.id}
                             value={suggestion.label}
                             onSelect={() => handleSuggestionSelect(suggestion)}
-                            className="flex items-center space-x-3 px-3 py-2 cursor-pointer"
+                            className="flex items-center space-x-3 px-3 py-2 cursor-pointer hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)]"
                           >
-                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[hsl(0_0%_25%)]">
                               {getSuggestionIcon(suggestion)}
                             </div>
                             <div className="flex-1">
-                              <div className="font-medium">
+                              <div className="font-medium text-[hsl(0_0%_85%)]">
                                 {suggestion.label}
                               </div>
                               {suggestion.description && (
-                                <div className="text-sm text-muted-foreground">
+                                <div className="text-sm text-[hsl(0_0%_65%)]">
                                   {suggestion.description}
                                 </div>
                               )}
                             </div>
                             <div className="flex items-center space-x-2">
                               {suggestion.count && (
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-xs text-[hsl(0_0%_65%)]">
                                   {suggestion.count}
                                 </span>
                               )}
-                              <Badge variant="outline" className="text-xs">
+                              <Badge
+                                variant="outline"
+                                className="text-xs border-[hsl(0_0%_25%)] text-[hsl(0_0%_85%)]"
+                              >
                                 {getSuggestionTypeLabel(suggestion.type)}
                               </Badge>
                             </div>

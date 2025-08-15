@@ -145,9 +145,12 @@ export function PropertyMap({
         }
 
         // Ensure Leaflet can re-initialize on the same container
-        if ((mapRef.current as any)?._leaflet_id) {
+        if (
+          (mapRef.current as unknown as { _leaflet_id?: number })?._leaflet_id
+        ) {
           try {
-            delete (mapRef.current as any)._leaflet_id;
+            delete (mapRef.current as unknown as { _leaflet_id?: number })
+              ._leaflet_id;
           } catch {}
         }
 
@@ -181,7 +184,7 @@ export function PropertyMap({
         // Use internal proxy tiles (matches single property page behavior)
         const primaryTiles = L.tileLayer("/api/tiles/{z}/{x}/{y}.png", {
           attribution: "© OpenStreetMap contributors",
-          crossOrigin: true as any,
+          crossOrigin: true,
         }).addTo(map);
 
         primaryTiles.on("tileerror", () => {
@@ -194,7 +197,7 @@ export function PropertyMap({
               {
                 subdomains: "abc",
                 attribution: "© OpenStreetMap contributors",
-                crossOrigin: true as any,
+                crossOrigin: true,
               }
             );
             fallback.addTo(map);

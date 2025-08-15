@@ -160,7 +160,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
         variant={type === "SALE" ? "default" : "secondary"}
         className={`${
           type === "SALE"
-            ? "bg-blue-600 hover:bg-blue-700"
+            ? "bg-primary hover:bg-primary/90"
             : "bg-green-600 hover:bg-green-700 text-white"
         }`}
       >
@@ -254,9 +254,9 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground dark">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-background border-b border-border">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <Button
@@ -375,7 +375,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                   )}
 
                   {/* Image Counter */}
-                  <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm">
+                  <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium">
                     {currentImageIndex + 1} / {property.images.length}
                   </div>
                 </div>
@@ -413,7 +413,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <span className="text-white font-semibold">
+                      <span className="text-white font-semibold text-sm">
                         +{property.images.length - 3} fotos
                       </span>
                     </div>
@@ -422,7 +422,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
               </div>
             </div>
           ) : (
-            <div className="aspect-[4/3] rounded-lg bg-muted flex items-center justify-center">
+            <div className="aspect-[4/3] rounded-lg bg-muted flex items-center justify-center border border-border">
               <div className="text-center">
                 <Home className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
                 <p className="text-muted-foreground">
@@ -726,7 +726,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             )}
 
             {/* Counter */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full">
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full font-medium">
               {currentImageIndex + 1} / {property.images.length}
             </div>
           </div>
