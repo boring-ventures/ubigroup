@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { FacebookIcon, TwitterIcon, InstagramIcon, Brain } from "lucide-react";
+import Image from "next/image";
+import { FacebookIcon, TwitterIcon, InstagramIcon } from "lucide-react";
+import logoLight from "@logos/logo_ligth.svg";
+import logoDark from "@logos/logo_dark.svg";
 
 export default function Footer() {
   return (
@@ -8,10 +11,23 @@ export default function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center space-x-2 mb-4">
-              <Brain className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold text-primary">
-                POSITIVE-Next
-              </span>
+              <Image
+                src={logoLight}
+                alt="UbiGroup logo"
+                width={32}
+                height={32}
+                className="h-8 w-auto dark:hidden"
+                priority
+              />
+              <Image
+                src={logoDark}
+                alt="UbiGroup logo"
+                width={32}
+                height={32}
+                className="hidden h-8 w-auto dark:block"
+                priority
+              />
+              <span className="text-2xl font-bold text-primary">UbiGroup</span>
             </div>
             <p className="text-muted-foreground">
               Empowering minds for a better tomorrow.
@@ -99,8 +115,10 @@ export default function Footer() {
         </div>
         <div className="mt-8 pt-8 border-t border-border text-center">
           <p className="text-muted-foreground">
-            &copy; {new Date().getFullYear()} POSITIVE-Next. All rights
-            reserved.
+            &copy; {new Date().getFullYear()} UbiGroup. All rights reserved.
+          </p>
+          <p className="text-muted-foreground text-sm mt-2">
+            Desarrollado por Boring Studios
           </p>
         </div>
       </div>

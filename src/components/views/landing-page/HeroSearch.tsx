@@ -12,13 +12,12 @@ import {
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { PropertySearchBar } from "@/components/public/property-search-bar";
-import { Sparkles, MapPin } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { ShineBorder } from "@/components/magicui/shine-border";
+import { ContainerTextFlip } from "@/components/ui/container-text-flip";
+import { AvatarCircles } from "@/components/magicui/avatar-circles";
 
-type TransactionTab = "venta" | "alquiler" | "anticretico";
-
-const defaultBackground =
-  "https://images.unsplash.com/photo-1570129477492-45c003edd2be?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+type TransactionTab = "venta" | "alquiler" | "anticretico" | "proyectos";
 
 export const HeroSearch = () => {
   const router = useRouter();
@@ -34,7 +33,6 @@ export const HeroSearch = () => {
   const carouselImages: string[] = [
     "https://images.unsplash.com/photo-1460317442991-0ec209397118?q=80&w=1200&auto=format&fit=crop",
     "https://plus.unsplash.com/premium_photo-1684175656320-5c3f701c082c?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "https://images.unsplash.com/photo-1494526585095-c41746248156?q=80&w=1200&auto=format&fit=crop",
     "https://images.unsplash.com/photo-1430285561322-7808604715df?q=80&w=1200&auto=format&fit=crop",
   ];
   const [imageIndex, setImageIndex] = useState(0);
@@ -45,7 +43,7 @@ export const HeroSearch = () => {
       setImageIndex((prev) => (prev + 1) % carouselImages.length);
     }, 5000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [carouselImages.length]);
 
   // Sticky search pill on mobile
   const [showStickySearch, setShowStickySearch] = useState(false);
@@ -78,7 +76,7 @@ export const HeroSearch = () => {
     <section className="relative">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Visual hero with image on the right and content overlay */}
-        <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-6 items-center py-4 md:py-10 lg:py-12 pb-14 lg:pb-16">
+        <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-6 items-center pt-20 md:pt-24 lg:pt-28 pb-14 lg:pb-16">
           {/* Left copy */}
           <div
             className="order-1 lg:order-1 space-y-4 lg:space-y-6"
@@ -90,14 +88,49 @@ export const HeroSearch = () => {
                 Encuentra tu propiedad con confianza
               </span>
             </div>
-            <h1 className="text-3xl sm:text-5xl lg:text-5xl font-bold leading-[1.1]">
-              Encuentra tu
-              <span className="text-primary"> Hogar Ideal</span>
+            <h1 className="text-3xl sm:text-5xl lg:text-5xl font-bold leading-[1.1] text-foreground">
+              Encuentra tu{" "}
+              <ContainerTextFlip
+                words={[
+                  "Hogar Ideal",
+                  "Departamento Ideal",
+                  "Casa Ideal",
+                  "Oficina Ideal",
+                  "Terreno Ideal",
+                ]}
+              />
             </h1>
             <p className="text-base lg:text-lg text-muted-foreground max-w-xl">
               Busca por ciudad, barrio o tipo de propiedad. Filtra por venta o
               alquiler y empieza a explorar.
             </p>
+
+            {/* Trust indicator */}
+            <AvatarCircles
+              numPeople={500}
+              avatarUrls={[
+                {
+                  imageUrl:
+                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+                },
+                {
+                  imageUrl:
+                    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+                },
+                {
+                  imageUrl:
+                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
+                },
+                {
+                  imageUrl:
+                    "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face",
+                },
+                {
+                  imageUrl:
+                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                },
+              ]}
+            />
 
             {/* Search Panel - mobile */}
             <div className="lg:hidden">
@@ -117,6 +150,7 @@ export const HeroSearch = () => {
                           <TabsTrigger value="anticretico">
                             Anticrético
                           </TabsTrigger>
+                          <TabsTrigger value="proyectos">Proyectos</TabsTrigger>
                         </TabsList>
                       </Tabs>
                       <Select
@@ -129,17 +163,40 @@ export const HeroSearch = () => {
                           )
                         }
                       >
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger className="w-full border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
                           <SelectValue placeholder="Tipo" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ALL">Todos</SelectItem>
-                          <SelectItem value="HOUSE">Casa</SelectItem>
-                          <SelectItem value="APARTMENT">
+                        <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                          <SelectItem
+                            value="ALL"
+                            className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                          >
+                            Todos
+                          </SelectItem>
+                          <SelectItem
+                            value="HOUSE"
+                            className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                          >
+                            Casa
+                          </SelectItem>
+                          <SelectItem
+                            value="APARTMENT"
+                            className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                          >
                             Departamento
                           </SelectItem>
-                          <SelectItem value="OFFICE">Oficina</SelectItem>
-                          <SelectItem value="LAND">Terreno</SelectItem>
+                          <SelectItem
+                            value="OFFICE"
+                            className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                          >
+                            Oficina
+                          </SelectItem>
+                          <SelectItem
+                            value="LAND"
+                            className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                          >
+                            Terreno
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -147,7 +204,7 @@ export const HeroSearch = () => {
                       value={query}
                       onSearch={handleSearch}
                       placeholder="Buscar por ciudad, barrio o palabra clave"
-                      className="flex-1"
+                      className="flex-1 [&_input]:border-[hsl(0_0%_25%)] [&_input]:bg-[hsl(0_0%_13%)] [&_input]:text-[hsl(0_0%_85%)] [&_input]:placeholder-[hsl(0_0%_65%)]"
                     />
                     <div className="text-xs text-muted-foreground">
                       Búsqueda rápida. Para filtros avanzados, baja a la sección
@@ -226,6 +283,7 @@ export const HeroSearch = () => {
                       <TabsTrigger value="venta">Venta</TabsTrigger>
                       <TabsTrigger value="alquiler">Alquiler</TabsTrigger>
                       <TabsTrigger value="anticretico">Anticrético</TabsTrigger>
+                      <TabsTrigger value="proyectos">Proyectos</TabsTrigger>
                     </TabsList>
                   </Tabs>
                   <Select
@@ -238,15 +296,40 @@ export const HeroSearch = () => {
                       )
                     }
                   >
-                    <SelectTrigger className="w-48">
+                    <SelectTrigger className="w-48 border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
                       <SelectValue placeholder="Tipo" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ALL">Todos</SelectItem>
-                      <SelectItem value="HOUSE">Casa</SelectItem>
-                      <SelectItem value="APARTMENT">Departamento</SelectItem>
-                      <SelectItem value="OFFICE">Oficina</SelectItem>
-                      <SelectItem value="LAND">Terreno</SelectItem>
+                    <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                      <SelectItem
+                        value="ALL"
+                        className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                      >
+                        Todos
+                      </SelectItem>
+                      <SelectItem
+                        value="HOUSE"
+                        className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                      >
+                        Casa
+                      </SelectItem>
+                      <SelectItem
+                        value="APARTMENT"
+                        className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                      >
+                        Departamento
+                      </SelectItem>
+                      <SelectItem
+                        value="OFFICE"
+                        className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                      >
+                        Oficina
+                      </SelectItem>
+                      <SelectItem
+                        value="LAND"
+                        className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                      >
+                        Terreno
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <div className="flex-1">
@@ -254,7 +337,7 @@ export const HeroSearch = () => {
                       value={query}
                       onSearch={handleSearch}
                       placeholder="Buscar por ciudad, barrio o palabra clave"
-                      className="w-full"
+                      className="w-full [&_input]:border-[hsl(0_0%_25%)] [&_input]:bg-[hsl(0_0%_13%)] [&_input]:text-[hsl(0_0%_85%)] [&_input]:placeholder-[hsl(0_0%_65%)]"
                     />
                   </div>
                 </div>
