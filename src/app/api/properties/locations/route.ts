@@ -5,7 +5,7 @@ export async function GET() {
   try {
     // Get all unique locations from all properties (not just approved ones)
     // This ensures we have all possible filter options available
-    
+
     // Get unique states
     const states = await prisma.property.findMany({
       where: {
@@ -37,10 +37,7 @@ export async function GET() {
         locationState: true,
       },
       distinct: ["locationCity", "locationState"],
-      orderBy: [
-        { locationState: "asc" },
-        { locationCity: "asc" },
-      ],
+      orderBy: [{ locationState: "asc" }, { locationCity: "asc" }],
     });
 
     // Get unique municipalities
@@ -60,13 +57,20 @@ export async function GET() {
     });
 
     // Process the results
-    const statesList = states.map(s => s.locationState).filter(Boolean);
-    const citiesList = cities.map(c => ({
-      value: c.locationCity,
-      label: `${c.locationCity}, ${c.locationState}`,
-      state: c.locationState,
-    })).filter(c => c.value && c.state);
-    const municipalitiesList = municipalities.map(m => m.municipality).filter(Boolean);
+    const statesList = states.map((s) => s.locationState).filter(Boolean);
+    const citiesList = cities
+      .map((c) => ({
+        value: c.locationCity,
+        label: `${c.locationCity}, ${c.locationState}`,
+        state: c.locationState,
+      }))
+      .filter((c) => c.value && c.state);
+    const municipalitiesList = municipalities
+      .map((m) => ({
+        value: m.municipality,
+        label: m.municipality,
+      }))
+      .filter((m) => m.value);
 
     return NextResponse.json({
       states: statesList,

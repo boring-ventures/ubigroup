@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
@@ -204,119 +204,124 @@ export default function Properties() {
   };
 
   // Fetch properties from API with search and pagination
-  const fetchProperties = async (searchFilters?: SearchFilters, page = 1) => {
-    try {
-      setSearchLoading(true);
-      setError(null);
-      const params = new URLSearchParams();
+  const fetchProperties = useCallback(
+    async (searchFilters?: SearchFilters, page = 1) => {
+      try {
+        setSearchLoading(true);
+        setError(null);
+        const params = new URLSearchParams();
 
-      // Add pagination params
-      const limit = 6;
-      const offset = (page - 1) * limit;
-      params.append("limit", limit.toString());
-      params.append("offset", offset.toString());
-      params.append("sortBy", "createdAt");
-      params.append("sortOrder", "desc");
+        // Add pagination params
+        const limit = 6;
+        const offset = (page - 1) * limit;
+        params.append("limit", limit.toString());
+        params.append("offset", offset.toString());
+        params.append("sortBy", "createdAt");
+        params.append("sortOrder", "desc");
 
-      // Always restrict to APPROVED for public homepage
-      params.append("status", "APPROVED");
+        // Always restrict to APPROVED for public homepage
+        params.append("status", "APPROVED");
 
-      // Add search and filter params
-      if (searchFilters) {
-        if (searchFilters.searchTerm) {
-          params.append("search", searchFilters.searchTerm);
+        // Add search and filter params
+        if (searchFilters) {
+          if (searchFilters.searchTerm) {
+            params.append("search", searchFilters.searchTerm);
+          }
+          if (
+            searchFilters.propertyType &&
+            searchFilters.propertyType !== "ALL"
+          ) {
+            params.append("type", searchFilters.propertyType);
+          }
+          // Transaction type comes from active tab for property tabs
+          const tabToTransaction: Record<string, string> = {
+            venta: "SALE",
+            alquiler: "RENT",
+            anticretico: "ANTICRÉTICO",
+          };
+          if (activeTab !== "proyectos") {
+            const tx = tabToTransaction[activeTab];
+            if (tx) params.append("transactionType", tx);
+          } else if (
+            searchFilters.transactionType &&
+            searchFilters.transactionType !== "ALL"
+          ) {
+            // Fallback (shouldn't happen on proyectos tab)
+            params.append("transactionType", searchFilters.transactionType);
+          }
+          if (
+            searchFilters.locationState &&
+            searchFilters.locationState !== "ALL"
+          ) {
+            params.append("locationState", searchFilters.locationState);
+          }
+          if (
+            searchFilters.locationCity &&
+            searchFilters.locationCity !== "ALL"
+          ) {
+            params.append("locationCity", searchFilters.locationCity);
+          }
+          if (
+            searchFilters.municipality &&
+            searchFilters.municipality !== "ALL"
+          ) {
+            params.append("municipality", searchFilters.municipality);
+          }
+          if (searchFilters.minPrice) {
+            params.append("minPrice", searchFilters.minPrice);
+          }
+          if (searchFilters.maxPrice) {
+            params.append("maxPrice", searchFilters.maxPrice);
+          }
+          if (searchFilters.minBedrooms) {
+            params.append("minBedrooms", searchFilters.minBedrooms);
+          }
+          if (searchFilters.maxBedrooms) {
+            params.append("maxBedrooms", searchFilters.maxBedrooms);
+          }
+          if (searchFilters.minBathrooms) {
+            params.append("minBathrooms", searchFilters.minBathrooms);
+          }
+          if (searchFilters.maxBathrooms) {
+            params.append("maxBathrooms", searchFilters.maxBathrooms);
+          }
         }
-        if (
-          searchFilters.propertyType &&
-          searchFilters.propertyType !== "ALL"
-        ) {
-          params.append("type", searchFilters.propertyType);
+
+        const response = await fetch(`/api/properties?${params.toString()}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-        // Transaction type comes from active tab for property tabs
-        const tabToTransaction: Record<string, string> = {
-          venta: "SALE",
-          alquiler: "RENT",
-          anticretico: "ANTICRÉTICO",
-        };
-        if (activeTab !== "proyectos") {
-          const tx = tabToTransaction[activeTab];
-          if (tx) params.append("transactionType", tx);
-        } else if (
-          searchFilters.transactionType &&
-          searchFilters.transactionType !== "ALL"
-        ) {
-          // Fallback (shouldn't happen on proyectos tab)
-          params.append("transactionType", searchFilters.transactionType);
-        }
-        if (
-          searchFilters.locationState &&
-          searchFilters.locationState !== "ALL"
-        ) {
-          params.append("locationState", searchFilters.locationState);
-        }
-        if (
-          searchFilters.locationCity &&
-          searchFilters.locationCity !== "ALL"
-        ) {
-          params.append("locationCity", searchFilters.locationCity);
-        }
-        if (
-          searchFilters.municipality &&
-          searchFilters.municipality !== "ALL"
-        ) {
-          params.append("municipality", searchFilters.municipality);
-        }
-        if (searchFilters.minPrice) {
-          params.append("minPrice", searchFilters.minPrice);
-        }
-        if (searchFilters.maxPrice) {
-          params.append("maxPrice", searchFilters.maxPrice);
-        }
-        if (searchFilters.minBedrooms) {
-          params.append("minBedrooms", searchFilters.minBedrooms);
-        }
-        if (searchFilters.maxBedrooms) {
-          params.append("maxBedrooms", searchFilters.maxBedrooms);
-        }
-        if (searchFilters.minBathrooms) {
-          params.append("minBathrooms", searchFilters.minBathrooms);
-        }
-        if (searchFilters.maxBathrooms) {
-          params.append("maxBathrooms", searchFilters.maxBathrooms);
-        }
+
+        const data = await response.json();
+        console.log("API Response:", data);
+        console.log("Properties from API:", data.properties);
+        console.log(
+          "Properties with coordinates:",
+          data.properties?.filter((p: Property) => p.latitude && p.longitude)
+        );
+        setProperties(data.properties || []);
+        setPagination({
+          limit: data.pagination.limit,
+          offset: data.pagination.offset,
+          page: data.pagination.page,
+          totalPages: data.pagination.totalPages,
+          totalCount: data.total,
+          hasMore: data.hasMore,
+        });
+      } catch (error) {
+        console.error("Error fetching properties:", error);
+        setError(
+          "Error al cargar las propiedades. Por favor, intenta de nuevo."
+        );
+      } finally {
+        setLoading(false);
+        setSearchLoading(false);
       }
+    },
+    [activeTab]
+  );
 
-      const response = await fetch(`/api/properties?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("API Response:", data);
-      console.log("Properties from API:", data.properties);
-      console.log(
-        "Properties with coordinates:",
-        data.properties?.filter((p: Property) => p.latitude && p.longitude)
-      );
-      setProperties(data.properties || []);
-      setPagination({
-        limit: data.pagination.limit,
-        offset: data.pagination.offset,
-        page: data.pagination.page,
-        totalPages: data.pagination.totalPages,
-        totalCount: data.total,
-        hasMore: data.hasMore,
-      });
-    } catch (error) {
-      console.error("Error fetching properties:", error);
-      setError("Error al cargar las propiedades. Por favor, intenta de nuevo.");
-    } finally {
-      setLoading(false);
-      setSearchLoading(false);
-    }
-  };
-
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       setProjectsLoading(true);
       setProjectsError(null);
@@ -334,7 +339,7 @@ export default function Properties() {
     } finally {
       setProjectsLoading(false);
     }
-  };
+  }, [filters.searchTerm]);
 
   // Initial load
   useEffect(() => {
@@ -531,20 +536,32 @@ export default function Properties() {
                   </SelectTrigger>
                   <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
                     <SelectItem
+                      key="ALL"
                       value="ALL"
                       className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                     >
                       Todos los estados
                     </SelectItem>
-                    {locations?.states?.map((state: string) => (
+                    {locations?.states && locations.states.length > 0 ? (
+                      locations.states.map((state: string) => (
+                        <SelectItem
+                          key={state}
+                          value={state}
+                          className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          {state}
+                        </SelectItem>
+                      ))
+                    ) : (
                       <SelectItem
-                        key={state}
-                        value={state}
-                        className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                        key="no-states"
+                        value="NO_STATES"
+                        disabled
+                        className="text-muted-foreground cursor-not-allowed"
                       >
-                        {state}
+                        No hay estados disponibles
                       </SelectItem>
-                    ))}
+                    )}
                   </SelectContent>
                 </Select>
 
@@ -560,21 +577,33 @@ export default function Properties() {
                   </SelectTrigger>
                   <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
                     <SelectItem
+                      key="ALL"
                       value="ALL"
                       className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                     >
                       Todas las ciudades
                     </SelectItem>
-                    {locations?.cities?.map(
-                      (city: { value: string; label: string }) => (
-                        <SelectItem
-                          key={city.value}
-                          value={city.value}
-                          className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
-                        >
-                          {city.label}
-                        </SelectItem>
+                    {locations?.cities && locations.cities.length > 0 ? (
+                      locations.cities.map(
+                        (city: { value: string; label: string }) => (
+                          <SelectItem
+                            key={city.value}
+                            value={city.value}
+                            className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                          >
+                            {city.label}
+                          </SelectItem>
+                        )
                       )
+                    ) : (
+                      <SelectItem
+                        key="no-cities"
+                        value="NO_CITIES"
+                        disabled
+                        className="text-muted-foreground cursor-not-allowed"
+                      >
+                        No hay ciudades disponibles
+                      </SelectItem>
                     )}
                   </SelectContent>
                 </Select>
@@ -593,21 +622,34 @@ export default function Properties() {
                   </SelectTrigger>
                   <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
                     <SelectItem
+                      key="ALL"
                       value="ALL"
                       className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                     >
                       Todos los municipios
                     </SelectItem>
-                    {locations?.municipalities?.map(
-                      (municipality: { value: string; label: string }) => (
-                        <SelectItem
-                          key={municipality.value}
-                          value={municipality.value}
-                          className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
-                        >
-                          {municipality.label}
-                        </SelectItem>
+                    {locations?.municipalities &&
+                    locations.municipalities.length > 0 ? (
+                      locations.municipalities.map(
+                        (municipality: { value: string; label: string }) => (
+                          <SelectItem
+                            key={municipality.value}
+                            value={municipality.value}
+                            className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                          >
+                            {municipality.label}
+                          </SelectItem>
+                        )
                       )
+                    ) : (
+                      <SelectItem
+                        key="no-municipalities"
+                        value="NO_MUNICIPALITIES"
+                        disabled
+                        className="text-muted-foreground cursor-not-allowed"
+                      >
+                        No hay municipios disponibles
+                      </SelectItem>
                     )}
                   </SelectContent>
                 </Select>
@@ -801,30 +843,35 @@ export default function Properties() {
                   </SelectTrigger>
                   <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
                     <SelectItem
+                      key="ALL"
                       value="ALL"
                       className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                     >
                       Todos
                     </SelectItem>
                     <SelectItem
+                      key="HOUSE"
                       value="HOUSE"
                       className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                     >
                       Casa
                     </SelectItem>
                     <SelectItem
+                      key="APARTMENT"
                       value="APARTMENT"
                       className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                     >
                       Departamento
                     </SelectItem>
                     <SelectItem
+                      key="OFFICE"
                       value="OFFICE"
                       className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                     >
                       Oficina
                     </SelectItem>
                     <SelectItem
+                      key="LAND"
                       value="LAND"
                       className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                     >
@@ -853,6 +900,7 @@ export default function Properties() {
             <div className="mb-4 flex flex-wrap gap-2 text-sm">
               {filters.propertyType !== "ALL" && (
                 <Badge
+                  key="propertyType"
                   variant="secondary"
                   onClick={() => handleFilterChange("propertyType", "ALL")}
                   className="cursor-pointer"
@@ -862,6 +910,7 @@ export default function Properties() {
               )}
               {filters.locationState !== "ALL" && (
                 <Badge
+                  key="locationState"
                   variant="secondary"
                   onClick={() => handleFilterChange("locationState", "ALL")}
                   className="cursor-pointer"
@@ -871,6 +920,7 @@ export default function Properties() {
               )}
               {filters.locationCity !== "ALL" && (
                 <Badge
+                  key="locationCity"
                   variant="secondary"
                   onClick={() => handleFilterChange("locationCity", "ALL")}
                   className="cursor-pointer"
@@ -880,6 +930,7 @@ export default function Properties() {
               )}
               {(filters.minPrice || filters.maxPrice) && (
                 <Badge
+                  key="price"
                   variant="secondary"
                   onClick={() => {
                     handleFilterChange("minPrice", "");
@@ -892,6 +943,7 @@ export default function Properties() {
               )}
               {(filters.minBedrooms || filters.maxBedrooms) && (
                 <Badge
+                  key="bedrooms"
                   variant="secondary"
                   onClick={() => {
                     handleFilterChange("minBedrooms", "");
@@ -905,6 +957,7 @@ export default function Properties() {
               )}
               {(filters.minBathrooms || filters.maxBathrooms) && (
                 <Badge
+                  key="bathrooms"
                   variant="secondary"
                   onClick={() => {
                     handleFilterChange("minBathrooms", "");
@@ -980,30 +1033,35 @@ export default function Properties() {
                       </SelectTrigger>
                       <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
                         <SelectItem
+                          key="ALL"
                           value="ALL"
                           className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                         >
                           Todos los tipos
                         </SelectItem>
                         <SelectItem
+                          key="HOUSE"
                           value="HOUSE"
                           className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                         >
                           Casa
                         </SelectItem>
                         <SelectItem
+                          key="APARTMENT"
                           value="APARTMENT"
                           className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                         >
                           Apartamento
                         </SelectItem>
                         <SelectItem
+                          key="OFFICE"
                           value="OFFICE"
                           className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                         >
                           Oficina
                         </SelectItem>
                         <SelectItem
+                          key="LAND"
                           value="LAND"
                           className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                         >
@@ -1029,20 +1087,32 @@ export default function Properties() {
                       </SelectTrigger>
                       <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
                         <SelectItem
+                          key="ALL"
                           value="ALL"
                           className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                         >
                           Todos los estados
                         </SelectItem>
-                        {locations?.states?.map((state: string) => (
+                        {locations?.states && locations.states.length > 0 ? (
+                          locations.states.map((state: string) => (
+                            <SelectItem
+                              key={state}
+                              value={state}
+                              className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                            >
+                              {state}
+                            </SelectItem>
+                          ))
+                        ) : (
                           <SelectItem
-                            key={state}
-                            value={state}
-                            className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                            key="no-states"
+                            value="NO_STATES"
+                            disabled
+                            className="text-muted-foreground cursor-not-allowed"
                           >
-                            {state}
+                            No hay estados disponibles
                           </SelectItem>
-                        ))}
+                        )}
                       </SelectContent>
                     </Select>
 
@@ -1063,21 +1133,33 @@ export default function Properties() {
                       </SelectTrigger>
                       <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
                         <SelectItem
+                          key="ALL"
                           value="ALL"
                           className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                         >
                           Todas las ciudades
                         </SelectItem>
-                        {locations?.cities?.map(
-                          (city: { value: string; label: string }) => (
-                            <SelectItem
-                              key={city.value}
-                              value={city.value}
-                              className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
-                            >
-                              {city.label}
-                            </SelectItem>
+                        {locations?.cities && locations.cities.length > 0 ? (
+                          locations.cities.map(
+                            (city: { value: string; label: string }) => (
+                              <SelectItem
+                                key={city.value}
+                                value={city.value}
+                                className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                              >
+                                {city.label}
+                              </SelectItem>
+                            )
                           )
+                        ) : (
+                          <SelectItem
+                            key="no-cities"
+                            value="NO_CITIES"
+                            disabled
+                            className="text-muted-foreground cursor-not-allowed"
+                          >
+                            No hay ciudades disponibles
+                          </SelectItem>
                         )}
                       </SelectContent>
                     </Select>
@@ -1099,21 +1181,37 @@ export default function Properties() {
                       </SelectTrigger>
                       <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
                         <SelectItem
+                          key="ALL"
                           value="ALL"
                           className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                         >
                           Todos los municipios
                         </SelectItem>
-                        {locations?.municipalities?.map(
-                          (municipality: { value: string; label: string }) => (
-                            <SelectItem
-                              key={municipality.value}
-                              value={municipality.value}
-                              className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
-                            >
-                              {municipality.label}
-                            </SelectItem>
+                        {locations?.municipalities &&
+                        locations.municipalities.length > 0 ? (
+                          locations.municipalities.map(
+                            (municipality: {
+                              value: string;
+                              label: string;
+                            }) => (
+                              <SelectItem
+                                key={municipality.value}
+                                value={municipality.value}
+                                className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                              >
+                                {municipality.label}
+                              </SelectItem>
+                            )
                           )
+                        ) : (
+                          <SelectItem
+                            key="no-municipalities"
+                            value="NO_MUNICIPALITIES"
+                            disabled
+                            className="text-muted-foreground cursor-not-allowed"
+                          >
+                            No hay municipios disponibles
+                          </SelectItem>
                         )}
                       </SelectContent>
                     </Select>
