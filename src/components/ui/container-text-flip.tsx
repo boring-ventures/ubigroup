@@ -23,7 +23,7 @@ export function ContainerTextFlip({
   }, [words.length]);
 
   return (
-    <div className={`inline-block relative ${className}`}>
+    <div className={`relative ${className}`}>
       <AnimatePresence mode="wait">
         <motion.span
           key={currentIndex}
@@ -31,7 +31,7 @@ export function ContainerTextFlip({
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -20, opacity: 0 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="inline-block text-primary font-bold"
+          className="text-primary font-bold"
         >
           {words[currentIndex]}
         </motion.span>

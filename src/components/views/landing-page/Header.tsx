@@ -82,18 +82,16 @@ const HeroHeader = () => {
         data-state={menuState && "active"}
         className="fixed z-20 w-full top-0 left-0 right-0"
       >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container">
           <div
             className={cn(
               "mx-auto transition-all duration-700 ease-out px-4 sm:px-6 lg:px-8",
               isScrolled
-                ? "bg-background/50 rounded-2xl border backdrop-blur-lg mt-2 shadow-lg"
-                : "mt-2"
+                ? "bg-background/50 rounded-2xl border backdrop-blur-lg mt-2 sm:mt-3 shadow-lg"
+                : "mt-2 sm:mt-3"
             )}
             style={{
               transition: "all 700ms cubic-bezier(0.4, 0, 0.2, 1)",
-              maxWidth: isScrolled ? "64rem" : "100%",
-              width: isScrolled ? "95%" : "100%",
             }}
           >
             <div

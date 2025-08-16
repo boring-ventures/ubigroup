@@ -756,7 +756,7 @@ export default function Properties() {
   if (loading) {
     return (
       <section className="py-8 sm:py-16 bg-background">
-        <div className="container mx-auto px-4">
+        <div className="container">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
             <p className="mt-4 text-muted-foreground">
@@ -770,7 +770,7 @@ export default function Properties() {
 
   return (
     <section className="py-8 sm:py-16 bg-background dark" id="properties">
-      <div className="container mx-auto px-4">
+      <div className="container">
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-4xl font-bold text-foreground mb-4">
