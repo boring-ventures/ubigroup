@@ -199,8 +199,8 @@ export function PropertyForm({
 
         if (videos.length > 0) {
           toast({
-            title: "Uploading videos...",
-            description: "Please wait while videos are being uploaded",
+            title: "Subiendo videos...",
+            description: "Por favor espera mientras se suben los videos",
           });
           const uploadedVideoUrls = await uploadFiles(videos, "videos");
           videoUrls = [...videoUrls, ...uploadedVideoUrls];
@@ -208,11 +208,11 @@ export function PropertyForm({
       } catch (uploadError) {
         console.error("Upload failed:", uploadError);
         toast({
-          title: "Upload Failed",
+          title: "Error de Subida",
           description:
             uploadError instanceof Error
               ? uploadError.message
-              : "Failed to upload files",
+              : "Error al subir archivos",
           variant: "destructive",
         });
         return; // Stop the submission if upload fails
@@ -247,17 +247,17 @@ export function PropertyForm({
           .json()
           .catch(() => ({ error: "Unknown error" }));
         console.error("API Error:", errorData);
-        throw new Error(errorData.error || "Failed to save property");
+        throw new Error(errorData.error || "Error al guardar la propiedad");
       }
 
       const result = await response.json();
       console.log("Success response:", result);
 
       toast({
-        title: "Success",
+        title: "Éxito",
         description: propertyId
-          ? "Property updated successfully"
-          : "Property created successfully and sent for approval",
+          ? "Propiedad actualizada exitosamente"
+          : "Propiedad creada exitosamente y enviada para aprobación",
       });
 
       // Reset form and states
@@ -278,7 +278,7 @@ export function PropertyForm({
         description:
           error instanceof Error
             ? error.message
-            : "An unexpected error occurred",
+            : "Ocurrió un error inesperado",
         variant: "destructive",
       });
     } finally {
@@ -287,26 +287,34 @@ export function PropertyForm({
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="max-w-6xl mx-auto p-3 sm:p-6">
       {/* Header with Progress Steps */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <span className="text-sm text-gray-600">Información básica</span>
+      <div className="mb-6 sm:mb-8">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 dark:text-green-400" />
+              <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                Información básica
+              </span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Circle className="h-5 w-5 text-gray-300" />
-              <span className="text-sm text-gray-600">Ubicación</span>
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              <Circle className="h-4 w-4 sm:h-5 sm:w-5 text-gray-300 dark:text-gray-600" />
+              <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                Ubicación
+              </span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Circle className="h-5 w-5 text-gray-300" />
-              <span className="text-sm text-gray-600">Detalles</span>
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              <Circle className="h-4 w-4 sm:h-5 sm:w-5 text-gray-300 dark:text-gray-600" />
+              <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                Detalles
+              </span>
             </div>
-            <div className="flex items-center space-x-2">
-              <Circle className="h-5 w-5 text-gray-300" />
-              <span className="text-sm text-gray-600">Multimedia</span>
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              <Circle className="h-4 w-4 sm:h-5 sm:w-5 text-gray-300 dark:text-gray-600" />
+              <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                Multimedia
+              </span>
             </div>
           </div>
         </div>
@@ -322,44 +330,44 @@ export function PropertyForm({
             (errors) => {
               console.error("Form validation failed:", errors);
               toast({
-                title: "Validation Error",
-                description: "Please check all required fields",
+                title: "Error de Validación",
+                description: "Por favor verifica todos los campos requeridos",
                 variant: "destructive",
               });
             }
           )}
-          className="space-y-8"
+          className="space-y-6 sm:space-y-8"
         >
           {/* Section 1: Basic Information */}
-          <Card className="border-2 border-blue-100 bg-blue-50/30">
-            <CardHeader className="bg-blue-50 border-b border-blue-200">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Home className="h-6 w-6 text-blue-600" />
+          <Card className="border-2 border-blue-100 dark:border-blue-800 bg-blue-50/30 dark:bg-blue-950/30">
+            <CardHeader className="bg-blue-50 dark:bg-blue-950/50 border-b border-blue-200 dark:border-blue-800">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="p-1.5 sm:p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                  <Home className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-blue-900">
+                  <CardTitle className="text-lg sm:text-xl text-blue-900 dark:text-blue-100">
                     Información básica
                   </CardTitle>
-                  <CardDescription className="text-blue-700">
+                  <CardDescription className="text-sm sm:text-base text-blue-700 dark:text-blue-300">
                     Cuéntanos sobre tu propiedad
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-6 space-y-6">
+            <CardContent className="pt-4 sm:pt-6 space-y-4 sm:space-y-6">
               <FormField
                 control={form.control}
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base font-semibold">
+                    <FormLabel className="text-sm sm:text-base font-semibold">
                       Título de la propiedad *
                     </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Ej: Departamento moderno de 2 dormitorios en el centro"
-                        className="h-12 text-lg"
+                        className="h-10 sm:h-12 text-base sm:text-lg"
                         {...field}
                       />
                     </FormControl>
@@ -373,14 +381,14 @@ export function PropertyForm({
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base font-semibold">
+                    <FormLabel className="text-sm sm:text-base font-semibold">
                       Descripción *
                     </FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Describe tu propiedad en detalle. Incluye características clave, comodidades y qué hace especial a esta propiedad..."
-                        rows={5}
-                        className="text-base"
+                        rows={4}
+                        className="text-sm sm:text-base"
                         {...field}
                       />
                     </FormControl>
@@ -389,13 +397,13 @@ export function PropertyForm({
                 )}
               />
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="propertyType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base font-semibold">
+                      <FormLabel className="text-sm sm:text-base font-semibold">
                         Tipo de propiedad *
                       </FormLabel>
                       <Select
@@ -403,7 +411,7 @@ export function PropertyForm({
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className="h-12 text-base">
+                          <SelectTrigger className="h-10 sm:h-12 text-sm sm:text-base">
                             <SelectValue placeholder="Selecciona el tipo de propiedad" />
                           </SelectTrigger>
                         </FormControl>
@@ -432,7 +440,7 @@ export function PropertyForm({
                   name="transactionType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base font-semibold">
+                      <FormLabel className="text-sm sm:text-base font-semibold">
                         Tipo de transacción *
                       </FormLabel>
                       <Select
@@ -440,7 +448,7 @@ export function PropertyForm({
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className="h-12 text-base">
+                          <SelectTrigger className="h-10 sm:h-12 text-sm sm:text-base">
                             <SelectValue placeholder="Selecciona el tipo de transacción" />
                           </SelectTrigger>
                         </FormControl>
@@ -465,29 +473,29 @@ export function PropertyForm({
           </Card>
 
           {/* Section 2: Pricing */}
-          <Card className="border-2 border-green-100 bg-green-50/30">
-            <CardHeader className="bg-green-50 border-b border-green-200">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <DollarSign className="h-6 w-6 text-green-600" />
+          <Card className="border-2 border-green-100 dark:border-green-800 bg-green-50/30 dark:bg-green-950/30">
+            <CardHeader className="bg-green-50 dark:bg-green-950/50 border-b border-green-200 dark:border-green-800">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="p-1.5 sm:p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                  <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-green-900">
+                  <CardTitle className="text-lg sm:text-xl text-green-900 dark:text-green-100">
                     Información de precios
                   </CardTitle>
-                  <CardDescription className="text-green-700">
+                  <CardDescription className="text-sm sm:text-base text-green-700 dark:text-green-300">
                     Establece el precio de tu propiedad
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-6 space-y-6">
-              <div className="bg-white p-6 rounded-lg border border-green-200">
-                <h4 className="text-lg font-semibold mb-4 text-gray-800">
+            <CardContent className="pt-4 sm:pt-6 space-y-4 sm:space-y-6">
+              <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-green-200 dark:border-green-700">
+                <h4 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-gray-800 dark:text-gray-200">
                   Selección de moneda
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-3 p-4 border-2 border-green-200 rounded-lg bg-green-50">
+                <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
+                  <div className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 border-2 border-green-200 dark:border-green-700 rounded-lg bg-green-50 dark:bg-green-950/50">
                     <input
                       type="radio"
                       id="currency-bolivianos"
@@ -495,16 +503,16 @@ export function PropertyForm({
                       value={Currency.BOLIVIANOS}
                       checked={currency === Currency.BOLIVIANOS}
                       onChange={(e) => setCurrency(e.target.value as Currency)}
-                      className="h-5 w-5 text-green-600 border-green-300 focus:ring-green-500"
+                      className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 border-green-300 focus:ring-green-500"
                     />
                     <Label
                       htmlFor="currency-bolivianos"
-                      className="text-lg font-medium cursor-pointer"
+                      className="text-sm sm:text-lg font-medium cursor-pointer"
                     >
                       🇧🇴 Bolivianos (Bs)
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-3 p-4 border-2 border-gray-200 rounded-lg bg-gray-50">
+                  <div className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800">
                     <input
                       type="radio"
                       id="currency-dollars"
@@ -512,11 +520,11 @@ export function PropertyForm({
                       value={Currency.DOLLARS}
                       checked={currency === Currency.DOLLARS}
                       onChange={(e) => setCurrency(e.target.value as Currency)}
-                      className="h-5 w-5 text-green-600 border-gray-300 focus:ring-green-500"
+                      className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 border-gray-300 dark:border-gray-600 focus:ring-green-500"
                     />
                     <Label
                       htmlFor="currency-dollars"
-                      className="text-lg font-medium cursor-pointer"
+                      className="text-sm sm:text-lg font-medium cursor-pointer"
                     >
                       🇺🇸 Dólares estadounidenses ($)
                     </Label>
@@ -524,24 +532,24 @@ export function PropertyForm({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base font-semibold">
+                      <FormLabel className="text-sm sm:text-base font-semibold">
                         Precio *
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">
+                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 text-base sm:text-lg">
                             {currency === Currency.BOLIVIANOS ? "Bs" : "$"}
                           </span>
                           <Input
                             type="number"
                             placeholder="0"
-                            className="h-12 text-lg pl-12"
+                            className="h-10 sm:h-12 text-base sm:text-lg pl-10 sm:pl-12"
                             {...field}
                             onChange={(e) => {
                               const value = parseFloat(e.target.value);
@@ -550,7 +558,7 @@ export function PropertyForm({
                           />
                         </div>
                       </FormControl>
-                      <FormDescription className="text-sm">
+                      <FormDescription className="text-xs sm:text-sm">
                         Ingresa el precio en{" "}
                         {currency === Currency.BOLIVIANOS
                           ? "Bolivianos (Bs)"
@@ -567,7 +575,7 @@ export function PropertyForm({
                     name="exchangeRate"
                     render={() => (
                       <FormItem>
-                        <FormLabel className="text-base font-semibold">
+                        <FormLabel className="text-sm sm:text-base font-semibold">
                           Tipo de cambio (Bs/$) *
                         </FormLabel>
                         <FormControl>
@@ -575,7 +583,7 @@ export function PropertyForm({
                             type="number"
                             step="0.01"
                             placeholder="6.96"
-                            className="h-12 text-lg"
+                            className="h-10 sm:h-12 text-base sm:text-lg"
                             value={exchangeRate || ""}
                             onChange={(e) => {
                               const value = parseFloat(e.target.value);
@@ -583,7 +591,7 @@ export function PropertyForm({
                             }}
                           />
                         </FormControl>
-                        <FormDescription className="text-sm">
+                        <FormDescription className="text-xs sm:text-sm">
                           Tipo de cambio actual de dólares a bolivianos
                         </FormDescription>
                         <FormMessage />
@@ -596,35 +604,35 @@ export function PropertyForm({
           </Card>
 
           {/* Section 3: Location */}
-          <Card className="border-2 border-purple-100 bg-purple-50/30">
-            <CardHeader className="bg-purple-50 border-b border-purple-200">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <MapPin className="h-6 w-6 text-purple-600" />
+          <Card className="border-2 border-purple-100 dark:border-purple-800 bg-purple-50/30 dark:bg-purple-950/30">
+            <CardHeader className="bg-purple-50 dark:bg-purple-950/50 border-b border-purple-200 dark:border-purple-800">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="p-1.5 sm:p-2 bg-purple-100 dark:bg-purple-900 rounded-lg">
+                  <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600 dark:text-purple-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-purple-900">
+                  <CardTitle className="text-lg sm:text-xl text-purple-900 dark:text-purple-100">
                     Detalles de ubicación
                   </CardTitle>
-                  <CardDescription className="text-purple-700">
+                  <CardDescription className="text-sm sm:text-base text-purple-700 dark:text-purple-300">
                     ¿Dónde está ubicada tu propiedad?
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-6 space-y-6">
+            <CardContent className="pt-4 sm:pt-6 space-y-4 sm:space-y-6">
               <FormField
                 control={form.control}
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base font-semibold">
+                    <FormLabel className="text-sm sm:text-base font-semibold">
                       Dirección *
                     </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Ej: Calle Principal 123, Centro"
-                        className="h-12 text-lg"
+                        className="h-10 sm:h-12 text-base sm:text-lg"
                         {...field}
                       />
                     </FormControl>
@@ -633,19 +641,19 @@ export function PropertyForm({
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base font-semibold">
+                      <FormLabel className="text-sm sm:text-base font-semibold">
                         Ciudad *
                       </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Ej: La Paz"
-                          className="h-12 text-lg"
+                          className="h-10 sm:h-12 text-base sm:text-lg"
                           {...field}
                         />
                       </FormControl>
@@ -659,13 +667,13 @@ export function PropertyForm({
                   name="state"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base font-semibold">
+                      <FormLabel className="text-sm sm:text-base font-semibold">
                         Estado/Departamento *
                       </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Ej: La Paz"
-                          className="h-12 text-lg"
+                          className="h-10 sm:h-12 text-base sm:text-lg"
                           {...field}
                         />
                       </FormControl>
@@ -679,13 +687,13 @@ export function PropertyForm({
                   name="municipality"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base font-semibold">
+                      <FormLabel className="text-sm sm:text-base font-semibold">
                         Municipio *
                       </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Ej: Centro"
-                          className="h-12 text-lg"
+                          className="h-10 sm:h-12 text-base sm:text-lg"
                           {...field}
                         />
                       </FormControl>
@@ -695,11 +703,11 @@ export function PropertyForm({
                 />
               </div>
 
-              <div className="bg-white p-6 rounded-lg border border-purple-200">
-                <h4 className="text-lg font-semibold mb-4 text-gray-800">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-purple-200 dark:border-purple-700">
+                <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
                   📍 Ubicación en mapa (opcional)
                 </h4>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   Agrega coordenadas para mostrar tu propiedad en el mapa
                 </p>
 
@@ -790,31 +798,31 @@ export function PropertyForm({
           </Card>
 
           {/* Section 4: Property Details */}
-          <Card className="border-2 border-orange-100 bg-orange-50/30">
-            <CardHeader className="bg-orange-50 border-b border-orange-200">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <Ruler className="h-6 w-6 text-orange-600" />
+          <Card className="border-2 border-orange-100 dark:border-orange-800 bg-orange-50/30 dark:bg-orange-950/30">
+            <CardHeader className="bg-orange-50 dark:bg-orange-950/50 border-b border-orange-200 dark:border-orange-800">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="p-1.5 sm:p-2 bg-orange-100 dark:bg-orange-900 rounded-lg">
+                  <Ruler className="h-5 w-5 sm:h-6 sm:w-6 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-orange-900">
+                  <CardTitle className="text-lg sm:text-xl text-orange-900 dark:text-orange-100">
                     Detalles de la propiedad
                   </CardTitle>
-                  <CardDescription className="text-orange-700">
+                  <CardDescription className="text-sm sm:text-base text-orange-700 dark:text-orange-300">
                     Especificaciones clave de tu propiedad
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <CardContent className="pt-4 sm:pt-6 space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
                 <FormField
                   control={form.control}
                   name="bedrooms"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base font-semibold flex items-center space-x-2">
-                        <Bed className="h-5 w-5" />
+                      <FormLabel className="text-sm sm:text-base font-semibold flex items-center space-x-1 sm:space-x-2">
+                        <Bed className="h-4 w-4 sm:h-5 sm:w-5" />
                         <span>Dormitorios *</span>
                       </FormLabel>
                       <FormControl>
@@ -822,7 +830,7 @@ export function PropertyForm({
                           type="number"
                           min="0"
                           placeholder="1"
-                          className="h-12 text-lg"
+                          className="h-10 sm:h-12 text-base sm:text-lg"
                           {...field}
                           onChange={(e) => {
                             const value = parseInt(e.target.value);
@@ -840,8 +848,8 @@ export function PropertyForm({
                   name="bathrooms"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base font-semibold flex items-center space-x-2">
-                        <Bath className="h-5 w-5" />
+                      <FormLabel className="text-sm sm:text-base font-semibold flex items-center space-x-1 sm:space-x-2">
+                        <Bath className="h-4 w-4 sm:h-5 sm:w-5" />
                         <span>Baños *</span>
                       </FormLabel>
                       <FormControl>
@@ -850,7 +858,7 @@ export function PropertyForm({
                           min="0"
                           step="0.5"
                           placeholder="1"
-                          className="h-12 text-lg"
+                          className="h-10 sm:h-12 text-base sm:text-lg"
                           {...field}
                           onChange={(e) => {
                             const value = parseFloat(e.target.value);
@@ -868,8 +876,8 @@ export function PropertyForm({
                   name="area"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base font-semibold flex items-center space-x-2">
-                        <Ruler className="h-5 w-5" />
+                      <FormLabel className="text-sm sm:text-base font-semibold flex items-center space-x-1 sm:space-x-2">
+                        <Ruler className="h-4 w-4 sm:h-5 sm:w-5" />
                         <span>Área (m²) *</span>
                       </FormLabel>
                       <FormControl>
@@ -877,7 +885,7 @@ export function PropertyForm({
                           type="number"
                           min="0"
                           placeholder="1000"
-                          className="h-12 text-lg"
+                          className="h-10 sm:h-12 text-base sm:text-lg"
                           {...field}
                           onChange={(e) => {
                             const value = parseInt(e.target.value);
@@ -894,30 +902,30 @@ export function PropertyForm({
           </Card>
 
           {/* Section 5: Features */}
-          <Card className="border-2 border-yellow-100 bg-yellow-50/30">
-            <CardHeader className="bg-yellow-50 border-b border-yellow-200">
+          <Card className="border-2 border-yellow-100 dark:border-yellow-800 bg-yellow-50/30 dark:bg-yellow-950/30">
+            <CardHeader className="bg-yellow-50 dark:bg-yellow-950/50 border-b border-yellow-200 dark:border-yellow-800">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <Star className="h-6 w-6 text-yellow-600" />
+                <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
+                  <Star className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-yellow-900">
+                  <CardTitle className="text-xl text-yellow-900 dark:text-yellow-100">
                     Características y amenidades
                   </CardTitle>
-                  <CardDescription className="text-yellow-700">
+                  <CardDescription className="text-yellow-700 dark:text-yellow-300">
                     ¿Qué hace especial tu propiedad?
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="pt-6 space-y-6">
-              <div className="bg-white p-6 rounded-lg border border-yellow-200">
-                <h4 className="text-lg font-semibold mb-4 text-gray-800">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                <h4 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
                   Características actuales
                 </h4>
                 <div className="flex flex-wrap gap-3 mb-6">
                   {features.length === 0 ? (
-                    <p className="text-gray-500 italic">
+                    <p className="text-gray-500 dark:text-gray-400 italic">
                       Aún no se agregaron características
                     </p>
                   ) : (
@@ -925,13 +933,13 @@ export function PropertyForm({
                       <Badge
                         key={feature}
                         variant="secondary"
-                        className="px-4 py-2 text-sm bg-yellow-100 text-yellow-800 border-yellow-200"
+                        className="px-4 py-2 text-sm bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-700"
                       >
                         {feature}
                         <button
                           type="button"
                           onClick={() => removeFeature(feature)}
-                          className="ml-2 text-yellow-600 hover:text-yellow-800 transition-colors"
+                          className="ml-2 text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-200 transition-colors"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -954,7 +962,7 @@ export function PropertyForm({
                     type="button"
                     onClick={addFeature}
                     variant="outline"
-                    className="h-12 px-6 border-yellow-300 text-yellow-700 hover:bg-yellow-50"
+                    className="h-12 px-6 border-yellow-300 dark:border-yellow-600 text-yellow-700 dark:text-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-950/50"
                   >
                     <Plus className="h-5 w-5 mr-2" />
                     Agregar
@@ -965,43 +973,43 @@ export function PropertyForm({
           </Card>
 
           {/* Section 6: Media Upload */}
-          <Card className="border-2 border-indigo-100 bg-indigo-50/30">
-            <CardHeader className="bg-indigo-50 border-b border-indigo-200">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-indigo-100 rounded-lg">
-                  <ImageIcon className="h-6 w-6 text-indigo-600" />
+          <Card className="border-2 border-indigo-100 dark:border-indigo-800 bg-indigo-50/30 dark:bg-indigo-950/30">
+            <CardHeader className="bg-indigo-50 dark:bg-indigo-950/50 border-b border-indigo-200 dark:border-indigo-800">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="p-1.5 sm:p-2 bg-indigo-100 dark:bg-indigo-900 rounded-lg">
+                  <ImageIcon className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600 dark:text-indigo-400" />
                 </div>
                 <div>
-                  <CardTitle className="text-xl text-indigo-900">
+                  <CardTitle className="text-lg sm:text-xl text-indigo-900 dark:text-indigo-100">
                     Imágenes y videos
                   </CardTitle>
-                  <CardDescription className="text-indigo-700">
+                  <CardDescription className="text-sm sm:text-base text-indigo-700 dark:text-indigo-300">
                     Muestra tu propiedad de la mejor manera
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-6 space-y-8">
+            <CardContent className="pt-4 sm:pt-6 space-y-6 sm:space-y-8">
               {/* Images Section */}
-              <div className="bg-white p-6 rounded-lg border border-indigo-200">
-                <div className="flex items-center space-x-2 mb-4">
-                  <ImageIcon className="h-5 w-5 text-indigo-600" />
-                  <h4 className="text-lg font-semibold text-gray-800">
+              <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-indigo-200 dark:border-indigo-700">
+                <div className="flex items-center space-x-2 mb-3 sm:mb-4">
+                  <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 dark:text-indigo-400" />
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200">
                     Imágenes
                   </h4>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-4">
                   Tamaño máximo por archivo: 50MB. Formatos soportados: JPG,
                   PNG, GIF
                 </p>
 
                 {/* Existing uploaded images */}
                 {uploadedImages.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 mb-4 sm:mb-6">
                     {uploadedImages.map((imageUrl, index) => (
                       <div
                         key={`uploaded-${index}`}
-                        className="relative group border-2 border-gray-200 rounded-lg p-2 bg-gray-50 hover:border-indigo-300 transition-colors"
+                        className="relative group border-2 border-gray-200 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-800 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors"
                       >
                         <Image
                           src={imageUrl}
@@ -1023,11 +1031,11 @@ export function PropertyForm({
 
                 {/* New image files */}
                 {images.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 mb-4 sm:mb-6">
                     {images.map((file, index) => (
                       <div
                         key={`new-${index}`}
-                        className="relative group border-2 border-indigo-200 rounded-lg p-2 bg-indigo-50 hover:border-indigo-300 transition-colors"
+                        className="relative group border-2 border-indigo-200 dark:border-indigo-600 rounded-lg p-2 bg-indigo-50 dark:bg-indigo-950/50 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors"
                       >
                         <Image
                           src={URL.createObjectURL(file)}
@@ -1047,37 +1055,37 @@ export function PropertyForm({
                   </div>
                 )}
 
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3">
                   <Input
                     type="file"
-                    accept="image/*"
+                    accept="image/*,.webp"
                     multiple
                     onChange={handleImageUpload}
-                    className="flex-1 h-12 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600"
+                    className="flex-1 h-10 sm:h-12 text-sm sm:text-base file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600"
                   />
                 </div>
               </div>
 
               {/* Videos Section */}
-              <div className="bg-white p-6 rounded-lg border border-indigo-200">
-                <div className="flex items-center space-x-2 mb-4">
-                  <Video className="h-5 w-5 text-indigo-600" />
-                  <h4 className="text-lg font-semibold text-gray-800">
+              <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-indigo-200 dark:border-indigo-700">
+                <div className="flex items-center space-x-2 mb-3 sm:mb-4">
+                  <Video className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 dark:text-indigo-400" />
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200">
                     Videos
                   </h4>
                 </div>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-4">
                   Tamaño máximo por archivo: 50MB. Formatos soportados: MP4,
-                  AVI, MOV
+                  AVI, MOV, WebM. Se recomienda WebM para mejor compresión.
                 </p>
 
                 {/* Existing uploaded videos */}
                 {uploadedVideos.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 mb-4 sm:mb-6">
                     {uploadedVideos.map((videoUrl, index) => (
                       <div
                         key={`uploaded-video-${index}`}
-                        className="relative group border-2 border-gray-200 rounded-lg p-2 bg-gray-50 hover:border-indigo-300 transition-colors"
+                        className="relative group border-2 border-gray-200 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-800 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors"
                       >
                         <video
                           src={videoUrl}
@@ -1099,11 +1107,11 @@ export function PropertyForm({
 
                 {/* New video files */}
                 {videos.length > 0 && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 mb-4 sm:mb-6">
                     {videos.map((file, index) => (
                       <div
                         key={`new-video-${index}`}
-                        className="relative group border-2 border-indigo-200 rounded-lg p-2 bg-indigo-50 hover:border-indigo-300 transition-colors"
+                        className="relative group border-2 border-indigo-200 dark:border-indigo-600 rounded-lg p-2 bg-indigo-50 dark:bg-indigo-950/50 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors"
                       >
                         <video
                           src={URL.createObjectURL(file)}
@@ -1123,13 +1131,13 @@ export function PropertyForm({
                   </div>
                 )}
 
-                <div className="flex gap-3">
+                <div className="flex gap-2 sm:gap-3">
                   <Input
                     type="file"
-                    accept="video/*"
+                    accept="video/*,.webm"
                     multiple
                     onChange={handleVideoUpload}
-                    className="flex-1 h-12 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600"
+                    className="flex-1 h-10 sm:h-12 text-sm sm:text-base file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600"
                   />
                 </div>
               </div>
@@ -1137,15 +1145,15 @@ export function PropertyForm({
           </Card>
 
           {/* Form Actions */}
-          <div className="bg-white p-6 rounded-lg border-2 border-gray-200 shadow-lg">
-            <div className="flex flex-col sm:flex-row gap-4">
+          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border-2 border-gray-200 dark:border-gray-700 shadow-lg">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-1 h-14 text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                className="flex-1 h-12 sm:h-14 text-base sm:text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 {isSubmitting && (
-                  <Loader className="mr-3 h-5 w-5 animate-spin" />
+                  <Loader className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
                 )}
                 {propertyId ? "Actualizar propiedad" : "Crear propiedad"}
               </Button>
@@ -1154,13 +1162,13 @@ export function PropertyForm({
                   type="button"
                   variant="outline"
                   onClick={onCancel}
-                  className="h-14 px-8 text-lg font-semibold border-2 border-gray-300 hover:bg-gray-50"
+                  className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg font-semibold border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   Cancelar
                 </Button>
               )}
             </div>
-            <p className="text-sm text-gray-600 mt-4 text-center">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-3 sm:mt-4 text-center">
               {propertyId
                 ? "Tus cambios se guardarán inmediatamente"
                 : "Tu propiedad se enviará para aprobación después de crearla"}

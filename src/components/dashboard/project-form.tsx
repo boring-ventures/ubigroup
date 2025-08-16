@@ -361,7 +361,7 @@ export function ProjectForm({
                   <div className="mt-2">
                     <Input
                       type="file"
-                      accept="image/*"
+                      accept="image/*,.webp"
                       multiple
                       onChange={handleImageUpload}
                       className="cursor-pointer"

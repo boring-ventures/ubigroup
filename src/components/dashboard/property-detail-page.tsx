@@ -76,7 +76,6 @@ interface Property {
     lastName: string | null;
     avatarUrl: string | null;
     phone: string | null;
-    whatsapp: string | null;
   };
   agency: {
     id: string;
@@ -265,12 +264,34 @@ export function PropertyDetailPage({
     }
   };
 
+  const getTransactionTypeLabel = (type: string) => {
+    return type === "SALE" ? "Venta" : "Alquiler";
+  };
+
   const handleContactWhatsApp = () => {
-    if (property?.agent.whatsapp) {
-      const message = encodeURIComponent(
-        `Hola! Tengo interés en la propiedad "${property.title}" (ID: ${property.id}). ¿Podrías darme más información?`
+    if (property?.agent.phone) {
+      const propertyUrl = `https://ubigroup.vercel.app/property/${property.id}`;
+      const price = formatPrice(
+        property.price,
+        property.currency,
+        property.exchangeRate
       );
-      const whatsappUrl = `https://wa.me/${property.agent.whatsapp.replace(/\D/g, "")}?text=${message}`;
+      const location = `${property.locationCity}, ${property.locationState}`;
+      const transactionType = getTransactionTypeLabel(property.transactionType);
+      const propertyType = getPropertyTypeLabel(property.type);
+
+      const message = `Hola, me interesa obtener más información sobre esta propiedad:
+
+🏠 ${property.title}
+📍 ${location}
+💰 ${price}
+🏢 ${propertyType} - ${transactionType}
+🔗 ${propertyUrl}
+
+¿Podrías proporcionarme más detalles?`;
+
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/${property.agent.phone.replace(/\D/g, "")}?text=${encodedMessage}`;
       window.open(whatsappUrl, "_blank");
     }
   };
@@ -758,7 +779,7 @@ export function PropertyDetailPage({
                         Llamar
                       </Button>
                     )}
-                    {property.agent.whatsapp && (
+                    {property.agent.phone && (
                       <Button
                         className="w-full bg-green-600 hover:bg-green-700"
                         onClick={handleContactWhatsApp}

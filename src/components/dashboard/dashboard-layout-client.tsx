@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { SearchProvider } from "@/context/search-context";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -9,12 +10,35 @@ import { Header } from "@/components/sidebar/header";
 import { Search } from "@/components/sidebar/search";
 import { ThemeSwitch } from "@/components/sidebar/theme-switch";
 import { ProfileDropdown } from "@/components/sidebar/profile-dropdown";
+import { PasswordChangeModal } from "@/components/auth/password-change-modal";
+import { useAuth } from "@/providers/auth-provider";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 export function DashboardLayoutClient({ children }: DashboardLayoutProps) {
+  const { profile, refreshProfile } = useAuth();
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [hasCheckedPassword, setHasCheckedPassword] = useState(false);
+
+  useEffect(() => {
+    // Only check once when the profile is loaded
+    if (profile && !hasCheckedPassword) {
+      setHasCheckedPassword(true);
+      if (profile.requiresPasswordChange) {
+        setShowPasswordModal(true);
+      }
+    }
+  }, [profile, hasCheckedPassword]);
+
+  const handlePasswordChanged = async () => {
+    setShowPasswordModal(false);
+    // Refresh the profile to get the updated state
+    await refreshProfile();
+    setHasCheckedPassword(false); // Reset to allow checking again
+  };
+
   return (
     <SearchProvider>
       <SidebarProvider defaultOpen={true}>
@@ -41,7 +65,13 @@ export function DashboardLayoutClient({ children }: DashboardLayoutProps) {
           </Header>
           {children}
         </div>
+
+        <PasswordChangeModal
+          isOpen={showPasswordModal}
+          onClose={() => setShowPasswordModal(false)}
+          onPasswordChanged={handlePasswordChanged}
+        />
       </SidebarProvider>
     </SearchProvider>
   );
-} 
+}

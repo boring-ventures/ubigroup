@@ -42,15 +42,15 @@ export function LogoUpload({
       const logoUrl = await uploadLogo(file, agencyId);
       onUploadComplete(logoUrl);
       toast({
-        title: "Logo updated",
-        description: "Your agency logo has been updated successfully.",
+        title: "Logo actualizado",
+        description: "El logo de tu agencia ha sido actualizado exitosamente.",
       });
     } catch (error) {
       console.error("Error uploading logo:", error);
       onUploadError(
         error instanceof Error
           ? error
-          : new Error("Error uploading agency logo")
+          : new Error("Error al subir el logo de la agencia")
       );
     } finally {
       setIsUploading(false);
@@ -63,7 +63,7 @@ export function LogoUpload({
         {previewUrl || currentLogoUrl ? (
           <Image
             src={previewUrl || currentLogoUrl || ""}
-            alt="Logo preview"
+            alt="Vista previa del logo"
             fill
             className="rounded-full object-cover"
           />
@@ -78,23 +78,23 @@ export function LogoUpload({
           {isUploading ? (
             <>
               <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-opacity-20 border-t-current"></span>
-              Uploading...
+              Subiendo...
             </>
           ) : (
-            "Change Logo"
+            "Cambiar Logo"
           )}
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,.webp"
             onChange={handleFileChange}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             disabled={isUploading}
           />
         </Button>
         <p className="text-xs text-muted-foreground">
-          PNG, JPG or GIF. Maximum 2MB.
+          PNG, JPG o GIF. Máximo 2MB.
         </p>
       </div>
     </div>
   );
-} 
+}
