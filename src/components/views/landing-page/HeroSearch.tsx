@@ -292,7 +292,7 @@ export const HeroSearch = () => {
           {/* Search Panel - desktop overlay (raised higher) */}
           <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 bottom-6 w-full max-w-5xl z-10">
             <ShineBorder className="p-3 rounded-2xl">
-              <Card className="p-6 bg-background/90 backdrop-blur-xl border-border shadow-2xl">
+              <Card className="p-6 bg-background/90 backdrop-blur-xl border-border shadow-2xl w-full">
                 <div className="flex items-center gap-4">
                   <Tabs
                     value={transaction}
