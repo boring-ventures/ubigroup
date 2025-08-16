@@ -3,6 +3,7 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { formatPhoneNumber } from "@/lib/utils";
 
 export async function GET() {
   try {
@@ -69,7 +70,44 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({ users });
+    // Fetch emails from Supabase Auth for each user
+    const usersWithEmails = await Promise.all(
+      users.map(async (user) => {
+        try {
+          if (user.userId && user.userId !== user.id) {
+            // User has a real Supabase auth ID
+            const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(user.userId);
+            
+            if (authError) {
+              console.error(`Failed to get email for user ${user.id}:`, authError);
+              return {
+                ...user,
+                email: user.userId, // Fallback to userId if we can't get email
+              };
+            }
+            
+            return {
+              ...user,
+              email: authUser?.user?.email || user.userId,
+            };
+          } else {
+            // User doesn't have a real auth ID
+            return {
+              ...user,
+              email: user.userId, // Use userId as fallback
+            };
+          }
+        } catch (error) {
+          console.error(`Error fetching email for user ${user.id}:`, error);
+          return {
+            ...user,
+            email: user.userId, // Fallback to userId
+          };
+        }
+      })
+    );
+
+    return NextResponse.json({ users: usersWithEmails });
   } catch (error) {
     console.error("Failed to fetch users:", error);
     return NextResponse.json(
@@ -127,9 +165,11 @@ export async function POST(request: NextRequest) {
       lastName,
       role,
       phone,
-      whatsapp,
       agencyId: initialAgencyId,
     } = body;
+
+    // Format phone number with Bolivia prefix if provided
+    const formattedPhone = phone ? formatPhoneNumber(phone) : null;
 
     // Validate required fields
     if (!email || !password || !firstName || !lastName || !role) {
@@ -256,10 +296,10 @@ export async function POST(request: NextRequest) {
           firstName,
           lastName,
           role,
-          phone: phone || null,
-          whatsapp: whatsapp || null,
+          phone: formattedPhone,
           agencyId: role === "SUPER_ADMIN" ? null : agencyId,
           active: true,
+          requiresPasswordChange: true, // Set flag for first-time password change
         },
         include: {
           agency: {
@@ -293,10 +333,10 @@ export async function POST(request: NextRequest) {
           firstName,
           lastName,
           role,
-          phone: phone || null,
-          whatsapp: whatsapp || null,
+          phone: formattedPhone,
           agencyId: role === "SUPER_ADMIN" ? null : agencyId,
           active: true,
+          requiresPasswordChange: true, // Set flag for first-time password change
         },
         include: {
           agency: {

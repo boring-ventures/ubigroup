@@ -134,7 +134,6 @@ export async function PATCH(
       lastName,
       role,
       phone,
-      whatsapp,
       agencyId: initialAgencyId,
       active,
     } = body;
@@ -239,7 +238,6 @@ export async function PATCH(
         lastName: lastName || undefined,
         role: role || undefined,
         phone: phone !== undefined ? phone : undefined,
-        whatsapp: whatsapp !== undefined ? whatsapp : undefined,
         agencyId: role === "SUPER_ADMIN" ? null : agencyId || undefined,
         active: active !== undefined ? active : undefined,
       },

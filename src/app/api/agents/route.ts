@@ -221,7 +221,6 @@ export async function POST(request: NextRequest) {
           lastName: agentData.lastName,
           role: UserRole.AGENT,
           phone: agentData.phone || null,
-          whatsapp: agentData.whatsapp || null,
           agencyId: user.agencyId!, // Agent belongs to the Agency Admin's agency
           active: true,
         },
@@ -263,7 +262,6 @@ export async function POST(request: NextRequest) {
           lastName: agentData.lastName,
           role: UserRole.AGENT,
           phone: agentData.phone || null,
-          whatsapp: agentData.whatsapp || null,
           agencyId: user.agencyId!,
           active: true,
         },

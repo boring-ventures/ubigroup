@@ -69,7 +69,25 @@ export async function GET() {
           },
         });
         console.log("Created new profile for user:", userId);
-        return NextResponse.json(newProfile);
+
+        // Return the profile in the expected format
+        const profileResponse = {
+          id: newProfile.id,
+          userId: newProfile.userId,
+          avatarUrl: newProfile.avatarUrl,
+          createdAt: newProfile.createdAt,
+          updatedAt: newProfile.updatedAt,
+          active: newProfile.active,
+          firstName: newProfile.firstName,
+          lastName: newProfile.lastName,
+          role: newProfile.role,
+          phone: newProfile.phone,
+          agencyId: newProfile.agencyId,
+          requiresPasswordChange: newProfile.requiresPasswordChange,
+          agency: newProfile.agency,
+        };
+
+        return NextResponse.json(profileResponse);
       } catch (createError) {
         console.error("Failed to create profile:", createError);
         return NextResponse.json(
@@ -91,8 +109,8 @@ export async function GET() {
       lastName: userProfile.lastName,
       role: userProfile.role,
       phone: userProfile.phone,
-      whatsapp: userProfile.whatsapp,
       agencyId: userProfile.agencyId,
+      requiresPasswordChange: userProfile.requiresPasswordChange,
       agency: userProfile.agency,
     };
 
@@ -123,7 +141,7 @@ export async function PUT(request: NextRequest) {
 
     const userId = user.id;
     const data = await request.json();
-    const { firstName, lastName, avatarUrl, active, phone, whatsapp } = data;
+    const { firstName, lastName, avatarUrl, active, phone } = data;
 
     // Update user profile in the database
     const updatedUser = await prisma.user.update({
@@ -134,7 +152,6 @@ export async function PUT(request: NextRequest) {
         avatarUrl,
         active,
         phone,
-        whatsapp,
       },
       include: {
         agency: {
@@ -167,7 +184,6 @@ export async function POST(request: NextRequest) {
       avatarUrl,
       role = "SUPER_ADMIN",
       phone,
-      whatsapp,
       agencyId,
     } = data;
 
@@ -195,7 +211,6 @@ export async function POST(request: NextRequest) {
           active: true,
           role,
           phone: phone || null,
-          whatsapp: whatsapp || null,
           agencyId: role === "SUPER_ADMIN" ? null : agencyId || null,
         },
         include: {
@@ -208,7 +223,24 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return NextResponse.json(newUser, { status: 201 });
+      // Return the profile in the expected format
+      const profileResponse = {
+        id: newUser.id,
+        userId: newUser.userId,
+        avatarUrl: newUser.avatarUrl,
+        createdAt: newUser.createdAt,
+        updatedAt: newUser.updatedAt,
+        active: newUser.active,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        role: newUser.role,
+        phone: newUser.phone,
+        agencyId: newUser.agencyId,
+        requiresPasswordChange: newUser.requiresPasswordChange,
+        agency: newUser.agency,
+      };
+
+      return NextResponse.json(profileResponse, { status: 201 });
     }
 
     // Normal flow requiring authentication
@@ -248,7 +280,6 @@ export async function POST(request: NextRequest) {
         active: true,
         role: "SUPER_ADMIN", // Default to SUPER_ADMIN for new signups
         phone: phone || null,
-        whatsapp: whatsapp || null,
       },
       include: {
         agency: {
@@ -260,7 +291,24 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(newUser, { status: 201 });
+    // Return the profile in the expected format
+    const profileResponse = {
+      id: newUser.id,
+      userId: newUser.userId,
+      avatarUrl: newUser.avatarUrl,
+      createdAt: newUser.createdAt,
+      updatedAt: newUser.updatedAt,
+      active: newUser.active,
+      firstName: newUser.firstName,
+      lastName: newUser.lastName,
+      role: newUser.role,
+      phone: newUser.phone,
+      agencyId: newUser.agencyId,
+      requiresPasswordChange: newUser.requiresPasswordChange,
+      agency: newUser.agency,
+    };
+
+    return NextResponse.json(profileResponse, { status: 201 });
   } catch (error) {
     console.error("Error creating profile:", error);
     return NextResponse.json(

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { authenticateUser } from "@/lib/auth/server-auth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { convertImageToWebP } from "@/lib/image-processing";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
@@ -53,14 +54,54 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Generate unique filename
-      const timestamp = Date.now();
-      const randomId = Math.random().toString(36).substring(2);
-      const fileExtension = file.name.split(".").pop();
-      const fileName = `${timestamp}-${randomId}.${fileExtension}`;
+      // Process image files to WebP and video files to WebM
+      let processedFile = file;
+      let fileName: string;
+      
+      if (file.type.startsWith("image/") && file.type !== "image/webp") {
+        try {
+          console.log(`Upload API: Converting ${file.name} to WebP...`);
+          const arrayBuffer = await file.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          const webpBuffer = await convertImageToWebP(buffer, { quality: 80 });
+          
+          // Create new file with WebP extension
+          const timestamp = Date.now();
+          const randomId = Math.random().toString(36).substring(2);
+          fileName = `${timestamp}-${randomId}.webp`;
+          
+          // Create a new File object with WebP data
+          processedFile = new File([webpBuffer], fileName, {
+            type: 'image/webp',
+            lastModified: file.lastModified
+          });
+          
+          console.log(`Upload API: Successfully converted ${file.name} to WebP`);
+        } catch (error) {
+          console.error(`Upload API: Failed to convert ${file.name} to WebP:`, error);
+          // Fallback to original file
+          const timestamp = Date.now();
+          const randomId = Math.random().toString(36).substring(2);
+          const fileExtension = file.name.split(".").pop();
+          fileName = `${timestamp}-${randomId}.${fileExtension}`;
+        }
+      } else if (file.type.startsWith("video/")) {
+        // Handle video files (no conversion for now)
+        const timestamp = Date.now();
+        const randomId = Math.random().toString(36).substring(2);
+        const fileExtension = file.name.split(".").pop();
+        fileName = `${timestamp}-${randomId}.${fileExtension}`;
+        console.log(`Upload API: Processing video file ${file.name} (no conversion)`);
+      } else {
+        // Generate unique filename for non-image/video files or already WebP/WebM files
+        const timestamp = Date.now();
+        const randomId = Math.random().toString(36).substring(2);
+        const fileExtension = file.name.split(".").pop();
+        fileName = `${timestamp}-${randomId}.${fileExtension}`;
+      }
 
       // Determine storage bucket based on file type
-      const bucket = file.type.startsWith("image/")
+      const bucket = processedFile.type.startsWith("image/")
         ? "property-images"
         : "property-videos";
       const filePath = `${user.id}/${fileName}`;
@@ -72,7 +113,7 @@ export async function POST(request: NextRequest) {
       // Try to upload directly first - the bucket might already exist
       let uploadResult = await supabase.storage
         .from(bucket)
-        .upload(filePath, file, {
+        .upload(filePath, processedFile, {
           cacheControl: "3600",
           upsert: false,
         });

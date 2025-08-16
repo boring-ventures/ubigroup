@@ -25,14 +25,13 @@ export async function GET(
       },
       include: {
         agent: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatarUrl: true,
-            phone: true,
-            whatsapp: true,
-          },
+                      select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              avatarUrl: true,
+              phone: true,
+            },
         },
         agency: {
           select: {
