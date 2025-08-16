@@ -51,22 +51,27 @@ import {
   Settings,
   UserPlus,
   Building2,
-  Mail,
   Key,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { PasswordInput } from "@/components/utils/password-input";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import {
+  generateSecurePassword,
+  formatPhoneNumber,
+  removePhonePrefix,
+} from "@/lib/utils";
+import { CredentialsModal } from "./credentials-modal";
 
 // Types
 interface User {
   id: string;
   userId: string;
+  email: string; // Email from Supabase Auth
   firstName: string | null;
   lastName: string | null;
   role: "SUPER_ADMIN" | "AGENCY_ADMIN" | "AGENT";
   phone: string | null;
-  whatsapp: string | null;
   avatarUrl: string | null;
   active: boolean;
   createdAt: string;
@@ -85,16 +90,20 @@ interface Agency {
 
 // Form schemas
 const createUserSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
+  email: z.string().email("Dirección de correo electrónico inválida"),
+  firstName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
+  lastName: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
   role: z.enum(["SUPER_ADMIN", "AGENCY_ADMIN", "AGENT"]),
-  phone: z.string().min(10, "Phone must be at least 10 characters").optional(),
-  whatsapp: z
+  phone: z
     .string()
-    .min(10, "WhatsApp must be at least 10 characters")
+    .refine((val) => {
+      if (!val) return true; // Optional field
+      const digits = val.replace(/\D/g, "");
+      // Accept 8 digits (landline) or 9 digits (mobile) for Bolivia
+      return digits.length >= 8 && digits.length <= 9;
+    }, "El teléfono debe tener 8 dígitos (fijo) o 9 dígitos (móvil)")
     .optional(),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
   agencyId: z.string().optional(),
 });
 
@@ -119,6 +128,25 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [passwordUser, setPasswordUser] = useState<User | null>(null);
+  const [isCredentialsModalOpen, setIsCredentialsModalOpen] = useState(false);
+  const [createdUserCredentials, setCreatedUserCredentials] = useState<{
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    agencyName?: string;
+  } | null>(null);
+  const [isResetCredentialsModalOpen, setIsResetCredentialsModalOpen] =
+    useState(false);
+  const [resetUserCredentials, setResetUserCredentials] = useState<{
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    agencyName?: string;
+  } | null>(null);
 
   const form = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
@@ -128,11 +156,27 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
       lastName: "",
       role: "AGENT",
       phone: "",
-      whatsapp: "",
       password: "",
       agencyId: "",
     },
   });
+
+  // Generate password function
+  const handleGeneratePassword = () => {
+    const generatedPassword = generateSecurePassword();
+    form.setValue("password", generatedPassword);
+  };
+
+  // Generate password for reset
+  const handleGenerateResetPassword = () => {
+    const generatedPassword = generateSecurePassword();
+    const passwordInput = document.querySelector(
+      'input[name="newPassword"]'
+    ) as HTMLInputElement;
+    if (passwordInput) {
+      passwordInput.value = generatedPassword;
+    }
+  };
 
   const editForm = useForm<Omit<CreateUserFormData, "email" | "password">>({
     resolver: zodResolver(
@@ -143,7 +187,6 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
       lastName: "",
       role: "AGENT",
       phone: "",
-      whatsapp: "",
       agencyId: "",
     },
   });
@@ -179,7 +222,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
       console.error("Failed to fetch users:", error);
       toast({
         title: "Error",
-        description: "Failed to fetch users",
+        description: "Error al cargar usuarios",
         variant: "destructive",
       });
     }
@@ -211,6 +254,9 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
     try {
       setIsCreating(true);
 
+      // Format phone number with Bolivia prefix if provided
+      const formattedPhone = data.phone ? formatPhoneNumber(data.phone) : null;
+
       // Prepare user data - send raw password, API will handle auth creation
       const userData = {
         email: data.email,
@@ -218,8 +264,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
-        phone: data.phone || null,
-        whatsapp: data.whatsapp || null,
+        phone: formattedPhone,
         agencyId:
           data.role === "SUPER_ADMIN"
             ? null
@@ -241,10 +286,19 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
       if (response.ok) {
         if (result.canLoginNow) {
           // User was created successfully in Supabase Auth
-          toast({
-            title: "✅ Usuario Creado Exitosamente",
-            description: `Usuario creado con acceso completo. Puede iniciar sesión inmediatamente con: ${data.email}`,
+          // Show credentials modal
+          const selectedAgency = agencies.find(
+            (agency) => agency.id === userData.agencyId
+          );
+          setCreatedUserCredentials({
+            email: data.email,
+            password: data.password,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            role: data.role,
+            agencyName: selectedAgency?.name,
           });
+          setIsCredentialsModalOpen(true);
         } else if (result.requiresSignup) {
           // Fallback approach - user needs to complete signup
           toast({
@@ -264,14 +318,14 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
         fetchUsers();
         onUserUpdate?.();
       } else {
-        throw new Error(result.error || "Failed to create user");
+        throw new Error(result.error || "Error al crear usuario");
       }
     } catch (error) {
       console.error("Failed to create user:", error);
       toast({
         title: "Error",
         description:
-          error instanceof Error ? error.message : "Failed to create user",
+          error instanceof Error ? error.message : "Error al crear usuario",
         variant: "destructive",
       });
     } finally {
@@ -286,8 +340,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
       firstName: user.firstName || "",
       lastName: user.lastName || "",
       role: user.role,
-      phone: user.phone || "",
-      whatsapp: user.whatsapp || "",
+      phone: user.phone ? removePhonePrefix(user.phone) : "",
       agencyId: user.agencyId || "",
     });
     setIsEditDialogOpen(true);
@@ -301,12 +354,14 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
     try {
       setIsEditing(true);
 
+      // Format phone number with Bolivia prefix if provided
+      const formattedPhone = data.phone ? formatPhoneNumber(data.phone) : null;
+
       const updateData = {
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
-        phone: data.phone || null,
-        whatsapp: data.whatsapp || null,
+        phone: formattedPhone,
         agencyId:
           data.role === "SUPER_ADMIN"
             ? null
@@ -337,7 +392,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
         fetchUsers();
         onUserUpdate?.();
       } else {
-        throw new Error(result.error || "Failed to update user");
+        throw new Error(result.error || "Error al actualizar usuario");
       }
     } catch (error) {
       console.error("Failed to update user:", error);
@@ -377,15 +432,35 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
       const result = await response.json();
 
       if (response.ok) {
-        toast({
-          title: "✅ Contraseña Actualizada",
-          description:
-            "La contraseña del usuario ha sido actualizada exitosamente.",
+        // Show credentials modal for password reset
+        const selectedAgency = agencies.find(
+          (agency) => agency.id === passwordUser.agencyId
+        );
+
+        // Debug: Log the values to understand what we're getting
+        console.log("Password reset result:", result);
+        console.log("Password user:", passwordUser);
+        console.log(
+          "Using email:",
+          result.email || result.userId || passwordUser.userId
+        );
+
+        // Use the user data from the API response if available
+        const userData = result.user || passwordUser;
+
+        setResetUserCredentials({
+          email: result.email || userData.userId, // Use email from API response or fallback to userId
+          password: data.newPassword,
+          firstName: userData.firstName || "",
+          lastName: userData.lastName || "",
+          role: userData.role,
+          agencyName: selectedAgency?.name,
         });
+        setIsResetCredentialsModalOpen(true);
         setIsPasswordDialogOpen(false);
         setPasswordUser(null);
       } else {
-        throw new Error(result.error || "Failed to reset password");
+        throw new Error(result.error || "Error al restablecer contraseña");
       }
     } catch (error) {
       console.error("Failed to reset password:", error);
@@ -424,7 +499,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
           fetchUsers();
           onUserUpdate?.();
         } else {
-          throw new Error(result.error || "Failed to delete user");
+          throw new Error(result.error || "Error al eliminar usuario");
         }
       } catch (error) {
         console.error("Failed to delete user:", error);
@@ -445,7 +520,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
     const matchesSearch =
       user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.userId.toLowerCase().includes(searchTerm.toLowerCase());
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesRole = selectedRole === "all" || user.role === selectedRole;
 
@@ -479,7 +554,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
   };
 
   if (loading) {
-    return <div className="flex justify-center p-8">Loading users...</div>;
+    return <div className="flex justify-center p-8">Cargando usuarios...</div>;
   }
 
   return (
@@ -487,7 +562,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>System Users</CardTitle>
+            <CardTitle>Usuarios del Sistema</CardTitle>
             <Dialog
               open={isCreateDialogOpen}
               onOpenChange={setIsCreateDialogOpen}
@@ -495,15 +570,15 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
               <DialogTrigger asChild>
                 <Button>
                   <UserPlus className="h-4 w-4 mr-2" />
-                  Create User
+                  Crear Usuario
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent className="w-[95vw] max-w-[500px] sm:w-full">
                 <DialogHeader>
-                  <DialogTitle>Create New User</DialogTitle>
+                  <DialogTitle>Crear Nuevo Usuario</DialogTitle>
                   <DialogDescription>
-                    Create a new user account with the specified role and
-                    permissions.
+                    Crear una nueva cuenta de usuario con el rol y permisos
+                    especificados.
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -511,15 +586,15 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                     onSubmit={form.handleSubmit(onSubmit)}
                     className="space-y-4"
                   >
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="firstName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>First Name</FormLabel>
+                            <FormLabel>Nombre</FormLabel>
                             <FormControl>
-                              <Input placeholder="John" {...field} />
+                              <Input placeholder="Juan" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -530,9 +605,9 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                         name="lastName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Last Name</FormLabel>
+                            <FormLabel>Apellido</FormLabel>
                             <FormControl>
-                              <Input placeholder="Doe" {...field} />
+                              <Input placeholder="Pérez" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -545,9 +620,12 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>Correo Electrónico</FormLabel>
                           <FormControl>
-                            <Input placeholder="user@example.com" {...field} />
+                            <Input
+                              placeholder="usuario@ejemplo.com"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -559,14 +637,14 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                       name="role"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Role</FormLabel>
+                          <FormLabel>Rol</FormLabel>
                           <Select
                             onValueChange={field.onChange}
                             defaultValue={field.value}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select a role" />
+                                <SelectValue placeholder="Seleccionar rol" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -574,7 +652,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                                 <SelectItem value="SUPER_ADMIN">
                                   <div className="flex items-center gap-2">
                                     <Shield className="h-4 w-4" />
-                                    Super Admin
+                                    Super Administrador
                                   </div>
                                 </SelectItem>
                               )}
@@ -582,7 +660,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                                 <SelectItem value="AGENCY_ADMIN">
                                   <div className="flex items-center gap-2">
                                     <Settings className="h-4 w-4" />
-                                    Agency Admin
+                                    Administrador de Agencia
                                   </div>
                                 </SelectItem>
                               )}
@@ -590,7 +668,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                                 <SelectItem value="AGENT">
                                   <div className="flex items-center gap-2">
                                     <Users className="h-4 w-4" />
-                                    Agent
+                                    Agente
                                   </div>
                                 </SelectItem>
                               )}
@@ -607,17 +685,17 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                         name="agencyId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Agency</FormLabel>
+                            <FormLabel>Agencia</FormLabel>
                             {currentUser?.role === "AGENCY_ADMIN" ? (
                               <div className="flex items-center gap-2 p-2 border rounded-md bg-muted">
                                 <Building2 className="h-4 w-4" />
                                 <span className="text-sm">
                                   {currentUser.agencyId
-                                    ? "Your Agency"
-                                    : "No Agency Assigned"}
+                                    ? "Tu Agencia"
+                                    : "Sin Agencia Asignada"}
                                 </span>
                                 <span className="text-xs text-muted-foreground">
-                                  (Automatically assigned)
+                                  (Asignado automáticamente)
                                 </span>
                               </div>
                             ) : (
@@ -627,7 +705,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                               >
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder="Select an agency" />
+                                    <SelectValue placeholder="Seleccionar agencia" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
@@ -651,44 +729,55 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                       />
                     )}
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone (Optional)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="+1234567890" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="whatsapp"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>WhatsApp (Optional)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="+1234567890" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Número de Teléfono (Opcional)</FormLabel>
+                          <FormControl>
+                            <div className="flex">
+                              <div className="flex items-center px-3 py-2 text-sm border border-r-0 rounded-l-md bg-muted text-muted-foreground">
+                                +591
+                              </div>
+                              <Input
+                                placeholder="71234567 o 21234567"
+                                className="rounded-l-none"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                          <p className="text-xs text-muted-foreground">
+                            Ingresa solo el número sin el prefijo
+                          </p>
+                        </FormItem>
+                      )}
+                    />
 
                     <FormField
                       control={form.control}
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <PasswordInput placeholder="********" {...field} />
-                          </FormControl>
+                          <FormLabel>Contraseña</FormLabel>
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <FormControl>
+                              <PasswordInput
+                                placeholder="********"
+                                {...field}
+                              />
+                            </FormControl>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleGeneratePassword}
+                              className="flex-shrink-0"
+                            >
+                              <Key className="h-4 w-4 mr-1" />
+                              Generar
+                            </Button>
+                          </div>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -696,7 +785,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
 
                     <DialogFooter>
                       <Button type="submit" disabled={isCreating}>
-                        {isCreating ? "Creating..." : "Create User"}
+                        {isCreating ? "Creando..." : "Crear Usuario"}
                       </Button>
                     </DialogFooter>
                   </form>
@@ -706,7 +795,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
 
             {/* Edit User Dialog */}
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent className="w-[95vw] max-w-[500px] sm:w-full">
                 <DialogHeader>
                   <DialogTitle>Editar Usuario</DialogTitle>
                   <DialogDescription>
@@ -718,7 +807,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                     onSubmit={editForm.handleSubmit(onEditSubmit)}
                     className="space-y-4"
                   >
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField
                         control={editForm.control}
                         name="firstName"
@@ -767,7 +856,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                                 <SelectItem value="SUPER_ADMIN">
                                   <div className="flex items-center gap-2">
                                     <Shield className="h-4 w-4" />
-                                    Super Admin
+                                    Super Administrador
                                   </div>
                                 </SelectItem>
                               )}
@@ -775,7 +864,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                                 <SelectItem value="AGENCY_ADMIN">
                                   <div className="flex items-center gap-2">
                                     <Settings className="h-4 w-4" />
-                                    Agency Admin
+                                    Administrador de Agencia
                                   </div>
                                 </SelectItem>
                               )}
@@ -783,7 +872,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                                 <SelectItem value="AGENT">
                                   <div className="flex items-center gap-2">
                                     <Users className="h-4 w-4" />
-                                    Agent
+                                    Agente
                                   </div>
                                 </SelectItem>
                               )}
@@ -806,11 +895,11 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                                 <Building2 className="h-4 w-4" />
                                 <span className="text-sm">
                                   {currentUser.agencyId
-                                    ? "Your Agency"
-                                    : "No Agency Assigned"}
+                                    ? "Tu Agencia"
+                                    : "Sin Agencia Asignada"}
                                 </span>
                                 <span className="text-xs text-muted-foreground">
-                                  (Automatically assigned)
+                                  (Asignado automáticamente)
                                 </span>
                               </div>
                             ) : (
@@ -846,34 +935,31 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                       />
                     )}
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={editForm.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Teléfono (Opcional)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="+1234567890" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={editForm.control}
-                        name="whatsapp"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>WhatsApp (Opcional)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="+1234567890" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    <FormField
+                      control={editForm.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Teléfono (Opcional)</FormLabel>
+                          <FormControl>
+                            <div className="flex">
+                              <div className="flex items-center px-3 py-2 text-sm border border-r-0 rounded-l-md bg-muted text-muted-foreground">
+                                +591
+                              </div>
+                              <Input
+                                placeholder="71234567 o 21234567"
+                                className="rounded-l-none"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                          <p className="text-xs text-muted-foreground">
+                            Ingresa solo el número sin el prefijo
+                          </p>
+                        </FormItem>
+                      )}
+                    />
 
                     <DialogFooter>
                       <Button type="submit" disabled={isEditing}>
@@ -890,7 +976,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
               open={isPasswordDialogOpen}
               onOpenChange={setIsPasswordDialogOpen}
             >
-              <DialogContent className="sm:max-w-[400px]">
+              <DialogContent className="w-[95vw] max-w-[400px] sm:w-full">
                 <DialogHeader>
                   <DialogTitle>Restablecer Contraseña</DialogTitle>
                   <DialogDescription>
@@ -913,13 +999,24 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                     <label className="text-sm font-medium">
                       Nueva Contraseña
                     </label>
-                    <PasswordInput
-                      name="newPassword"
-                      placeholder="Ingresa la nueva contraseña"
-                      className="mt-1"
-                      required
-                      minLength={8}
-                    />
+                    <div className="flex flex-col sm:flex-row gap-2 mt-1">
+                      <PasswordInput
+                        name="newPassword"
+                        placeholder="Ingresa la nueva contraseña"
+                        className="flex-1"
+                        required
+                        minLength={8}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleGenerateResetPassword}
+                        className="flex-shrink-0"
+                      >
+                        <Key className="h-4 w-4 mr-1" />
+                        Generar
+                      </Button>
+                    </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       La contraseña debe tener al menos 8 caracteres
                     </p>
@@ -946,111 +1043,175 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
         </CardHeader>
         <CardContent>
           {/* Search and Filter */}
-          <div className="flex items-center space-x-4 mb-4">
+          <div className="flex flex-col space-y-4 mb-4 sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search users..."
+                placeholder="Buscar usuarios..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"
               />
             </div>
             <Select value={selectedRole} onValueChange={setSelectedRole}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by role" />
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Filtrar por rol" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
-                <SelectItem value="AGENCY_ADMIN">Agency Admin</SelectItem>
-                <SelectItem value="AGENT">Agent</SelectItem>
+                <SelectItem value="all">Todos los Roles</SelectItem>
+                <SelectItem value="SUPER_ADMIN">Super Administrador</SelectItem>
+                <SelectItem value="AGENCY_ADMIN">
+                  Administrador de Agencia
+                </SelectItem>
+                <SelectItem value="AGENT">Agente</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Users Table */}
           <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Agency</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.length === 0 ? (
+            {/* Desktop Table */}
+            <div className="hidden md:block">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      No users found
-                    </TableCell>
+                    <TableHead>Usuario</TableHead>
+                    <TableHead>Rol</TableHead>
+                    <TableHead>Agencia</TableHead>
+                    <TableHead>Contacto</TableHead>
+                    <TableHead>Creado</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
-                ) : (
-                  filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <div className="flex items-center space-x-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={user.avatarUrl || undefined} />
-                            <AvatarFallback>
-                              {user.firstName?.[0]}
-                              {user.lastName?.[0]}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-medium">
-                              {user.firstName} {user.lastName}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {user.userId}
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8">
+                        No se encontraron usuarios
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell>
+                          <div className="flex items-center space-x-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={user.avatarUrl || undefined} />
+                              <AvatarFallback>
+                                {user.firstName?.[0]}
+                                {user.lastName?.[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-medium">
+                                {user.firstName} {user.lastName}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {user.email}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={getRoleBadgeVariant(user.role)}
-                          className="gap-1"
-                        >
-                          {getRoleIcon(user.role)}
-                          {user.role.replace("_", " ")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {user.agency ? (
-                          <div className="flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-muted-foreground" />
-                            {user.agency.name}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">N/A</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          {user.phone && (
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={getRoleBadgeVariant(user.role)}
+                            className="gap-1"
+                          >
+                            {getRoleIcon(user.role)}
+                            {user.role.replace("_", " ")}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {user.agency ? (
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-4 w-4 text-muted-foreground" />
+                              {user.agency.name}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">N/A</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {user.phone ? (
                             <div className="flex items-center gap-2 text-sm">
                               <Phone className="h-3 w-3" />
                               {user.phone}
                             </div>
+                          ) : (
+                            <span className="text-muted-foreground">N/A</span>
                           )}
-                          {user.whatsapp && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Mail className="h-3 w-3" />
-                              {user.whatsapp}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(user.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditUser(user)}
+                              title="Editar usuario"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleResetPassword(user)}
+                              title="Restablecer contraseña"
+                              className="text-blue-600 hover:text-blue-700"
+                            >
+                              <Key className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteUser(user)}
+                              title="Eliminar usuario"
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="md:hidden">
+              {filteredUsers.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No se encontraron usuarios
+                </div>
+              ) : (
+                <div className="space-y-4 p-4">
+                  {filteredUsers.map((user) => (
+                    <Card key={user.id} className="p-4">
+                      <div className="flex flex-col space-y-3 mb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center space-x-3 min-w-0 flex-1">
+                            <Avatar className="h-10 w-10 flex-shrink-0">
+                              <AvatarImage src={user.avatarUrl || undefined} />
+                              <AvatarFallback>
+                                {user.firstName?.[0]}
+                                {user.lastName?.[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium truncate">
+                                {user.firstName} {user.lastName}
+                              </div>
+                              <div className="text-sm text-muted-foreground truncate">
+                                {user.email}
+                              </div>
                             </div>
-                          )}
+                          </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(user.createdAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end space-x-2">
+                        <div className="flex items-center justify-between">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1078,15 +1239,84 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Rol:</span>
+                          <Badge
+                            variant={getRoleBadgeVariant(user.role)}
+                            className="gap-1"
+                          >
+                            {getRoleIcon(user.role)}
+                            {user.role.replace("_", " ")}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Agencia:</span>
+                          <span className="text-sm text-muted-foreground">
+                            {user.agency ? (
+                              <div className="flex items-center gap-1">
+                                <Building2 className="h-3 w-3" />
+                                {user.agency.name}
+                              </div>
+                            ) : (
+                              "N/A"
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Contacto:</span>
+                          <span className="text-sm text-muted-foreground">
+                            {user.phone ? (
+                              <div className="flex items-center gap-1">
+                                <Phone className="h-3 w-3" />
+                                {user.phone}
+                              </div>
+                            ) : (
+                              "N/A"
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Creado:</span>
+                          <span className="text-sm text-muted-foreground">
+                            {new Date(user.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Credentials Modal */}
+      {createdUserCredentials && (
+        <CredentialsModal
+          isOpen={isCredentialsModalOpen}
+          onClose={() => {
+            setIsCredentialsModalOpen(false);
+            setCreatedUserCredentials(null);
+          }}
+          userData={createdUserCredentials}
+        />
+      )}
+
+      {/* Reset Credentials Modal */}
+      {resetUserCredentials && (
+        <CredentialsModal
+          isOpen={isResetCredentialsModalOpen}
+          onClose={() => {
+            setIsResetCredentialsModalOpen(false);
+            setResetUserCredentials(null);
+          }}
+          userData={resetUserCredentials}
+          isPasswordReset={true}
+        />
+      )}
     </div>
   );
 }

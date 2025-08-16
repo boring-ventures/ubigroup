@@ -41,7 +41,6 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
       password: "",
       confirmPassword: "",
       phone: "",
-      whatsapp: "",
     },
   });
 
@@ -110,7 +109,6 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
               firstName: data.firstName,
               lastName: data.lastName,
               phone: data.phone,
-              whatsapp: data.whatsapp,
               avatarUrl,
             }),
           });
@@ -130,7 +128,6 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
               firstName: data.firstName,
               lastName: data.lastName,
               phone: data.phone,
-              whatsapp: data.whatsapp,
               role: "SUPER_ADMIN", // Always create as SUPER_ADMIN
               avatarUrl,
             }),
@@ -216,7 +213,7 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
             </div>
             <Input
               type="file"
-              accept="image/*"
+              accept="image/*,.webp"
               onChange={handleAvatarChange}
               className="w-full max-w-xs"
             />
@@ -265,34 +262,19 @@ export function SignUpForm({ className, ...props }: SignUpFormProps) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Teléfono</FormLabel>
-                  <FormControl>
-                    <Input placeholder="+1234567890" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="whatsapp"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>WhatsApp</FormLabel>
-                  <FormControl>
-                    <Input placeholder="+1234567890" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Teléfono</FormLabel>
+                <FormControl>
+                  <Input placeholder="+1234567890" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}

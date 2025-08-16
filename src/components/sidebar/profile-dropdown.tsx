@@ -14,11 +14,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useAuth } from "@/providers/auth-provider";
 import { Badge } from "@/components/ui/badge";
 import { UserRole } from "@prisma/client";
 
 export function ProfileDropdown() {
   const { profile, user, isLoading } = useCurrentUser();
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -60,7 +70,7 @@ export function ProfileDropdown() {
           <Avatar className="h-8 w-8 ring-2 ring-primary/10">
             <AvatarImage
               src={profile.avatarUrl || ""}
-              alt={displayName || user.email || "User"}
+              alt={displayName || user.email || "Usuario"}
             />
             <AvatarFallback className="bg-primary/10">
               {getInitials()}
@@ -89,13 +99,13 @@ export function ProfileDropdown() {
           <DropdownMenuItem asChild>
             <Link href="/profile">
               <User className="mr-2 h-4 w-4" />
-              Profile
+              Perfil
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
             <Link href="/settings">
               <Settings className="mr-2 h-4 w-4" />
-              Settings
+              Configuración
             </Link>
           </DropdownMenuItem>
           {profile.role === UserRole.SUPER_ADMIN && (
@@ -108,14 +118,9 @@ export function ProfileDropdown() {
           )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={async () => {
-            await fetch("/api/auth/signout", { method: "POST" });
-            window.location.href = "/login";
-          }}
-        >
+        <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
-          Log out
+          Cerrar Sesión
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
