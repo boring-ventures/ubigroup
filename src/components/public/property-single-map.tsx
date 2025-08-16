@@ -40,7 +40,6 @@ interface Property {
     firstName?: string;
     lastName?: string;
     phone?: string;
-    whatsapp?: string;
   };
   agency: {
     name: string;

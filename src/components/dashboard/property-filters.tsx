@@ -80,7 +80,7 @@ export function PropertyFilters({
   return (
     <div className="space-y-4">
       {/* Main Search and Status Filter */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
@@ -89,7 +89,7 @@ export function PropertyFilters({
             onChange={(e) =>
               onFiltersChange({ ...filters, search: e.target.value })
             }
-            className="pl-10"
+            className="pl-10 h-10 sm:h-9"
           />
         </div>
 
@@ -103,7 +103,7 @@ export function PropertyFilters({
               })
             }
           >
-            <SelectTrigger className="w-full sm:w-48">
+            <SelectTrigger className="w-full sm:w-48 h-10 sm:h-9">
               <SelectValue placeholder="Filtrar por estado" />
             </SelectTrigger>
             <SelectContent>
@@ -118,7 +118,7 @@ export function PropertyFilters({
       </div>
 
       {/* Horizontal Filters Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Location Filters */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
@@ -132,7 +132,7 @@ export function PropertyFilters({
               onChange={(e) =>
                 onFiltersChange({ ...filters, locationState: e.target.value })
               }
-              className="h-8 text-xs"
+              className="h-9 sm:h-8 text-xs"
             />
             <Input
               placeholder="Ciudad"
@@ -140,7 +140,7 @@ export function PropertyFilters({
               onChange={(e) =>
                 onFiltersChange({ ...filters, locationCity: e.target.value })
               }
-              className="h-8 text-xs"
+              className="h-9 sm:h-8 text-xs"
             />
           </div>
         </div>
@@ -161,7 +161,7 @@ export function PropertyFilters({
                 })
               }
             >
-              <SelectTrigger className="h-8 text-xs">
+              <SelectTrigger className="h-9 sm:h-8 text-xs">
                 <SelectValue placeholder="Tipo de propiedad" />
               </SelectTrigger>
               <SelectContent>
@@ -182,7 +182,7 @@ export function PropertyFilters({
                 })
               }
             >
-              <SelectTrigger className="h-8 text-xs">
+              <SelectTrigger className="h-9 sm:h-8 text-xs">
                 <SelectValue placeholder="Tipo de transacción" />
               </SelectTrigger>
               <SelectContent>
@@ -216,7 +216,7 @@ export function PropertyFilters({
                     : undefined,
                 })
               }
-              className="h-8 text-xs"
+              className="h-9 sm:h-8 text-xs"
             />
             <Input
               type="number"
@@ -230,7 +230,7 @@ export function PropertyFilters({
                     : undefined,
                 })
               }
-              className="h-8 text-xs"
+              className="h-9 sm:h-8 text-xs"
             />
           </div>
         </div>
@@ -254,7 +254,7 @@ export function PropertyFilters({
                     : undefined,
                 })
               }
-              className="h-8 text-xs"
+              className="h-9 sm:h-8 text-xs"
             />
             <Input
               type="number"
@@ -268,7 +268,7 @@ export function PropertyFilters({
                     : undefined,
                 })
               }
-              className="h-8 text-xs"
+              className="h-9 sm:h-8 text-xs"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -288,7 +288,7 @@ export function PropertyFilters({
                     : undefined,
                 })
               }
-              className="h-8 text-xs"
+              className="h-9 sm:h-8 text-xs"
             />
             <Input
               type="number"
@@ -302,7 +302,7 @@ export function PropertyFilters({
                     : undefined,
                 })
               }
-              className="h-8 text-xs"
+              className="h-9 sm:h-8 text-xs"
             />
           </div>
         </div>
@@ -314,7 +314,7 @@ export function PropertyFilters({
           <Car className="h-4 w-4 text-muted-foreground" />
           <Label className="text-sm font-medium">Área (m²)</Label>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <Input
             type="number"
             placeholder="Mínimo"
@@ -327,7 +327,7 @@ export function PropertyFilters({
                   : undefined,
               })
             }
-            className="h-8 text-xs"
+            className="h-9 sm:h-8 text-xs"
           />
           <Input
             type="number"
@@ -341,7 +341,7 @@ export function PropertyFilters({
                   : undefined,
               })
             }
-            className="h-8 text-xs"
+            className="h-9 sm:h-8 text-xs"
           />
         </div>
       </div>
@@ -350,8 +350,12 @@ export function PropertyFilters({
       {getActiveFiltersCount() > 0 && (
         <div className="flex flex-wrap gap-2">
           {filters.search && (
-            <Badge variant="secondary" className="gap-1">
-              Búsqueda: {filters.search}
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <span className="hidden sm:inline">Búsqueda:</span>
+              <span className="sm:hidden">Bus:</span>
+              {filters.search.length > 15
+                ? filters.search.substring(0, 15) + "..."
+                : filters.search}
               <X
                 className="h-3 w-3 cursor-pointer"
                 onClick={() =>
@@ -361,8 +365,10 @@ export function PropertyFilters({
             </Badge>
           )}
           {filters.status && (
-            <Badge variant="secondary" className="gap-1">
-              Estado: {filters.status}
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <span className="hidden sm:inline">Estado:</span>
+              <span className="sm:hidden">Est:</span>
+              {filters.status}
               <X
                 className="h-3 w-3 cursor-pointer"
                 onClick={() =>
@@ -372,8 +378,10 @@ export function PropertyFilters({
             </Badge>
           )}
           {filters.locationState && (
-            <Badge variant="secondary" className="gap-1">
-              Estado: {filters.locationState}
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <span className="hidden sm:inline">Estado:</span>
+              <span className="sm:hidden">Est:</span>
+              {filters.locationState}
               <X
                 className="h-3 w-3 cursor-pointer"
                 onClick={() =>
@@ -383,8 +391,10 @@ export function PropertyFilters({
             </Badge>
           )}
           {filters.locationCity && (
-            <Badge variant="secondary" className="gap-1">
-              Ciudad: {filters.locationCity}
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <span className="hidden sm:inline">Ciudad:</span>
+              <span className="sm:hidden">Ciud:</span>
+              {filters.locationCity}
               <X
                 className="h-3 w-3 cursor-pointer"
                 onClick={() =>
@@ -394,8 +404,10 @@ export function PropertyFilters({
             </Badge>
           )}
           {(filters.minPrice || filters.maxPrice) && (
-            <Badge variant="secondary" className="gap-1">
-              Precio: {filters.minPrice || 0} - {filters.maxPrice || "∞"}
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <span className="hidden sm:inline">Precio:</span>
+              <span className="sm:hidden">Prec:</span>
+              {filters.minPrice || 0} - {filters.maxPrice || "∞"}
               <X
                 className="h-3 w-3 cursor-pointer"
                 onClick={() =>
@@ -409,9 +421,10 @@ export function PropertyFilters({
             </Badge>
           )}
           {(filters.minBedrooms || filters.maxBedrooms) && (
-            <Badge variant="secondary" className="gap-1">
-              Habitaciones: {filters.minBedrooms || 0} -{" "}
-              {filters.maxBedrooms || "∞"}
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <span className="hidden sm:inline">Habitaciones:</span>
+              <span className="sm:hidden">Hab:</span>
+              {filters.minBedrooms || 0} - {filters.maxBedrooms || "∞"}
               <X
                 className="h-3 w-3 cursor-pointer"
                 onClick={() =>
@@ -425,8 +438,10 @@ export function PropertyFilters({
             </Badge>
           )}
           {(filters.minBathrooms || filters.maxBathrooms) && (
-            <Badge variant="secondary" className="gap-1">
-              Baños: {filters.minBathrooms || 0} - {filters.maxBathrooms || "∞"}
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <span className="hidden sm:inline">Baños:</span>
+              <span className="sm:hidden">Baños:</span>
+              {filters.minBathrooms || 0} - {filters.maxBathrooms || "∞"}
               <X
                 className="h-3 w-3 cursor-pointer"
                 onClick={() =>
@@ -440,9 +455,11 @@ export function PropertyFilters({
             </Badge>
           )}
           {(filters.minSquareMeters || filters.maxSquareMeters) && (
-            <Badge variant="secondary" className="gap-1">
-              Área: {filters.minSquareMeters || 0} -{" "}
-              {filters.maxSquareMeters || "∞"} m²
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <span className="hidden sm:inline">Área:</span>
+              <span className="sm:hidden">Área:</span>
+              {filters.minSquareMeters || 0} - {filters.maxSquareMeters || "∞"}{" "}
+              m²
               <X
                 className="h-3 w-3 cursor-pointer"
                 onClick={() =>
@@ -456,8 +473,9 @@ export function PropertyFilters({
             </Badge>
           )}
           {filters.propertyType && (
-            <Badge variant="secondary" className="gap-1">
-              Tipo:{" "}
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <span className="hidden sm:inline">Tipo:</span>
+              <span className="sm:hidden">Tipo:</span>
               {propertyTypes.find((t) => t.value === filters.propertyType)
                 ?.label || filters.propertyType}
               <X
@@ -469,8 +487,9 @@ export function PropertyFilters({
             </Badge>
           )}
           {filters.transactionType && (
-            <Badge variant="secondary" className="gap-1">
-              Transacción:{" "}
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <span className="hidden sm:inline">Transacción:</span>
+              <span className="sm:hidden">Trans:</span>
               {transactionTypes.find((t) => t.value === filters.transactionType)
                 ?.label || filters.transactionType}
               <X

@@ -111,6 +111,33 @@ export async function PATCH(
         await supabaseAdmin.auth.admin.updateUserById(existingUser.userId, {
           password: password,
         });
+
+        // Set requiresPasswordChange to true so user must change password on next login
+        await prisma.user.update({
+          where: { id },
+          data: { requiresPasswordChange: true },
+        });
+
+        // Get the user's email from Supabase Auth
+        const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(existingUser.userId);
+        
+        if (authError) {
+          console.error("Failed to get user email from Supabase Auth:", authError);
+        }
+
+        return NextResponse.json({
+          message: "Password updated successfully",
+          userId: existingUser.userId,
+          email: authUser?.user?.email || existingUser.userId, // Use email from Auth or fallback to userId
+          user: {
+            id: existingUser.id,
+            userId: existingUser.userId,
+            firstName: existingUser.firstName,
+            lastName: existingUser.lastName,
+            role: existingUser.role,
+            agencyId: existingUser.agencyId,
+          },
+        });
       } else {
         // User doesn't have a real auth ID, we can't update password
         return NextResponse.json(
@@ -128,11 +155,6 @@ export async function PATCH(
         { status: 500 }
       );
     }
-
-    return NextResponse.json({
-      message: "Password updated successfully",
-      userId: existingUser.userId,
-    });
   } catch (error) {
     console.error("Failed to reset password:", error);
     return NextResponse.json(

@@ -239,8 +239,8 @@ export function AgencyAdminUserManagement() {
                         disabled={createAgentMutation.isPending}
                       >
                         {createAgentMutation.isPending
-                          ? "Creating..."
-                          : "Create Agent"}
+                          ? "Creando..."
+                          : "Crear Agente"}
                       </Button>
                     </DialogFooter>
                   </form>
@@ -255,7 +255,7 @@ export function AgencyAdminUserManagement() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search agents..."
+                placeholder="Buscar agentes..."
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-10"
@@ -268,12 +268,12 @@ export function AgencyAdminUserManagement() {
               onValueChange={handleStatusFilter}
             >
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by status" />
+                <SelectValue placeholder="Filtrar por estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="true">Active</SelectItem>
-                <SelectItem value="false">Inactive</SelectItem>
+                <SelectItem value="all">Todos los Estados</SelectItem>
+                <SelectItem value="true">Activo</SelectItem>
+                <SelectItem value="false">Inactivo</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -295,16 +295,18 @@ export function AgencyAdminUserManagement() {
           ) : data?.agents.length === 0 ? (
             <div className="text-center py-10">
               <UserPlus className="mx-auto h-12 w-12 text-muted-foreground/40" />
-              <h3 className="mt-4 text-lg font-medium">No agents found</h3>
+              <h3 className="mt-4 text-lg font-medium">
+                No se encontraron agentes
+              </h3>
               <p className="text-muted-foreground mb-4">
                 {params.active !== undefined || search
-                  ? "No agents match your current filters"
-                  : "You haven't added any agents yet"}
+                  ? "Ningún agente coincide con tus filtros actuales"
+                  : "Aún no has agregado ningún agente"}
               </p>
               {!params.active && !search && (
                 <Button onClick={() => setIsCreateDialogOpen(true)}>
                   <UserPlus className="mr-2 h-4 w-4" />
-                  Add Your First Agent
+                  Agregar tu Primer Agente
                 </Button>
               )}
             </div>
@@ -314,12 +316,12 @@ export function AgencyAdminUserManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Agent</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Properties</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>Agente</TableHead>
+                      <TableHead>Correo</TableHead>
+                      <TableHead>Propiedades</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Se Unió</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

@@ -37,7 +37,6 @@ interface Property {
     firstName?: string;
     lastName?: string;
     phone?: string;
-    whatsapp?: string;
   };
   agency: {
     name: string;
@@ -110,6 +109,9 @@ export function PropertyMap({
 
   useEffect(() => {
     if (!isVisible) return;
+
+    // Capture the current map ref value to avoid the React hooks warning
+    const currentMapRef = mapRef.current;
 
     // Check if data has actually changed
     if (
@@ -204,7 +206,6 @@ export function PropertyMap({
             i < 20 && !hasSize() && !isCancelledRef.current;
             i++
           ) {
-            // eslint-disable-next-line no-await-in-loop
             await new Promise((r) => setTimeout(r, 150));
           }
           if (!hasSize() || isCancelledRef.current) return;
@@ -532,8 +533,8 @@ export function PropertyMap({
       }
 
       // Clear any remaining leaflet ID from the container
-      if (mapRef.current) {
-        const containerWithLeaflet = mapRef.current as HTMLDivElement & {
+      if (currentMapRef) {
+        const containerWithLeaflet = currentMapRef as HTMLDivElement & {
           _leaflet_id?: number;
         };
         if (containerWithLeaflet._leaflet_id) {
@@ -558,7 +559,7 @@ export function PropertyMap({
         resizeObserverRef.current = null;
       }
     };
-  }, [propertiesHash, projectsHash, isVisible]);
+  }, [propertiesHash, projectsHash, isVisible, properties, projects]);
 
   return (
     <Card className={className}>

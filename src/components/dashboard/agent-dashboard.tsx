@@ -78,15 +78,15 @@ export function AgentDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Mi Panel</h1>
           <p className="text-muted-foreground">
-            Track your property listings and performance
+            Controla tus publicaciones y rendimiento
           </p>
         </div>
         <Button asChild>
           <Link href="/properties/create">
             <Plus className="mr-2 h-4 w-4" />
-            Add Property
+            Crear Nueva Propiedad
           </Link>
         </Button>
       </div>
@@ -94,31 +94,31 @@ export function AgentDashboard() {
       {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricsCard
-          title="Total Properties"
+          title="Total de Propiedades"
           value={personalStats?.totalProperties || 0}
-          description="All your listings"
+          description="Todas tus publicaciones"
           icon={Home}
         />
         <MetricsCard
-          title="Approved"
+          title="Aprobadas"
           value={personalStats?.approvedProperties || 0}
-          description={`${approvalRate}% approval rate`}
+          description={`${approvalRate}% tasa de aprobación`}
           icon={CheckCircle}
         />
         <MetricsCard
-          title="Pending Review"
+          title="En Revisión"
           value={personalStats?.pendingProperties || 0}
-          description="Awaiting approval"
+          description="Esperando aprobación"
           icon={Clock}
         />
         <MetricsCard
-          title="Average Price"
+          title="Precio Promedio"
           value={
             metrics?.performanceInsights?.averagePropertyPrice
               ? `$${metrics.performanceInsights.averagePropertyPrice.toLocaleString()}`
               : "$0"
           }
-          description="Property listing average"
+          description="Promedio de publicaciones"
           icon={DollarSign}
         />
       </div>
@@ -127,38 +127,40 @@ export function AgentDashboard() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Manage your property listings</CardDescription>
+            <CardTitle>Acciones Rápidas</CardTitle>
+            <CardDescription>
+              Gestiona tus publicaciones de propiedades
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <Button asChild className="w-full justify-start">
               <Link href="/properties/create">
                 <Plus className="mr-2 h-4 w-4" />
-                Create New Property
+                Crear Nueva Propiedad
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">
               <Link href="/my-properties">
                 <Home className="mr-2 h-4 w-4" />
-                View All Properties
+                Ver Todas las Propiedades
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">
               <Link href="/projects/create">
                 <Layers className="mr-2 h-4 w-4" />
-                Create New Project
+                Crear Nuevo Proyecto
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">
               <Link href="/projects">
                 <Building2 className="mr-2 h-4 w-4" />
-                View All Projects
+                Ver Todos los Proyectos
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">
               <Link href="/properties/pending">
                 <Clock className="mr-2 h-4 w-4" />
-                Pending Properties
+                Propiedades Pendientes
                 {(personalStats?.pendingProperties || 0) > 0 && (
                   <Badge variant="secondary" className="ml-auto">
                     {personalStats?.pendingProperties}
@@ -171,14 +173,16 @@ export function AgentDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Property Status Overview</CardTitle>
-            <CardDescription>Current status of your listings</CardDescription>
+            <CardTitle>Resumen del Estado de Propiedades</CardTitle>
+            <CardDescription>
+              Estado actual de tus publicaciones
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                <span className="text-sm">Approved</span>
+                <span className="text-sm">Aprobadas</span>
               </div>
               <span className="text-sm font-medium">
                 {personalStats?.approvedProperties || 0}
@@ -187,7 +191,7 @@ export function AgentDashboard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Clock className="h-4 w-4 text-yellow-500" />
-                <span className="text-sm">Pending</span>
+                <span className="text-sm">Pendientes</span>
               </div>
               <span className="text-sm font-medium">
                 {personalStats?.pendingProperties || 0}
@@ -196,7 +200,7 @@ export function AgentDashboard() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <XCircle className="h-4 w-4 text-red-500" />
-                <span className="text-sm">Rejected</span>
+                <span className="text-sm">Rechazadas</span>
               </div>
               <span className="text-sm font-medium">
                 {personalStats?.rejectedProperties || 0}
@@ -206,7 +210,7 @@ export function AgentDashboard() {
               <div className="pt-2 border-t">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">
-                    Approval Rate
+                    Tasa de Aprobación
                   </span>
                   <span className="text-sm font-medium">{approvalRate}%</span>
                 </div>
@@ -219,8 +223,10 @@ export function AgentDashboard() {
       {/* Recent Properties */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Properties</CardTitle>
-          <CardDescription>Your latest property submissions</CardDescription>
+          <CardTitle>Propiedades Recientes</CardTitle>
+          <CardDescription>
+            Tus últimas publicaciones de propiedades
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {metrics?.recentProperties && metrics.recentProperties.length > 0 ? (
@@ -233,8 +239,7 @@ export function AgentDashboard() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">{property.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      Created{" "}
-                      {new Date(property.createdAt).toLocaleDateString()}
+                      Creado {new Date(property.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -257,12 +262,12 @@ export function AgentDashboard() {
             <div className="text-center py-6">
               <Home className="mx-auto h-12 w-12 text-muted-foreground/40" />
               <p className="mt-2 text-sm text-muted-foreground">
-                No properties yet
+                No hay propiedades aún
               </p>
               <Button asChild className="mt-4">
                 <Link href="/properties/create">
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Your First Property
+                  Crear tu primera propiedad
                 </Link>
               </Button>
             </div>

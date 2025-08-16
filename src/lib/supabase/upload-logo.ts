@@ -8,13 +8,14 @@ const ACCEPTED_IMAGE_TYPES = [
   "image/jpg",
   "image/png",
   "image/gif",
+  "image/webp",
 ];
 
 export async function uploadLogo(file: File, agencyId: string) {
   // Validate file before upload
   if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
     throw new Error(
-      "Invalid file type. Please upload a JPEG, PNG or GIF image."
+      "Invalid file type. Please upload a JPEG, PNG, GIF or WebP image."
     );
   }
 
@@ -27,7 +28,7 @@ export async function uploadLogo(file: File, agencyId: string) {
   try {
     const supabase = createClientComponentClient();
 
-    // Upload the file to Supabase storage
+    // Upload the file to Supabase storage - WebP conversion will happen on server side
     const fileExt = file.name.split(".").pop();
     const fileName = `agency-${agencyId}-${Math.random()}.${fileExt}`;
     const filePath = `${fileName}`;

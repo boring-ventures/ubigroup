@@ -85,7 +85,7 @@ export function AvatarUpload({
           )}
           <input
             type="file"
-            accept="image/*"
+            accept="image/*,.webp"
             onChange={handleFileChange}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             disabled={isUploading}

@@ -50,11 +50,11 @@ export default function CreatePropertyPage() {
 
   if (isLoading) {
     return (
-      <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <main className="flex-1 space-y-4 p-3 sm:p-4 md:p-8 pt-6">
         <div className="flex items-center justify-between">
           <div>
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-64 mt-2" />
+            <Skeleton className="h-6 sm:h-8 w-32 sm:w-48" />
+            <Skeleton className="h-3 sm:h-4 w-48 sm:w-64 mt-2" />
           </div>
         </div>
         <Skeleton className="h-96 w-full" />
@@ -63,11 +63,13 @@ export default function CreatePropertyPage() {
   }
 
   return (
-    <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+    <main className="flex-1 space-y-4 p-3 sm:p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Create Property</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Create Property
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Add a new property listing for approval
           </p>
         </div>

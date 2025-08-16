@@ -39,7 +39,6 @@ export async function GET(
             firstName: true,
             lastName: true,
             phone: true,
-            whatsapp: true,
             avatarUrl: true,
           },
         },
@@ -145,7 +144,7 @@ export async function PUT(
       type: updateData.propertyType, // Map propertyType to type
       locationState: updateData.state, // Map state to locationState
       locationCity: updateData.city, // Map city to locationCity
-      locationNeigh: updateData.city, // Use city as neighborhood for now
+      locationNeigh: updateData.municipality || updateData.city, // Use municipality or city as neighborhood
       address: updateData.address,
       price: updateData.price,
       bedrooms: updateData.bedrooms,
@@ -156,6 +155,13 @@ export async function PUT(
       images: updateData.images,
       videos: updateData.videos,
       features: updateData.features,
+      // Add optional fields if they exist
+      ...(updateData.googleMapsUrl && { googleMapsUrl: updateData.googleMapsUrl }),
+      ...(updateData.latitude !== undefined && { latitude: updateData.latitude }),
+      ...(updateData.longitude !== undefined && { longitude: updateData.longitude }),
+      // Add currency and exchange rate fields
+      ...(updateData.currency && { currency: updateData.currency }),
+      ...(updateData.exchangeRate !== undefined && { exchangeRate: updateData.exchangeRate }),
     };
 
     // If agent is updating their property, reset status to PENDING if it was rejected
@@ -182,7 +188,6 @@ export async function PUT(
             firstName: true,
             lastName: true,
             phone: true,
-            whatsapp: true,
           },
         },
         agency: {
@@ -198,8 +203,25 @@ export async function PUT(
     return NextResponse.json({ property: updatedProperty });
   } catch (error) {
     console.error("Error updating property:", error);
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes("Record to update not found")) {
+        return NextResponse.json(
+          { error: "Property not found" },
+          { status: 404 }
+        );
+      }
+      if (error.message.includes("Invalid")) {
+        return NextResponse.json(
+          { error: "Invalid property data" },
+          { status: 400 }
+        );
+      }
+    }
+    
     return NextResponse.json(
-      { error: "Error updating property" },
+      { error: "Error updating property", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }

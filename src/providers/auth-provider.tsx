@@ -21,6 +21,7 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({
@@ -31,6 +32,7 @@ const AuthContext = createContext<AuthContextType>({
   signIn: async () => {},
   signUp: async () => {},
   signOut: async () => {},
+  refreshProfile: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -254,9 +256,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/sign-in");
   }, [supabase, router]);
 
+  const refreshProfile = useCallback(async () => {
+    if (user) {
+      await fetchProfile(user.id);
+    }
+  }, [user, fetchProfile]);
+
   return (
     <AuthContext.Provider
-      value={{ user, session, profile, isLoading, signIn, signUp, signOut }}
+      value={{
+        user,
+        session,
+        profile,
+        isLoading,
+        signIn,
+        signUp,
+        signOut,
+        refreshProfile,
+      }}
     >
       {children}
     </AuthContext.Provider>

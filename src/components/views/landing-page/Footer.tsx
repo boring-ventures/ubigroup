@@ -13,7 +13,7 @@ export default function Footer() {
             <div className="flex items-center space-x-2 mb-4">
               <Image
                 src={logoLight}
-                alt="UbiGroup logo"
+                alt="Logo de UbiGroup"
                 width={32}
                 height={32}
                 className="h-8 w-auto dark:hidden"
@@ -21,7 +21,7 @@ export default function Footer() {
               />
               <Image
                 src={logoDark}
-                alt="UbiGroup logo"
+                alt="Logo de UbiGroup"
                 width={32}
                 height={32}
                 className="hidden h-8 w-auto dark:block"
@@ -30,18 +30,18 @@ export default function Footer() {
               <span className="text-2xl font-bold text-primary">UbiGroup</span>
             </div>
             <p className="text-muted-foreground">
-              Empowering minds for a better tomorrow.
+              Encontrando hogares ideales para un mejor mañana.
             </p>
           </div>
           <div>
-            <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
+            <h4 className="text-lg font-semibold mb-4">Enlaces Rápidos</h4>
             <ul className="space-y-2">
               <li>
                 <Link
                   href="/#features"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Features
+                  Características
                 </Link>
               </li>
               <li>
@@ -49,7 +49,7 @@ export default function Footer() {
                   href="/#about"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  About
+                  Acerca de
                 </Link>
               </li>
               <li>
@@ -57,7 +57,7 @@ export default function Footer() {
                   href="/#testimonials"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Testimonials
+                  Testimonios
                 </Link>
               </li>
             </ul>
@@ -70,7 +70,7 @@ export default function Footer() {
                   href="/terms"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Terms of Service
+                  Términos de Servicio
                 </Link>
               </li>
               <li>
@@ -78,16 +78,16 @@ export default function Footer() {
                   href="/privacy"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Privacy Policy
+                  Política de Privacidad
                 </Link>
               </li>
             </ul>
           </div>
           <div>
-            <h4 className="text-lg font-semibold mb-4">Connect</h4>
+            <h4 className="text-lg font-semibold mb-4">Conectar</h4>
             <div className="flex space-x-4">
               <a
-                href="https://facebook.com/positivenext"
+                href="https://facebook.com/ubigroup"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"
@@ -95,7 +95,7 @@ export default function Footer() {
                 <FacebookIcon size={24} />
               </a>
               <a
-                href="https://twitter.com/positivenext"
+                href="https://twitter.com/ubigroup"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"
@@ -103,7 +103,7 @@ export default function Footer() {
                 <TwitterIcon size={24} />
               </a>
               <a
-                href="https://instagram.com/positivenext"
+                href="https://instagram.com/ubigroup"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"

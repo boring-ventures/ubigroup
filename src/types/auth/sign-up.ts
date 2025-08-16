@@ -6,12 +6,11 @@ export const signUpFormSchema = z
     firstName: z.string().min(2).max(30),
     lastName: z.string().min(2).max(30),
     phone: z.string().min(10).max(20).optional(),
-    whatsapp: z.string().min(10).max(20).optional(),
     password: z.string().min(8),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
+    message: "Las contraseñas no coinciden",
     path: ["confirmPassword"],
   });
 

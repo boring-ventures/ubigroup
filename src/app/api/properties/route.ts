@@ -225,7 +225,6 @@ export async function GET(request: NextRequest) {
               firstName: true,
               lastName: true,
               phone: true,
-              whatsapp: true,
             },
           },
           agency: {
@@ -277,7 +276,6 @@ export async function GET(request: NextRequest) {
             firstName: property.agent.firstName,
             lastName: property.agent.lastName,
             phone: property.agent.phone,
-            whatsapp: property.agent.whatsapp,
           }
         : {},
       agency: property.agency
@@ -416,7 +414,6 @@ export async function POST(request: NextRequest) {
             firstName: true,
             lastName: true,
             phone: true,
-            whatsapp: true,
           },
         },
         agency: {

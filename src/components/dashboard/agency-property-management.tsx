@@ -120,7 +120,8 @@ export function AgencyPropertyManagement() {
       <div className="flex items-center gap-2">
         <Badge variant={variants[status]} className="flex items-center gap-1">
           <Icon className="h-3 w-3" />
-          {status}
+          <span className="hidden sm:inline">{status}</span>
+          <span className="sm:hidden">{status.charAt(0)}</span>
         </Badge>
       </div>
     );
@@ -144,7 +145,7 @@ export function AgencyPropertyManagement() {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-destructive">Failed to load properties</p>
+          <p className="text-destructive">Error al cargar las propiedades</p>
         </CardContent>
       </Card>
     );
@@ -152,48 +153,52 @@ export function AgencyPropertyManagement() {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Status Overview Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center space-x-2">
                 <div className="p-2 bg-yellow-100 rounded-full">
                   <Clock className="h-4 w-4 text-yellow-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.pending}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Pending Review
+                  <p className="text-xl sm:text-2xl font-bold">
+                    {stats.pending}
                   </p>
+                  <p className="text-xs text-muted-foreground">En Revisión</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center space-x-2">
                 <div className="p-2 bg-green-100 rounded-full">
                   <CheckCircle className="h-4 w-4 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.approved}</p>
-                  <p className="text-xs text-muted-foreground">Approved</p>
+                  <p className="text-xl sm:text-2xl font-bold">
+                    {stats.approved}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Aprobadas</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-4">
+          <Card className="sm:col-span-2 md:col-span-1">
+            <CardContent className="p-3 sm:p-4">
               <div className="flex items-center space-x-2">
                 <div className="p-2 bg-red-100 rounded-full">
                   <XCircle className="h-4 w-4 text-red-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.rejected}</p>
-                  <p className="text-xs text-muted-foreground">Rejected</p>
+                  <p className="text-xl sm:text-2xl font-bold">
+                    {stats.rejected}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Rechazadas</p>
                 </div>
               </div>
             </CardContent>
@@ -202,7 +207,7 @@ export function AgencyPropertyManagement() {
 
         {/* Total Properties Card */}
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-3 sm:p-4">
             <div className="flex items-center space-x-2">
               <div className="p-2 bg-gray-100 rounded-full">
                 <svg
@@ -220,7 +225,9 @@ export function AgencyPropertyManagement() {
                 </svg>
               </div>
               <div>
-                <p className="text-2xl font-bold">{data?.totalCount || 0}</p>
+                <p className="text-xl sm:text-2xl font-bold">
+                  {data?.totalCount || 0}
+                </p>
                 <p className="text-xs text-muted-foreground">
                   Total Properties
                 </p>
@@ -231,35 +238,44 @@ export function AgencyPropertyManagement() {
 
         {/* Properties Table */}
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
+          <CardHeader className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <CardTitle>Property Management</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-lg sm:text-xl">
+                  Property Management
+                </CardTitle>
+                <CardDescription className="text-sm">
                   View and manage all properties submitted by your agents
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <Button
                   variant="outline"
                   onClick={handleDownloadCSV}
                   disabled={!data?.properties || data.properties.length === 0}
+                  className="w-full sm:w-auto"
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  Export CSV
+                  <span className="hidden sm:inline">Export CSV</span>
+                  <span className="sm:hidden">Export</span>
                 </Button>
                 {stats.pending > 0 && (
-                  <Button asChild>
+                  <Button asChild className="w-full sm:w-auto">
                     <Link href="/properties/pending">
                       <Clock className="mr-2 h-4 w-4" />
-                      Review Pending ({stats.pending})
+                      <span className="hidden sm:inline">
+                        Review Pending ({stats.pending})
+                      </span>
+                      <span className="sm:hidden">
+                        Pending ({stats.pending})
+                      </span>
                     </Link>
                   </Button>
                 )}
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 sm:p-6">
             {/* Filters */}
             <PropertyFilters
               filters={filters}
@@ -299,7 +315,75 @@ export function AgencyPropertyManagement() {
               </div>
             ) : (
               <>
-                <div className="rounded-md border">
+                {/* Mobile Card View */}
+                <div className="block sm:hidden space-y-4">
+                  {data?.properties.map((property) => (
+                    <Card key={property.id} className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-medium text-sm">
+                              {property.title}
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                              {property.address || property.locationNeigh},{" "}
+                              {property.locationCity}
+                            </p>
+                          </div>
+                          {getStatusBadge(property.status)}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 text-xs">
+                          <div>
+                            <span className="text-muted-foreground">
+                              Agent:
+                            </span>
+                            <p className="font-medium">
+                              {property.agent.firstName || ""}{" "}
+                              {property.agent.lastName || ""}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Type:</span>
+                            <p className="font-medium">{property.type}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">
+                              Price:
+                            </span>
+                            <p className="font-medium">
+                              {property.currency === "DOLLARS" ? (
+                                <>${property.price.toLocaleString()}</>
+                              ) : (
+                                <>Bs {property.price.toLocaleString()}</>
+                              )}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Date:</span>
+                            <p className="font-medium">
+                              {new Date(
+                                property.createdAt
+                              ).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                          <Button size="sm" variant="ghost" asChild>
+                            <Link href={`/properties/${property.id}`}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              View
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden sm:block rounded-md border">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -335,7 +419,7 @@ export function AgencyPropertyManagement() {
                               </div>
                               <div className="text-sm text-muted-foreground">
                                 {property.agent.phone ||
-                                  property.agent.whatsapp ||
+                                  property.agent.phone ||
                                   "Sin contacto"}
                               </div>
                             </div>
@@ -403,8 +487,8 @@ export function AgencyPropertyManagement() {
 
                 {/* Pagination */}
                 {data && data.pagination.totalPages > 1 && (
-                  <div className="flex items-center justify-between mt-4">
-                    <p className="text-sm text-muted-foreground">
+                  <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
+                    <p className="text-sm text-muted-foreground text-center sm:text-left">
                       Showing {(data.pagination.page - 1) * params.limit! + 1}{" "}
                       to{" "}
                       {Math.min(

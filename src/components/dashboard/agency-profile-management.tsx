@@ -27,17 +27,20 @@ import { Building2, MapPin, Phone, Save, Loader2 } from "lucide-react";
 import { LogoUpload } from "./logo-upload";
 
 const agencyProfileSchema = z.object({
-  name: z.string().min(2, "Agency name must be at least 2 characters").max(100),
+  name: z
+    .string()
+    .min(2, "El nombre de la agencia debe tener al menos 2 caracteres")
+    .max(100),
   logoUrl: z.string().optional().or(z.literal("")),
   address: z
     .string()
-    .min(10, "Address must be at least 10 characters")
+    .min(10, "La dirección debe tener al menos 10 caracteres")
     .max(200)
     .optional()
     .or(z.literal("")),
   phone: z
     .string()
-    .min(10, "Phone must be at least 10 characters")
+    .min(10, "El teléfono debe tener al menos 10 caracteres")
     .max(20)
     .optional()
     .or(z.literal("")),
@@ -86,8 +89,8 @@ export function AgencyProfileManagement() {
       await updateAgencyProfile.mutateAsync(updateData);
 
       toast({
-        title: "Success",
-        description: "Agency profile updated successfully",
+        title: "Éxito",
+        description: "Perfil de agencia actualizado exitosamente",
       });
 
       setIsEditing(false);
@@ -97,7 +100,7 @@ export function AgencyProfileManagement() {
         description:
           error instanceof Error
             ? error.message
-            : "Failed to update agency profile",
+            : "Error al actualizar el perfil de la agencia",
         variant: "destructive",
       });
     }

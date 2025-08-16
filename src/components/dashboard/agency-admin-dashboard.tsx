@@ -67,10 +67,10 @@ export function AgencyAdminDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Agency Dashboard
+            Panel de Agencia
           </h1>
           <p className="text-muted-foreground">
-            {metrics?.agencyInfo?.name || "Agency"} management overview
+            Resumen de gestión de {metrics?.agencyInfo?.name || "Agencia"}
           </p>
         </div>
       </div>
@@ -78,27 +78,27 @@ export function AgencyAdminDashboard() {
       {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricsCard
-          title="Total Agents"
+          title="Total de Agentes"
           value={metrics?.agencyInfo?.totalAgents || 0}
-          description={`${metrics?.agencyInfo?.activeAgents || 0} active`}
+          description={`${metrics?.agencyInfo?.activeAgents || 0} activos`}
           icon={Users}
         />
         <MetricsCard
-          title="Total Properties"
+          title="Total de Propiedades"
           value={agencyProperties?.total || 0}
-          description="All listings from your agents"
+          description="Todas las publicaciones de tus agentes"
           icon={Home}
         />
         <MetricsCard
-          title="Pending Approval"
+          title="Pendientes de Aprobación"
           value={agencyProperties?.pending || 0}
-          description="Waiting for your review"
+          description="Esperando tu revisión"
           icon={Clock}
         />
         <MetricsCard
-          title="Approval Rate"
+          title="Tasa de Aprobación"
           value={`${approvalRate}%`}
-          description="Properties approved"
+          description="Propiedades aprobadas"
           icon={CheckCircle}
         />
       </div>
@@ -107,14 +107,16 @@ export function AgencyAdminDashboard() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common agency management tasks</CardDescription>
+            <CardTitle>Acciones Rápidas</CardTitle>
+            <CardDescription>
+              Tareas comunes de gestión de agencia
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <Button asChild className="w-full justify-start">
               <Link href="/properties/pending">
                 <Clock className="mr-2 h-4 w-4" />
-                Review Pending Properties
+                Revisar Propiedades Pendientes
                 {(agencyProperties?.pending || 0) > 0 && (
                   <Badge variant="secondary" className="ml-auto">
                     {agencyProperties?.pending}
@@ -125,13 +127,13 @@ export function AgencyAdminDashboard() {
             <Button asChild variant="outline" className="w-full justify-start">
               <Link href="/agents">
                 <Users className="mr-2 h-4 w-4" />
-                Manage Agents
+                Gestionar Agentes
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">
               <Link href="/properties">
                 <Home className="mr-2 h-4 w-4" />
-                View All Properties
+                Ver Todas las Propiedades
               </Link>
             </Button>
           </CardContent>
@@ -139,9 +141,9 @@ export function AgencyAdminDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Top Performing Agents</CardTitle>
+            <CardTitle>Agentes con Mejor Rendimiento</CardTitle>
             <CardDescription>
-              Agents with most approved properties
+              Agentes con más propiedades aprobadas
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -155,7 +157,7 @@ export function AgencyAdminDashboard() {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium">{agent.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {agent.propertyCount} properties
+                        {agent.propertyCount} propiedades
                       </p>
                     </div>
                   </div>
@@ -163,7 +165,7 @@ export function AgencyAdminDashboard() {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                No agent data available
+                No hay datos de agentes disponibles
               </p>
             )}
           </CardContent>

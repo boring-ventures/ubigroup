@@ -32,7 +32,6 @@ interface Property {
     lastName: string | null;
     avatarUrl: string | null;
     phone: string | null;
-    whatsapp: string | null;
   };
   agency: {
     id: string;

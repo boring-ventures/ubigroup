@@ -3,9 +3,9 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  output: 'standalone',
+  output: "standalone",
   experimental: {
-    serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
+    serverComponentsExternalPackages: ["@prisma/client", "prisma"],
   },
   webpack: (config) => {
     config.resolve = config.resolve || {};

@@ -44,7 +44,6 @@ export default async function DashboardPropertyPage({
           lastName: true,
           avatarUrl: true,
           phone: true,
-          whatsapp: true,
         },
       },
       agency: {

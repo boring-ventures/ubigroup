@@ -59,7 +59,6 @@ interface Project {
     lastName?: string;
     avatarUrl?: string;
     phone?: string;
-    whatsapp?: string;
   };
   agency?: {
     name: string;
@@ -156,11 +155,20 @@ export default function ProjectDetailPage() {
   };
 
   const handleContactWhatsApp = () => {
-    if (project?.agent?.whatsapp) {
-      const message = encodeURIComponent(
-        `¡Hola! Tengo interés en el proyecto "${project.name}" (ID: ${project.id}). ¿Podrías darme más información?`
-      );
-      const whatsappUrl = `https://wa.me/${project.agent.whatsapp.replace(/\D/g, "")}?text=${message}`;
+    if (project?.agent?.phone) {
+      const projectUrl = `https://ubigroup.vercel.app/project/${project.id}`;
+      const location = project.location || "Ubicación no especificada";
+
+      const message = `Hola, me interesa obtener más información sobre este proyecto:
+
+🏗️ ${project.name}
+📍 ${location}
+🔗 ${projectUrl}
+
+¿Podrías proporcionarme más detalles sobre las unidades disponibles y precios?`;
+
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/${project.agent.phone.replace(/\D/g, "")}?text=${encodedMessage}`;
       window.open(whatsappUrl, "_blank");
     }
   };
@@ -369,7 +377,7 @@ export default function ProjectDetailPage() {
 
                 {/* Contact Buttons */}
                 <div className="space-y-3">
-                  {project.agent.whatsapp && (
+                  {project.agent.phone && (
                     <Button
                       onClick={handleContactWhatsApp}
                       className="w-full bg-green-600 hover:bg-green-700"

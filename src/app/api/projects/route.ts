@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const search = searchParams.get("search") || "";
     const agencyId = searchParams.get("agencyId");
+    const agentId = searchParams.get("agentId");
 
     const skip = (page - 1) * limit;
 
@@ -61,6 +62,11 @@ export async function GET(request: NextRequest) {
         { description: { contains: search, mode: "insensitive" } },
         { location: { contains: search, mode: "insensitive" } },
       ];
+    }
+
+    // Add agent filter
+    if (agentId) {
+      whereClause.agentId = agentId;
     }
 
     const [projects, total] = await Promise.all([

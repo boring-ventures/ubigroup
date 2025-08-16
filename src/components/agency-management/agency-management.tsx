@@ -42,6 +42,7 @@ import {
   Building2,
   Phone,
   Users,
+  Trash2,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import {
@@ -79,6 +80,9 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingAgency, setEditingAgency] = useState<Agency | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deletingAgency, setDeletingAgency] = useState<Agency | null>(null);
 
   const form = useForm<CreateAgencyFormData>({
     resolver: zodResolver(createAgencySchema),
@@ -110,7 +114,7 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
       console.error("Failed to fetch agencies:", error);
       toast({
         title: "Error",
-        description: "Failed to fetch agencies",
+        description: "Error al cargar las agencias",
         variant: "destructive",
       });
     }
@@ -153,8 +157,8 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
         const result = await response.json();
         console.log("Success response:", result);
         toast({
-          title: "Success",
-          description: "Agency created successfully",
+          title: "Éxito",
+          description: "Agencia creada exitosamente",
         });
         setIsCreateDialogOpen(false);
         form.reset();
@@ -164,7 +168,7 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
         const error = await response.json();
         console.log("Error response:", error);
         throw new Error(
-          error.error || error.message || "Failed to create agency"
+          error.error || error.message || "Error al crear la agencia"
         );
       }
     } catch (error) {
@@ -172,7 +176,7 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
       toast({
         title: "Error",
         description:
-          error instanceof Error ? error.message : "Failed to create agency",
+          error instanceof Error ? error.message : "Error al crear la agencia",
         variant: "destructive",
       });
     } finally {
@@ -211,8 +215,8 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
 
       if (response.ok) {
         toast({
-          title: "Success",
-          description: "Agency updated successfully",
+          title: "Éxito",
+          description: "Agencia actualizada exitosamente",
         });
         setIsEditDialogOpen(false);
         setEditingAgency(null);
@@ -221,14 +225,16 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
         onAgencyUpdate?.();
       } else {
         const error = await response.json();
-        throw new Error(error.message || "Failed to update agency");
+        throw new Error(error.message || "Error al actualizar la agencia");
       }
     } catch (error) {
       console.error("Failed to update agency:", error);
       toast({
         title: "Error",
         description:
-          error instanceof Error ? error.message : "Failed to update agency",
+          error instanceof Error
+            ? error.message
+            : "Error al actualizar la agencia",
         variant: "destructive",
       });
     } finally {
@@ -252,21 +258,65 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
 
       if (response.ok) {
         toast({
-          title: "Success",
-          description: `Agency ${!currentStatus ? "activated" : "deactivated"} successfully`,
+          title: "Éxito",
+          description: `Agencia ${!currentStatus ? "activada" : "desactivada"} exitosamente`,
         });
         fetchAgencies();
         onAgencyUpdate?.();
       } else {
-        throw new Error("Failed to update agency status");
+        throw new Error("Error al actualizar el estado de la agencia");
       }
     } catch (error) {
       console.error("Failed to toggle agency status:", error);
       toast({
         title: "Error",
-        description: "Failed to update agency status",
+        description: "Error al actualizar el estado de la agencia",
         variant: "destructive",
       });
+    }
+  };
+
+  // Delete agency
+  const handleDeleteAgency = (agency: Agency) => {
+    setDeletingAgency(agency);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteAgency = async () => {
+    if (!deletingAgency) return;
+
+    try {
+      setIsDeleting(true);
+
+      const response = await fetch(`/api/agencies/${deletingAgency.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Éxito",
+          description: `Agencia "${deletingAgency.name}" eliminada exitosamente`,
+        });
+        setIsDeleteDialogOpen(false);
+        setDeletingAgency(null);
+        fetchAgencies();
+        onAgencyUpdate?.();
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || "Error al eliminar la agencia");
+      }
+    } catch (error) {
+      console.error("Failed to delete agency:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Error al eliminar la agencia",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -278,7 +328,7 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
   );
 
   if (loading) {
-    return <div className="flex justify-center p-8">Loading agencies...</div>;
+    return <div className="flex justify-center p-8">Cargando agencias...</div>;
   }
 
   return (
@@ -286,7 +336,7 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>System Agencies</CardTitle>
+            <CardTitle>Agencias del Sistema</CardTitle>
             <Dialog
               open={isCreateDialogOpen}
               onOpenChange={setIsCreateDialogOpen}
@@ -294,14 +344,14 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  Create Agency
+                  Crear Agencia
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                  <DialogTitle>Create New Agency</DialogTitle>
+                  <DialogTitle>Crear Nueva Agencia</DialogTitle>
                   <DialogDescription>
-                    Create a new real estate agency in the system.
+                    Crear una nueva agencia inmobiliaria en el sistema.
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -314,9 +364,9 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Agency Name</FormLabel>
+                          <FormLabel>Nombre de la Agencia</FormLabel>
                           <FormControl>
-                            <Input placeholder="ABC Real Estate" {...field} />
+                            <Input placeholder="ABC Bienes Raíces" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -328,10 +378,10 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
                       name="address"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Address (Optional)</FormLabel>
+                          <FormLabel>Dirección (Opcional)</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="123 Main St, City, State"
+                              placeholder="123 Calle Principal, Ciudad, Estado"
                               {...field}
                               value={field.value || ""}
                             />
@@ -346,7 +396,7 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Phone (Optional)</FormLabel>
+                          <FormLabel>Teléfono (Opcional)</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="12345678"
@@ -361,7 +411,7 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
 
                     <DialogFooter>
                       <Button type="submit" disabled={isCreating}>
-                        {isCreating ? "Creating..." : "Create Agency"}
+                        {isCreating ? "Creando..." : "Crear Agencia"}
                       </Button>
                     </DialogFooter>
                   </form>
@@ -373,9 +423,9 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                  <DialogTitle>Edit Agency</DialogTitle>
+                  <DialogTitle>Editar Agencia</DialogTitle>
                   <DialogDescription>
-                    Update agency information and contact details.
+                    Actualizar información de la agencia y detalles de contacto.
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...editForm}>
@@ -388,9 +438,9 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Agency Name</FormLabel>
+                          <FormLabel>Nombre de la Agencia</FormLabel>
                           <FormControl>
-                            <Input placeholder="ABC Real Estate" {...field} />
+                            <Input placeholder="ABC Bienes Raíces" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -402,10 +452,10 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
                       name="address"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Address (Optional)</FormLabel>
+                          <FormLabel>Dirección (Opcional)</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="123 Main St, City, State"
+                              placeholder="123 Calle Principal, Ciudad, Estado"
                               {...field}
                               value={field.value || ""}
                             />
@@ -420,7 +470,7 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Phone (Optional)</FormLabel>
+                          <FormLabel>Teléfono (Opcional)</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="12345678"
@@ -435,11 +485,78 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
 
                     <DialogFooter>
                       <Button type="submit" disabled={isEditing}>
-                        {isEditing ? "Updating..." : "Update Agency"}
+                        {isEditing ? "Actualizando..." : "Actualizar Agencia"}
                       </Button>
                     </DialogFooter>
                   </form>
                 </Form>
+              </DialogContent>
+            </Dialog>
+
+            {/* Delete Agency Dialog */}
+            <Dialog
+              open={isDeleteDialogOpen}
+              onOpenChange={setIsDeleteDialogOpen}
+            >
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Eliminar Agencia</DialogTitle>
+                  <DialogDescription asChild>
+                    <div className="space-y-3">
+                      <div>
+                        ¿Estás seguro de que quieres eliminar{" "}
+                        <span className="font-semibold">
+                          {deletingAgency?.name}
+                        </span>
+                        ?
+                      </div>
+                      <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 space-y-2">
+                        <div className="text-sm font-medium text-destructive">
+                          ⚠️ Esto eliminará permanentemente:
+                        </div>
+                        <ul className="text-sm space-y-1 text-muted-foreground">
+                          <li>• La agencia y todos sus datos</li>
+                          <li>
+                            • Todos los usuarios (agentes, administradores)
+                            asociados con esta agencia
+                          </li>
+                          <li>
+                            • Todas las propiedades listadas por esta agencia
+                          </li>
+                          <li>
+                            • Todas las imágenes de propiedades del
+                            almacenamiento
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Esta acción no se puede deshacer. Por favor, asegúrate
+                        de haber respaldado cualquier dato importante.
+                      </div>
+                    </div>
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsDeleteDialogOpen(false);
+                      setDeletingAgency(null);
+                    }}
+                    disabled={isDeleting}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={confirmDeleteAgency}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting
+                      ? "Eliminando..."
+                      : "Eliminar Agencia y Todos los Datos"}
+                  </Button>
+                </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
@@ -450,7 +567,7 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search agencies..."
+                placeholder="Buscar agencias..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"
@@ -463,20 +580,20 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Agency</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Users</TableHead>
-                  <TableHead>Properties</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Agencia</TableHead>
+                  <TableHead>Contacto</TableHead>
+                  <TableHead>Usuarios</TableHead>
+                  <TableHead>Propiedades</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Creado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredAgencies.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8">
-                      No agencies found
+                      No se encontraron agencias
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -526,7 +643,7 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
                         <Badge
                           variant={agency.active ? "default" : "secondary"}
                         >
-                          {agency.active ? "Active" : "Inactive"}
+                          {agency.active ? "Activa" : "Inactiva"}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -542,8 +659,8 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
                             }
                             title={
                               agency.active
-                                ? "Deactivate agency"
-                                : "Activate agency"
+                                ? "Desactivar agencia"
+                                : "Activar agencia"
                             }
                           >
                             {agency.active ? (
@@ -556,9 +673,18 @@ export function AgencyManagement({ onAgencyUpdate }: AgencyManagementProps) {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEditAgency(agency)}
-                            title="Edit agency"
+                            title="Editar agencia"
                           >
                             <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteAgency(agency)}
+                            title="Eliminar agencia"
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>

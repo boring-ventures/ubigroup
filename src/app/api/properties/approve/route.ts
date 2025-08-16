@@ -50,7 +50,6 @@ export async function GET(request: NextRequest) {
               firstName: true,
               lastName: true,
               phone: true,
-              whatsapp: true,
             },
           },
           agency: {
@@ -185,13 +184,12 @@ export async function POST(request: NextRequest) {
       },
       include: {
         agent: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            phone: true,
-            whatsapp: true,
-          },
+                      select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+            },
         },
         agency: {
           select: {

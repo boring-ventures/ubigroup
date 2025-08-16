@@ -43,13 +43,14 @@ export function SuperAdminDashboard() {
         <CardContent className="pt-6">
           <div className="text-center">
             <p className="text-destructive mb-4">
-              Failed to load dashboard metrics
+              Error al cargar métricas del panel
             </p>
             <p className="text-sm text-muted-foreground mb-4">
-              {error.message ||
-                "There was an error loading your dashboard data"}
+              {error.message || "Hubo un error al cargar los datos de tu panel"}
             </p>
-            <Button onClick={() => window.location.reload()}>Try Again</Button>
+            <Button onClick={() => window.location.reload()}>
+              Intentar de Nuevo
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -61,10 +62,10 @@ export function SuperAdminDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Super Admin Dashboard
+            Panel de Super Administrador
           </h1>
           <p className="text-muted-foreground">
-            Platform overview and system management
+            Resumen de la plataforma y gestión del sistema
           </p>
         </div>
       </div>
@@ -72,27 +73,27 @@ export function SuperAdminDashboard() {
       {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricsCard
-          title="Total Agencies"
+          title="Total de Agencias"
           value={metrics?.totalAgencies || 0}
-          description="Active agencies on platform"
+          description="Agencias activas en la plataforma"
           icon={Building2}
         />
         <MetricsCard
-          title="Total Users"
+          title="Total de Usuarios"
           value={metrics?.totalUsers || 0}
-          description="Platform-wide users"
+          description="Usuarios en toda la plataforma"
           icon={Users}
         />
         <MetricsCard
-          title="Total Properties"
+          title="Total de Propiedades"
           value={metrics?.totalProperties || 0}
-          description="All property listings"
+          description="Todas las publicaciones de propiedades"
           icon={Home}
         />
         <MetricsCard
-          title="Approval Rate"
+          title="Tasa de Aprobación"
           value={`${metrics?.approvalRate || 0}%`}
-          description="Property approval success"
+          description="Éxito en aprobación de propiedades"
           icon={TrendingUp}
         />
       </div>
@@ -101,26 +102,26 @@ export function SuperAdminDashboard() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common administrative tasks</CardDescription>
+            <CardTitle>Acciones Rápidas</CardTitle>
+            <CardDescription>Tareas administrativas comunes</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <Button asChild className="w-full justify-start">
               <Link href="/agencies">
                 <Building2 className="mr-2 h-4 w-4" />
-                Manage Agencies
+                Gestionar Agencias
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">
               <Link href="/users">
                 <Users className="mr-2 h-4 w-4" />
-                View All Users
+                Ver Todos los Usuarios
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">
               <Link href="/all-properties">
                 <Home className="mr-2 h-4 w-4" />
-                Review Properties
+                Revisar Propiedades
               </Link>
             </Button>
           </CardContent>
@@ -130,9 +131,11 @@ export function SuperAdminDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Activity className="h-4 w-4" />
-              Recent Activities
+              Actividades Recientes
             </CardTitle>
-            <CardDescription>Latest platform activities</CardDescription>
+            <CardDescription>
+              Últimas actividades de la plataforma
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {metrics?.recentActivities &&
@@ -154,10 +157,10 @@ export function SuperAdminDashboard() {
               <div className="text-center py-6">
                 <Activity className="mx-auto h-12 w-12 text-muted-foreground/40" />
                 <p className="mt-2 text-sm text-muted-foreground">
-                  No recent activities
+                  No hay actividades recientes
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Platform activities will appear here
+                  Las actividades de la plataforma aparecerán aquí
                 </p>
               </div>
             )}

@@ -111,7 +111,7 @@ const HeroHeader = () => {
 
                 <button
                   onClick={() => setMenuState(!menuState)}
-                  aria-label={menuState == true ? "Close Menu" : "Open Menu"}
+                  aria-label={menuState == true ? "Cerrar Menú" : "Abrir Menú"}
                   className="relative z-20 -m-2.5 -mr-4 block cursor-pointer p-2.5 lg:hidden text-foreground"
                 >
                   <Menu
@@ -175,13 +175,13 @@ const HeroHeader = () => {
                       {!user ? (
                         <Link href="/sign-in">
                           <Button size="sm">
-                            <span>Sign In</span>
+                            <span>Iniciar Sesión</span>
                           </Button>
                         </Link>
                       ) : (
                         <Link href="/dashboard">
                           <Button size="sm">
-                            <span>Go to Dashboard</span>
+                            <span>Ir al Panel</span>
                           </Button>
                         </Link>
                       )}
