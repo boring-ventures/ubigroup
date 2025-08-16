@@ -19,7 +19,6 @@ interface User {
   lastName: string | null;
   role: "SUPER_ADMIN" | "AGENCY_ADMIN" | "AGENT";
   phone: string | null;
-  whatsapp: string | null;
   avatarUrl: string | null;
   active: boolean;
   createdAt: string;
@@ -71,32 +70,40 @@ export default function UsersPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
+      <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
-          <p className="text-muted-foreground">
-            Manage all system users, agencies, and roles
+          <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+            Gestión de Usuarios
+          </h2>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Gestiona todos los usuarios del sistema, agencias y roles
           </p>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total de Usuarios
+            </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {loading ? "..." : metrics.totalUsers}
             </div>
-            <p className="text-xs text-muted-foreground">All system users</p>
+            <p className="text-xs text-muted-foreground">
+              Todos los usuarios del sistema
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Super Admins</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Super Administradores
+            </CardTitle>
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -104,39 +111,43 @@ export default function UsersPage() {
               {loading ? "..." : metrics.superAdmins}
             </div>
             <p className="text-xs text-muted-foreground">
-              Platform administrators
+              Administradores de la plataforma
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Agency Admins</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Administradores de Agencia
+            </CardTitle>
             <Settings className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {loading ? "..." : metrics.agencyAdmins}
             </div>
-            <p className="text-xs text-muted-foreground">Agency managers</p>
+            <p className="text-xs text-muted-foreground">Gerentes de agencia</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Agents</CardTitle>
+            <CardTitle className="text-sm font-medium">Agentes</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {loading ? "..." : metrics.agents}
             </div>
-            <p className="text-xs text-muted-foreground">Property agents</p>
+            <p className="text-xs text-muted-foreground">
+              Agentes inmobiliarios
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div>Cargando usuarios...</div>}>
         <UserManagement onUserUpdate={fetchUserMetrics} />
       </Suspense>
     </div>
