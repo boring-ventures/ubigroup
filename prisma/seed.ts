@@ -55,7 +55,6 @@ async function main() {
       lastName: "Silva",
       role: UserRole.SUPER_ADMIN,
       phone: "+55 11 9999-0000",
-      whatsapp: "+55 11 9999-0000",
       agencyId: null, // Super admins don't belong to agencies
     },
   });
@@ -68,7 +67,6 @@ async function main() {
       lastName: "Santos",
       role: UserRole.AGENCY_ADMIN,
       phone: "+55 11 9999-1111",
-      whatsapp: "+55 11 9999-1111",
       agencyId: futureworksAgency.id,
     },
   });
@@ -80,7 +78,6 @@ async function main() {
       lastName: "Costa",
       role: UserRole.AGENCY_ADMIN,
       phone: "+55 11 8888-2222",
-      whatsapp: "+55 11 8888-2222",
       agencyId: innovateLabsAgency.id,
     },
   });
@@ -92,7 +89,6 @@ async function main() {
       lastName: "Oliveira",
       role: UserRole.AGENCY_ADMIN,
       phone: "+55 11 7777-3333",
-      whatsapp: "+55 11 7777-3333",
       agencyId: zenithHealthAgency.id,
     },
   });
@@ -105,7 +101,6 @@ async function main() {
       lastName: "Rodrigues",
       role: UserRole.AGENT,
       phone: "+55 11 9999-4444",
-      whatsapp: "+55 11 9999-4444",
       agencyId: futureworksAgency.id,
     },
   });
@@ -117,7 +112,6 @@ async function main() {
       lastName: "Fernandes",
       role: UserRole.AGENT,
       phone: "+55 11 9999-5555",
-      whatsapp: "+55 11 9999-5555",
       agencyId: futureworksAgency.id,
     },
   });
@@ -129,7 +123,6 @@ async function main() {
       lastName: "Lima",
       role: UserRole.AGENT,
       phone: "+55 11 8888-6666",
-      whatsapp: "+55 11 8888-6666",
       agencyId: innovateLabsAgency.id,
     },
   });
@@ -141,7 +134,6 @@ async function main() {
       lastName: "Alves",
       role: UserRole.AGENT,
       phone: "+55 11 7777-7777",
-      whatsapp: "+55 11 7777-7777",
       agencyId: zenithHealthAgency.id,
     },
   });
