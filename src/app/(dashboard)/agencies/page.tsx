@@ -80,10 +80,10 @@ export default function AgenciesPage() {
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">
-            Agency Management
+            Gestión de Agencias
           </h2>
           <p className="text-muted-foreground">
-            Manage all real estate agencies in the system
+            Gestionar todas las agencias inmobiliarias del sistema
           </p>
         </div>
       </div>
@@ -92,7 +92,7 @@ export default function AgenciesPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Agencies
+              Total de Agencias
             </CardTitle>
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -100,27 +100,31 @@ export default function AgenciesPage() {
             <div className="text-2xl font-bold">
               {loading ? "..." : metrics.totalAgencies}
             </div>
-            <p className="text-xs text-muted-foreground">Active agencies</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Agents</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {loading ? "..." : metrics.totalAgents}
-            </div>
-            <p className="text-xs text-muted-foreground">Across all agencies</p>
+            <p className="text-xs text-muted-foreground">Agencias activas</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Active Properties
+              Total de Agentes
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {loading ? "..." : metrics.totalAgents}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              En todas las agencias
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Propiedades Activas
             </CardTitle>
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -128,14 +132,16 @@ export default function AgenciesPage() {
             <div className="text-2xl font-bold">
               {loading ? "..." : metrics.activeProperties}
             </div>
-            <p className="text-xs text-muted-foreground">Listed properties</p>
+            <p className="text-xs text-muted-foreground">
+              Propiedades listadas
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Pending Approval
+              Pendientes de Aprobación
             </CardTitle>
             <Plus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -143,12 +149,14 @@ export default function AgenciesPage() {
             <div className="text-2xl font-bold">
               {loading ? "..." : metrics.pendingApproval}
             </div>
-            <p className="text-xs text-muted-foreground">Awaiting review</p>
+            <p className="text-xs text-muted-foreground">
+              En espera de revisión
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      <Suspense fallback={<div>Loading agencies...</div>}>
+      <Suspense fallback={<div>Cargando agencias...</div>}>
         <AgencyManagement onAgencyUpdate={fetchAgencyMetrics} />
       </Suspense>
     </div>
