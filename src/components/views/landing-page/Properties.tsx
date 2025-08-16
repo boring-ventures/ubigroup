@@ -74,7 +74,6 @@ interface Property {
     firstName?: string;
     lastName?: string;
     phone?: string;
-    whatsapp?: string;
   };
   agency: {
     name: string;
@@ -745,11 +744,36 @@ export default function Properties() {
     }
   };
 
-  const handleContactAgent = (phone?: string, whatsapp?: string) => {
-    if (whatsapp) {
-      window.open(`https://wa.me/${whatsapp}`, "_blank");
-    } else if (phone) {
-      window.open(`tel:${phone}`, "_blank");
+  const handleContactAgent = (phone?: string, property?: Property) => {
+    if (phone) {
+      let message =
+        "Hola, me interesa obtener más información sobre una propiedad.";
+
+      if (property) {
+        const propertyUrl = `https://ubigroup.vercel.app/property/${property.id}`;
+        const price = formatPrice(property.price, property.currency);
+        const location = `${property.locationCity}, ${property.locationState}`;
+        const transactionType = getTransactionTypeLabel(
+          property.transactionType
+        );
+        const propertyType = getPropertyTypeLabel(property.type);
+
+        message = `Hola, me interesa obtener más información sobre esta propiedad:
+
+🏠 ${property.title}
+📍 ${location}
+💰 ${price}
+🏢 ${propertyType} - ${transactionType}
+🔗 ${propertyUrl}
+
+¿Podrías proporcionarme más detalles?`;
+      }
+
+      const encodedMessage = encodeURIComponent(message);
+      window.open(
+        `https://wa.me/${phone.replace(/\D/g, "")}?text=${encodedMessage}`,
+        "_blank"
+      );
     }
   };
 
@@ -1524,22 +1548,25 @@ export default function Properties() {
                               className="flex-1"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleContactAgent(property.agent.phone);
+                                handleContactAgent(
+                                  property.agent.phone,
+                                  property
+                                );
                               }}
                             >
                               <Phone className="h-4 w-4 mr-1" />
                               Llamar
                             </Button>
                           )}
-                          {property.agent.whatsapp && (
+                          {property.agent.phone && (
                             <Button
                               size="sm"
                               className="flex-1"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleContactAgent(
-                                  undefined,
-                                  property.agent.whatsapp
+                                  property.agent.phone,
+                                  property
                                 );
                               }}
                             >
@@ -1714,21 +1741,24 @@ export default function Properties() {
                                     variant="outline"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleContactAgent(property.agent.phone);
+                                      handleContactAgent(
+                                        property.agent.phone,
+                                        property
+                                      );
                                     }}
                                   >
                                     <Phone className="h-4 w-4 mr-1" />
                                     Llamar
                                   </Button>
                                 )}
-                                {property.agent.whatsapp && (
+                                {property.agent.phone && (
                                   <Button
                                     size="sm"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleContactAgent(
-                                        undefined,
-                                        property.agent.whatsapp
+                                        property.agent.phone,
+                                        property
                                       );
                                     }}
                                   >
@@ -1749,21 +1779,24 @@ export default function Properties() {
                                 className="flex-1"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleContactAgent(property.agent.phone);
+                                  handleContactAgent(
+                                    property.agent.phone,
+                                    property
+                                  );
                                 }}
                               >
                                 <Phone className="h-4 w-4 mr-1" /> Llamar
                               </Button>
                             )}
-                            {property.agent.whatsapp && (
+                            {property.agent.phone && (
                               <Button
                                 size="sm"
                                 className="flex-1"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleContactAgent(
-                                    undefined,
-                                    property.agent.whatsapp
+                                    property.agent.phone,
+                                    property
                                   );
                                 }}
                               >

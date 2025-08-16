@@ -93,3 +93,93 @@ export function exportToCSV(data: Record<string, unknown>[], filename: string) {
     document.body.removeChild(link);
   }
 }
+
+/**
+ * Generates a secure random password
+ * @param length - Length of the password (default: 12)
+ * @returns A secure random password
+ */
+export function generateSecurePassword(length: number = 12): string {
+  const charset = {
+    uppercase: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    lowercase: "abcdefghijklmnopqrstuvwxyz",
+    numbers: "0123456789",
+    symbols: "!@#$%^&*()_+-=[]{}|;:,.<>?",
+  };
+
+  // Ensure at least one character from each category
+  let password = "";
+  password +=
+    charset.uppercase[Math.floor(Math.random() * charset.uppercase.length)];
+  password +=
+    charset.lowercase[Math.floor(Math.random() * charset.lowercase.length)];
+  password +=
+    charset.numbers[Math.floor(Math.random() * charset.numbers.length)];
+  password +=
+    charset.symbols[Math.floor(Math.random() * charset.symbols.length)];
+
+  // Fill the rest with random characters from all categories
+  const allChars =
+    charset.uppercase + charset.lowercase + charset.numbers + charset.symbols;
+  for (let i = password.length; i < length; i++) {
+    password += allChars[Math.floor(Math.random() * allChars.length)];
+  }
+
+  // Shuffle the password to make it more random
+  return password
+    .split("")
+    .sort(() => Math.random() - 0.5)
+    .join("");
+}
+
+/**
+ * Formats a phone number with Bolivia country code if not already formatted
+ * @param phone - The phone number to format
+ * @returns Formatted phone number
+ */
+export function formatPhoneNumber(phone: string): string {
+  if (!phone) return "";
+
+  // Remove all non-digit characters
+  const digits = phone.replace(/\D/g, "");
+
+  // If it already starts with +591, return as is
+  if (phone.startsWith("+591")) return phone;
+
+  // If it starts with 591, add the +
+  if (digits.startsWith("591")) return `+${digits}`;
+
+  // If it's a 9-digit number (Bolivia mobile), add +591
+  if (digits.length === 9) return `+591${digits}`;
+
+  // If it's a 8-digit number (Bolivia landline), add +591
+  if (digits.length === 8) return `+591${digits}`;
+
+  // If it's already 11 digits and starts with 591, add +
+  if (digits.length === 11 && digits.startsWith("591")) return `+${digits}`;
+
+  // Default: return as is
+  return phone;
+}
+
+/**
+ * Removes the +591 prefix from a phone number for display in the input field
+ * @param phone - The phone number with prefix
+ * @returns Phone number without prefix
+ */
+export function removePhonePrefix(phone: string): string {
+  if (!phone) return "";
+
+  // If it starts with +591, remove it
+  if (phone.startsWith("+591")) {
+    return phone.substring(4);
+  }
+
+  // If it starts with 591, remove it
+  if (phone.startsWith("591")) {
+    return phone.substring(3);
+  }
+
+  // Return as is if no prefix
+  return phone;
+}

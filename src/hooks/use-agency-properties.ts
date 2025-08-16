@@ -26,7 +26,6 @@ export interface AgencyProperty {
     firstName: string | null;
     lastName: string | null;
     phone: string | null;
-    whatsapp: string | null;
   };
 }
 

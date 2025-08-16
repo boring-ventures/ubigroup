@@ -12,7 +12,7 @@ export async function uploadFiles(
 
   const formData = new FormData();
 
-  // Add files to FormData
+  // Add files to FormData - WebP conversion will happen on server side
   files.forEach((file) => {
     formData.append(`${type}`, file);
   });

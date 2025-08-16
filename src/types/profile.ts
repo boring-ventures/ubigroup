@@ -11,8 +11,8 @@ export interface Profile {
   lastName?: string | null;
   role: UserRole;
   phone?: string | null;
-  whatsapp?: string | null;
   agencyId?: string | null;
+  requiresPasswordChange: boolean;
   agency?: {
     id: string;
     name: string;
