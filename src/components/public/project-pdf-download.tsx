@@ -37,7 +37,6 @@ interface Project {
     lastName?: string;
     avatarUrl?: string;
     phone?: string;
-    whatsapp?: string;
   };
   agency?: {
     name: string;
@@ -525,11 +524,11 @@ export function ProjectPdfDownload({
                       : ""
                   }
                   ${
-                    project.agent.whatsapp
+                    project.agent.phone
                       ? `
                     <div>
                       <div style="font-weight: bold; color: #1f2937;">WhatsApp:</div>
-                      <div style="color: #6b7280;">${project.agent.whatsapp}</div>
+                      <div style="color: #6b7280;">${project.agent.phone}</div>
                     </div>
                   `
                       : ""

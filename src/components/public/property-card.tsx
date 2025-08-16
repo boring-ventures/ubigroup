@@ -46,7 +46,6 @@ interface PropertyCardProps {
       lastName: string | null;
       avatarUrl: string | null;
       phone: string | null;
-      whatsapp: string | null;
     };
     agency: {
       id: string;
@@ -139,12 +138,50 @@ export function PropertyCard({
     }
   };
 
+  const getTransactionTypeLabel = (type: string) => {
+    return type === "SALE" ? "Venta" : "Alquiler";
+  };
+
+  const getPropertyTypeLabel = (type: string) => {
+    switch (type) {
+      case "HOUSE":
+        return "Casa";
+      case "APARTMENT":
+        return "Apartamento";
+      case "OFFICE":
+        return "Oficina";
+      case "LAND":
+        return "Terreno";
+      default:
+        return type;
+    }
+  };
+
   const handleContactWhatsApp = () => {
-    if (property.agent.whatsapp) {
-      const message = encodeURIComponent(
-        `¡Hola! Tengo interés en la propiedad "${property.title}" (ID: ${property.id}). ¿Podrías darme más información?`
+    if (property.agent.phone) {
+      const propertyUrl = `https://ubigroup.vercel.app/property/${property.id}`;
+      const price = formatPrice(
+        property.price,
+        property.currency,
+        property.exchangeRate,
+        property.transactionType
       );
-      const whatsappUrl = `https://wa.me/${property.agent.whatsapp.replace(/\D/g, "")}?text=${message}`;
+      const location = `${property.locationCity}, ${property.locationState}`;
+      const transactionType = getTransactionTypeLabel(property.transactionType);
+      const propertyType = getPropertyTypeLabel(property.type);
+
+      const message = `Hola, me interesa obtener más información sobre esta propiedad:
+
+🏠 ${property.title}
+📍 ${location}
+💰 ${price}
+🏢 ${propertyType} - ${transactionType}
+🔗 ${propertyUrl}
+
+¿Podrías proporcionarme más detalles?`;
+
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/${property.agent.phone.replace(/\D/g, "")}?text=${encodedMessage}`;
       window.open(whatsappUrl, "_blank");
     }
   };
@@ -336,7 +373,7 @@ export function PropertyCard({
                   <Phone className="h-4 w-4" />
                 </Button>
               )}
-              {property.agent.whatsapp && (
+              {property.agent.phone && (
                 <Button
                   size="sm"
                   onClick={(e) => {
