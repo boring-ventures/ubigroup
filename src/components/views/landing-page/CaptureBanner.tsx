@@ -11,7 +11,7 @@ export default function CaptureBanner() {
       className="relative py-12 md:py-16 overflow-hidden"
     >
       <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 via-primary/10 to-blue-500/10 pointer-events-none" />
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className="container relative">
         <div className="rounded-2xl border bg-card text-card-foreground shadow-sm p-6 md:p-10 flex flex-col md:flex-row items-start md:items-center gap-6">
           <div className="flex-1">
             <div className="flex items-center gap-2 text-primary mb-2">

@@ -74,9 +74,9 @@ export const HeroSearch = () => {
 
   return (
     <section className="relative">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container">
         {/* Visual hero with image on the right and content overlay */}
-        <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-6 items-center pt-20 md:pt-24 lg:pt-28 pb-14 lg:pb-16">
+        <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-6 items-center pt-8 sm:pt-20 md:pt-24 lg:pt-28 pb-14 lg:pb-16">
           {/* Left copy */}
           <div
             className="order-1 lg:order-1 space-y-4 lg:space-y-6"
@@ -89,16 +89,19 @@ export const HeroSearch = () => {
               </span>
             </div>
             <h1 className="text-3xl sm:text-5xl lg:text-5xl font-bold leading-[1.1] text-foreground">
-              Encuentra tu{" "}
-              <ContainerTextFlip
-                words={[
-                  "Hogar Ideal",
-                  "Departamento Ideal",
-                  "Casa Ideal",
-                  "Oficina Ideal",
-                  "Terreno Ideal",
-                ]}
-              />
+              <div className="block lg:inline">
+                <span className="block lg:inline">Encuentra tu</span>{" "}
+                <ContainerTextFlip
+                  words={[
+                    "Hogar Ideal",
+                    "Departamento Ideal",
+                    "Casa Ideal",
+                    "Oficina Ideal",
+                    "Terreno Ideal",
+                  ]}
+                  className="block lg:inline"
+                />
+              </div>
             </h1>
             <p className="text-base lg:text-lg text-muted-foreground max-w-xl">
               Busca por ciudad, barrio o tipo de propiedad. Filtra por venta o
@@ -133,24 +136,40 @@ export const HeroSearch = () => {
             />
 
             {/* Search Panel - mobile */}
-            <div className="lg:hidden">
-              <ShineBorder className="p-3 rounded-2xl">
-                <Card className="p-5 bg-background/80 backdrop-blur-xl border-border shadow-2xl">
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-3">
+            <div className="lg:hidden w-full">
+              <ShineBorder className="p-1 rounded-2xl w-full">
+                <Card className="p-0 bg-background/80 backdrop-blur-xl shadow-2xl w-full border-0">
+                  <div className="flex flex-col gap-3 p-4 w-full">
+                    <div className="flex flex-col gap-1.5 w-full">
                       <Tabs
                         value={transaction}
                         onValueChange={(v) =>
                           setTransaction(v as TransactionTab)
                         }
+                        className="w-full"
                       >
-                        <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap">
-                          <TabsTrigger value="venta">Venta</TabsTrigger>
-                          <TabsTrigger value="alquiler">Alquiler</TabsTrigger>
-                          <TabsTrigger value="anticretico">
+                        <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap min-w-0">
+                          <TabsTrigger value="venta" className="flex-shrink-0">
+                            Venta
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="alquiler"
+                            className="flex-shrink-0"
+                          >
+                            Alquiler
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="anticretico"
+                            className="flex-shrink-0"
+                          >
                             Anticrético
                           </TabsTrigger>
-                          <TabsTrigger value="proyectos">Proyectos</TabsTrigger>
+                          <TabsTrigger
+                            value="proyectos"
+                            className="flex-shrink-0"
+                          >
+                            Proyectos
+                          </TabsTrigger>
                         </TabsList>
                       </Tabs>
                       <Select
@@ -204,7 +223,7 @@ export const HeroSearch = () => {
                       value={query}
                       onSearch={handleSearch}
                       placeholder="Buscar por ciudad, barrio o palabra clave"
-                      className="flex-1 [&_input]:border-[hsl(0_0%_25%)] [&_input]:bg-[hsl(0_0%_13%)] [&_input]:text-[hsl(0_0%_85%)] [&_input]:placeholder-[hsl(0_0%_65%)]"
+                      className="w-full [&_input]:border-[hsl(0_0%_25%)] [&_input]:bg-[hsl(0_0%_13%)] [&_input]:text-[hsl(0_0%_85%)] [&_input]:placeholder-[hsl(0_0%_65%)]"
                     />
                     <div className="text-xs text-muted-foreground">
                       Búsqueda rápida. Para filtros avanzados, baja a la sección
@@ -273,7 +292,7 @@ export const HeroSearch = () => {
           {/* Search Panel - desktop overlay (raised higher) */}
           <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 bottom-6 w-full max-w-5xl z-10">
             <ShineBorder className="p-3 rounded-2xl">
-              <Card className="p-6 bg-background/90 backdrop-blur-xl border-border shadow-2xl">
+              <Card className="p-6 bg-background/90 backdrop-blur-xl border-border shadow-2xl w-full">
                 <div className="flex items-center gap-4">
                   <Tabs
                     value={transaction}

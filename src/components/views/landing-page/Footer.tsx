@@ -7,7 +7,7 @@ import logoDark from "@logos/logo_dark.svg";
 export default function Footer() {
   return (
     <footer className="bg-secondary text-foreground py-12">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="container">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           <div>
             <div className="flex items-center space-x-2 mb-4">
