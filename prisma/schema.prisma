@@ -128,7 +128,7 @@ model Property {
   updatedAt       DateTime        @updatedAt
 
   // Property is created by an agent
-  agent    User   @relation(fields: [agentId], references: [id])
+  agent    User   @relation(fields: [agentId], references: [id], onDelete: Cascade)
   agentId  String @map("agent_id")
 
   // Property belongs to an agency
@@ -160,7 +160,7 @@ model Project {
   active      Boolean  @default(true)
 
   // Project is created by an agent
-  agent    User   @relation(fields: [agentId], references: [id])
+  agent    User   @relation(fields: [agentId], references: [id], onDelete: Cascade)
   agentId  String @map("agent_id")
 
   // Project belongs to an agency

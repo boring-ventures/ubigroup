@@ -22,6 +22,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -147,6 +157,15 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
     role: string;
     agencyName?: string;
   } | null>(null);
+
+  // Delete confirmation modal state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [userAssets, setUserAssets] = useState<{
+    propertiesCount: number;
+    projectsCount: number;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const form = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
@@ -477,41 +496,76 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
     }
   };
 
+  // Check user assets before deletion
+  const checkUserAssets = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/users/${userId}/assets`);
+      if (response.ok) {
+        const data = await response.json();
+        return data;
+      }
+      return { propertiesCount: 0, projectsCount: 0 };
+    } catch (error) {
+      console.error("Failed to check user assets:", error);
+      return { propertiesCount: 0, projectsCount: 0 };
+    }
+  };
+
   // Delete user
   const handleDeleteUser = async (user: User) => {
-    if (
-      window.confirm(
-        `¿Estás seguro de que quieres eliminar al usuario ${user.firstName} ${user.lastName}?`
-      )
-    ) {
-      try {
-        const response = await fetch(`/api/users/${user.id}`, {
-          method: "DELETE",
-        });
+    // Check if user has properties or projects
+    const assets = await checkUserAssets(user.id);
 
-        const result = await response.json();
-
-        if (response.ok) {
-          toast({
-            title: "✅ Usuario Eliminado",
-            description: "El usuario ha sido eliminado exitosamente.",
-          });
-          fetchUsers();
-          onUserUpdate?.();
-        } else {
-          throw new Error(result.error || "Error al eliminar usuario");
-        }
-      } catch (error) {
-        console.error("Failed to delete user:", error);
-        toast({
-          title: "Error",
-          description:
-            error instanceof Error
-              ? error.message
-              : "Error al eliminar usuario",
-          variant: "destructive",
-        });
+    if (assets.propertiesCount > 0 || assets.projectsCount > 0) {
+      // User has assets, show confirmation modal
+      setUserToDelete(user);
+      setUserAssets(assets);
+      setIsDeleteDialogOpen(true);
+    } else {
+      // User has no assets, proceed with simple confirmation
+      if (
+        window.confirm(
+          `¿Estás seguro de que quieres eliminar al usuario ${user.firstName} ${user.lastName}?`
+        )
+      ) {
+        await performUserDeletion(user);
       }
+    }
+  };
+
+  // Perform the actual user deletion
+  const performUserDeletion = async (user: User) => {
+    try {
+      setIsDeleting(true);
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: "DELETE",
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "✅ Usuario Eliminado",
+          description: "El usuario ha sido eliminado exitosamente.",
+        });
+        fetchUsers();
+        onUserUpdate?.();
+      } else {
+        throw new Error(result.error || "Error al eliminar usuario");
+      }
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Error al eliminar usuario",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
+      setUserAssets(null);
     }
   };
 
@@ -1317,6 +1371,87 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
           isPasswordReset={true}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Confirmar Eliminación de Usuario
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              {userToDelete && userAssets && (
+                <div className="space-y-4">
+                  <div>
+                    ¿Estás seguro de que quieres eliminar al usuario{" "}
+                    <span className="font-semibold">
+                      {userToDelete.firstName} {userToDelete.lastName}
+                    </span>
+                    ?
+                  </div>
+
+                  {(userAssets.propertiesCount > 0 ||
+                    userAssets.projectsCount > 0) && (
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                        <span className="font-semibold text-red-800">
+                          ⚠️ Advertencia: Este usuario tiene contenido asociado
+                        </span>
+                      </div>
+                      <div className="text-sm text-red-700 space-y-1">
+                        {userAssets.propertiesCount > 0 && (
+                          <div>
+                            •{" "}
+                            <span className="font-medium">
+                              {userAssets.propertiesCount}
+                            </span>{" "}
+                            {userAssets.propertiesCount === 1
+                              ? "propiedad"
+                              : "propiedades"}{" "}
+                            serán eliminadas
+                          </div>
+                        )}
+                        {userAssets.projectsCount > 0 && (
+                          <div>
+                            •{" "}
+                            <span className="font-medium">
+                              {userAssets.projectsCount}
+                            </span>{" "}
+                            {userAssets.projectsCount === 1
+                              ? "proyecto"
+                              : "proyectos"}{" "}
+                            serán eliminados
+                          </div>
+                        )}
+                        <div className="mt-2 font-medium">
+                          Esta acción no se puede deshacer. Todo el contenido
+                          asociado será eliminado permanentemente.
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => userToDelete && performUserDeletion(userToDelete)}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {isDeleting ? "Eliminando..." : "Sí, Eliminar Usuario"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

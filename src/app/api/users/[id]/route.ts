@@ -355,7 +355,7 @@ export async function DELETE(
       );
     }
 
-    // Delete user from database
+    // Delete user from database (this will cascade delete properties and projects)
     await prisma.user.delete({
       where: { id },
     });
