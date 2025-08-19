@@ -4,6 +4,7 @@ import {
   PropertyType,
   TransactionType,
   PropertyStatus,
+  LandingImageStatus,
 } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -12,6 +13,7 @@ async function main() {
   console.log("🌱 Starting to seed database...");
 
   // Clean existing data in the correct order to avoid foreign key conflicts
+  await prisma.landingImage.deleteMany();
   await prisma.property.deleteMany();
   await prisma.user.deleteMany();
   await prisma.agency.deleteMany();
@@ -350,6 +352,42 @@ async function main() {
 
   console.log("✅ Created properties (7 total: 5 approved, 2 pending)");
 
+  // Create Landing Images (only Super Admin can create these)
+  const landingImages = [
+    {
+      title: "Luxury Homes",
+      description: "Discover your dream luxury home",
+      imageUrl:
+        "https://images.unsplash.com/photo-1460317442991-0ec209397118?q=80&w=1200&auto=format&fit=crop",
+      status: LandingImageStatus.ACTIVE,
+      createdById: superAdmin.id,
+    },
+    {
+      title: "Modern Apartments",
+      description: "Contemporary living spaces",
+      imageUrl:
+        "https://plus.unsplash.com/premium_photo-1684175656320-5c3f701c082c?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      status: LandingImageStatus.ACTIVE,
+      createdById: superAdmin.id,
+    },
+    {
+      title: "Premium Properties",
+      description: "Exclusive properties for discerning buyers",
+      imageUrl:
+        "https://images.unsplash.com/photo-1430285561322-7808604715df?q=80&w=1200&auto=format&fit=crop",
+      status: LandingImageStatus.ACTIVE,
+      createdById: superAdmin.id,
+    },
+  ];
+
+  for (const landingImageData of landingImages) {
+    await prisma.landingImage.create({
+      data: landingImageData,
+    });
+  }
+
+  console.log("✅ Created landing images (3 active images)");
+
   console.log("🎉 Seed completed successfully!");
   console.log("\n📊 Summary:");
   console.log("- 3 Agencies created");
@@ -357,6 +395,7 @@ async function main() {
   console.log("- 3 Agency Admins created");
   console.log("- 4 Agents created");
   console.log("- 7 Properties created (5 approved, 2 pending)");
+  console.log("- 3 Landing Images created (all active)");
   console.log("\n🔑 Test Users:");
   console.log("Super Admin: super-admin-001");
   console.log(

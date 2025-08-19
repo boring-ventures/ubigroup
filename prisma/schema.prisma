@@ -51,6 +51,11 @@ enum Currency {
   DOLLARS
 }
 
+enum LandingImageStatus {
+  ACTIVE
+  INACTIVE
+}
+
 model User {
   id        String   @id @default(cuid())
   userId    String   @unique
@@ -73,6 +78,9 @@ model User {
   
   // Only agents create projects
   projects Project[]
+  
+  // Super admins can create landing images
+  landingImages LandingImage[]
 
   @@index([userId])
   @@index([role])
@@ -217,4 +225,23 @@ model Quadrant {
   // Ensure customId uniqueness per floor (not globally)
   @@unique([floorId, customId])
   @@map("quadrants")
+}
+
+model LandingImage {
+  id          String             @id @default(cuid())
+  title       String?            // Optional title for the image
+  description String?            // Optional description
+  imageUrl    String             @map("image_url")
+  status      LandingImageStatus @default(INACTIVE)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  active      Boolean            @default(true)
+
+  // Landing image is created by a super admin
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String @map("created_by_id")
+
+  @@index([status])
+  @@index([createdById])
+  @@map("landing_images")
 }
