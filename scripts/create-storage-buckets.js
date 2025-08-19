@@ -71,6 +71,35 @@ async function createStorageBuckets() {
       console.log("✅ property-videos bucket created successfully");
     }
 
+    // Create landing-images bucket
+    const { error: landingImagesError } = await supabase.storage.createBucket(
+      "landing-images",
+      {
+        public: true,
+        fileSizeLimit: 10485760, // 10MB
+        allowedMimeTypes: [
+          "image/jpeg",
+          "image/jpg",
+          "image/png",
+          "image/gif",
+          "image/webp",
+        ],
+      }
+    );
+
+    if (landingImagesError) {
+      if (landingImagesError.message.includes("already exists")) {
+        console.log("✅ landing-images bucket already exists");
+      } else {
+        console.error(
+          "Error creating landing-images bucket:",
+          landingImagesError
+        );
+      }
+    } else {
+      console.log("✅ landing-images bucket created successfully");
+    }
+
     console.log("✅ Storage buckets setup completed!");
   } catch (error) {
     console.error("Failed to create storage buckets:", error);
@@ -78,4 +107,4 @@ async function createStorageBuckets() {
   }
 }
 
-createStorageBuckets(); 
+createStorageBuckets();

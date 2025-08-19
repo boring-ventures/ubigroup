@@ -5,7 +5,8 @@ ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES 
   ('property-images', 'property-images', true, 52428800, ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg']),
-  ('property-videos', 'property-videos', true, 52428800, ARRAY['video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov'])
+  ('property-videos', 'property-videos', true, 52428800, ARRAY['video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov']),
+  ('landing-images', 'landing-images', true, 10485760, ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/jpg'])
 ON CONFLICT (id) DO NOTHING;
 
 -- Drop existing policies if they exist
@@ -17,6 +18,8 @@ DROP POLICY IF EXISTS "Users can upload their own property videos" ON storage.ob
 DROP POLICY IF EXISTS "Users can view all property videos" ON storage.objects;
 DROP POLICY IF EXISTS "Users can update their own property videos" ON storage.objects;
 DROP POLICY IF EXISTS "Users can delete their own property videos" ON storage.objects;
+DROP POLICY IF EXISTS "Super admins can manage landing images" ON storage.objects;
+DROP POLICY IF EXISTS "Public can view landing images" ON storage.objects;
 
 -- Set up RLS policies for property-images bucket
 CREATE POLICY "Users can upload their own property images" 
@@ -77,6 +80,24 @@ USING (
   bucket_id = 'property-videos' 
   AND auth.uid()::text = (storage.foldername(name))[1]
 );
+
+-- Set up RLS policies for landing-images bucket (super admin only)
+CREATE POLICY "Super admins can manage landing images" 
+ON storage.objects FOR ALL 
+TO authenticated
+USING (
+  bucket_id = 'landing-images' 
+  AND EXISTS (
+    SELECT 1 FROM users 
+    WHERE users.id = auth.uid() 
+    AND users.role = 'SUPER_ADMIN'
+  )
+);
+
+CREATE POLICY "Public can view landing images" 
+ON storage.objects FOR SELECT 
+TO public
+USING (bucket_id = 'landing-images');
 
 -- Allow bucket creation for authenticated users
 CREATE POLICY "Allow authenticated users to create buckets" 
