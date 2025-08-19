@@ -124,7 +124,7 @@ export const HeroSearch = () => {
 
     const intervalId = setInterval(() => {
       setImageIndex((prev) => (prev + 1) % carouselImages.length);
-    }, 1000);
+    }, 5000);
     return () => clearInterval(intervalId);
   }, [carouselImages.length]);
 
