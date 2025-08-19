@@ -16,12 +16,20 @@ import { Sparkles } from "lucide-react";
 import { ShineBorder } from "@/components/magicui/shine-border";
 import { ContainerTextFlip } from "@/components/ui/container-text-flip";
 import { AvatarCircles } from "@/components/magicui/avatar-circles";
+import { usePublicLandingImages } from "@/hooks/use-public-landing-images";
 
 type TransactionTab = "venta" | "alquiler" | "anticretico" | "proyectos";
+// Hardcoded fallback images for immediate display
+const FALLBACK_IMAGES = [
+  "https://plus.unsplash.com/premium_photo-1684175656320-5c3f701c082c?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  "https://images.unsplash.com/photo-1460317442991-0ec209397118?q=80&w=1200&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1430285561322-7808604715df?q=80&w=1200&auto=format&fit=crop",
+];
 
 export const HeroSearch = () => {
   const router = useRouter();
   const pathname = usePathname();
+  const { landingImages } = usePublicLandingImages();
 
   const [query, setQuery] = useState("");
   const [transaction, setTransaction] = useState<TransactionTab>("venta");
@@ -29,19 +37,94 @@ export const HeroSearch = () => {
     "" | "HOUSE" | "APARTMENT" | "OFFICE" | "LAND"
   >("");
 
-  // Hero image carousel (desktop)
-  const carouselImages: string[] = [
-    "https://images.unsplash.com/photo-1460317442991-0ec209397118?q=80&w=1200&auto=format&fit=crop",
-    "https://plus.unsplash.com/premium_photo-1684175656320-5c3f701c082c?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    "https://images.unsplash.com/photo-1430285561322-7808604715df?q=80&w=1200&auto=format&fit=crop",
-  ];
+  // Hero image carousel - smooth transition from hardcoded to DB images
+  const [carouselImages, setCarouselImages] =
+    useState<string[]>(FALLBACK_IMAGES);
   const [imageIndex, setImageIndex] = useState(0);
+  const hasInsertedDbImages = useRef(false);
+  const cleanupScheduled = useRef(false);
+
+  // Handle smooth progressive transition when database images load
+  useEffect(() => {
+    if (landingImages.length > 0 && !hasInsertedDbImages.current) {
+      const databaseImageUrls = landingImages.map((img) => img.imageUrl);
+
+      setCarouselImages((prevImages) => {
+        // Check if database images are already in the carousel
+        const hasDbImages = databaseImageUrls.some((url) =>
+          prevImages.includes(url)
+        );
+        if (hasDbImages) {
+          return prevImages; // No changes needed
+        }
+
+        // Insert database images after the current position
+        // If we're showing h2 (index 1), the new array becomes [h1, h2, d1, d2, d3, ...]
+        const beforeCurrent = prevImages.slice(0, imageIndex + 1);
+        const afterCurrent = prevImages.slice(imageIndex + 1);
+
+        // Create new array: [hardcoded up to current, database images, remaining hardcoded]
+        return [...beforeCurrent, ...databaseImageUrls, ...afterCurrent];
+      });
+
+      hasInsertedDbImages.current = true;
+    }
+  }, [landingImages, imageIndex]);
+
+  // Cleanup hardcoded images after they're no longer visible
+  useEffect(() => {
+    if (
+      hasInsertedDbImages.current &&
+      !cleanupScheduled.current &&
+      landingImages.length > 0
+    ) {
+      const databaseImageUrls = landingImages.map((img) => img.imageUrl);
+
+      // Find the position where database images start
+      const dbStartIndex = carouselImages.findIndex((img) =>
+        databaseImageUrls.includes(img)
+      );
+
+      // Check if we're currently showing a database image
+      const currentImage = carouselImages[imageIndex];
+      const isShowingDbImage = databaseImageUrls.includes(currentImage);
+
+      // Clean up when we're showing a DB image and have moved past the insertion point
+      if (
+        dbStartIndex !== -1 &&
+        isShowingDbImage &&
+        imageIndex >= dbStartIndex
+      ) {
+        // Clean up: remove hardcoded images, keep only database images
+        const cleanImages = carouselImages.filter((img) =>
+          databaseImageUrls.includes(img)
+        );
+
+        if (
+          cleanImages.length > 0 &&
+          cleanImages.length !== carouselImages.length
+        ) {
+          // Adjust current index to match the new array
+          const newIndex = cleanImages.findIndex((img) => img === currentImage);
+
+          setCarouselImages(cleanImages);
+          setImageIndex(newIndex !== -1 ? newIndex : 0);
+          cleanupScheduled.current = true;
+        }
+      }
+    }
+  }, [imageIndex, carouselImages, landingImages]);
+
   const touchStartXRef = useRef<number | null>(null);
   const touchEndXRef = useRef<number | null>(null);
+
+  // Auto-advance carousel
   useEffect(() => {
+    if (carouselImages.length === 0) return;
+
     const intervalId = setInterval(() => {
       setImageIndex((prev) => (prev + 1) % carouselImages.length);
-    }, 5000);
+    }, 1000);
     return () => clearInterval(intervalId);
   }, [carouselImages.length]);
 
@@ -110,27 +193,27 @@ export const HeroSearch = () => {
 
             {/* Trust indicator */}
             <AvatarCircles
-              numPeople={500}
-              avatarUrls={[
+              numProperties={500}
+              propertyUrls={[
                 {
                   imageUrl:
-                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=150&h=150&fit=crop&crop=entropy",
                 },
                 {
                   imageUrl:
-                    "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+                    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=150&h=150&fit=crop&crop=entropy",
                 },
                 {
                   imageUrl:
-                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
+                    "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=150&h=150&fit=crop&crop=entropy",
                 },
                 {
                   imageUrl:
-                    "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face",
+                    "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=150&h=150&fit=crop&crop=entropy",
                 },
                 {
                   imageUrl:
-                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                    "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=150&h=150&fit=crop&crop=entropy",
                 },
               ]}
             />
@@ -263,30 +346,44 @@ export const HeroSearch = () => {
               touchEndXRef.current = null;
             }}
           >
-            {carouselImages.map((img, idx) => (
-              <div
-                key={img}
-                className={`absolute inset-0 bg-center bg-cover transition-opacity duration-1000 ease-in-out ${
-                  idx === imageIndex ? "opacity-100" : "opacity-0"
-                }`}
-                style={{ backgroundImage: `url(${img})` }}
-                aria-hidden={idx !== imageIndex}
-              />
-            ))}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent" />
-            {/* Carousel dots */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
-              {carouselImages.map((_, i) => (
-                <button
-                  key={i}
-                  aria-label={`Ir a imagen ${i + 1}`}
-                  onClick={() => setImageIndex(i)}
-                  className={`h-2.5 w-2.5 rounded-full transition-colors ${
-                    i === imageIndex ? "bg-white" : "bg-white/50"
-                  }`}
-                />
-              ))}
-            </div>
+            {/* Always show images immediately - no loading state */}
+            {carouselImages.length > 0 ? (
+              <>
+                {carouselImages.map((img, idx) => {
+                  return (
+                    <div
+                      key={img}
+                      className={`absolute inset-0 bg-center bg-cover transition-opacity duration-1000 ease-in-out ${
+                        idx === imageIndex ? "opacity-100" : "opacity-0"
+                      }`}
+                      style={{ backgroundImage: `url(${img})` }}
+                      aria-hidden={idx !== imageIndex}
+                    />
+                  );
+                })}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent" />
+
+                {/* Carousel dots */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+                  {carouselImages.map((_, i) => (
+                    <button
+                      key={i}
+                      aria-label={`Ir a imagen ${i + 1}`}
+                      onClick={() => setImageIndex(i)}
+                      className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+                        i === imageIndex ? "bg-white" : "bg-white/50"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                <div className="text-white text-lg">
+                  No hay imágenes disponibles
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Search Panel - desktop overlay (raised higher) */}

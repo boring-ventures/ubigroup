@@ -9,6 +9,7 @@ import {
   Building,
   Shield,
   Layers,
+  Image,
 } from "lucide-react";
 import type { UserRole } from "@prisma/client";
 import type { SidebarData } from "../types";
@@ -106,6 +107,11 @@ export const getRoleBasedSidebarData = (role: UserRole): SidebarData => {
               title: "Configuración",
               url: "/settings",
               icon: Settings,
+            },
+            {
+              title: "Imágenes del Hero",
+              url: "/landing-images",
+              icon: Image,
             },
           ],
         }

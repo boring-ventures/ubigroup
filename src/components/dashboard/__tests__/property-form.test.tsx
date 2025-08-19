@@ -16,7 +16,7 @@ jest.mock("@/hooks/use-agent-properties", () => ({
 }));
 
 // Mock react-hook-form toast
-jest.mock("@/hooks/use-toast", () => ({
+jest.mock("@/components/ui/use-toast", () => ({
   toast: jest.fn(),
 }));
 

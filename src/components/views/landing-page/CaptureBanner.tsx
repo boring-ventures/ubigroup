@@ -21,7 +21,7 @@ export default function CaptureBanner() {
               </span>
             </div>
             <h3 className="text-2xl md:text-3xl font-semibold tracking-tight mb-2">
-              Publica tu propiedad con UbiGroup
+              Comercializa tu propiedad con UbiGroup
             </h3>
             <p className="text-muted-foreground">
               Completa un breve formulario y nos pondremos en contacto por

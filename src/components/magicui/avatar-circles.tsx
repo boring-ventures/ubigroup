@@ -4,38 +4,38 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 
 interface AvatarCirclesProps {
-  numPeople: number;
-  avatarUrls?: Array<{
+  numProperties: number;
+  propertyUrls?: Array<{
     imageUrl: string;
-    profileUrl?: string;
+    propertyUrl?: string;
   }>;
   className?: string;
 }
 
 export function AvatarCircles({
-  numPeople,
-  avatarUrls = [],
+  numProperties,
+  propertyUrls = [],
   className = "",
 }: AvatarCirclesProps) {
-  // Generate placeholder avatars if not enough provided
-  const allAvatars =
-    avatarUrls.length >= 5
-      ? avatarUrls
+  // Generate placeholder property images if not enough provided
+  const allProperties =
+    propertyUrls.length >= 5
+      ? propertyUrls
       : [
-          ...avatarUrls,
-          ...Array.from({ length: 5 - avatarUrls.length }, (_, i) => ({
-            imageUrl: `https://images.unsplash.com/photo-${1500000000000 + i}?w=150&h=150&fit=crop&crop=face`,
-            profileUrl: undefined,
+          ...propertyUrls,
+          ...Array.from({ length: 5 - propertyUrls.length }, (_, i) => ({
+            imageUrl: `https://images.unsplash.com/photo-${1500000000000 + i}?w=150&h=150&fit=crop&crop=entropy`,
+            propertyUrl: undefined,
           })),
         ];
 
-  const displayAvatars = allAvatars.slice(0, 5);
+  const displayProperties = allProperties.slice(0, 5);
 
   return (
     <div className={`flex items-center gap-2 sm:gap-3 ${className}`}>
-      {/* Avatar circles */}
+      {/* Property circles */}
       <div className="flex -space-x-1 sm:-space-x-2">
-        {displayAvatars.map((avatar, index) => (
+        {displayProperties.map((property, index) => (
           <motion.div
             key={index}
             initial={{ scale: 0, opacity: 0 }}
@@ -50,8 +50,8 @@ export function AvatarCircles({
           >
             <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-primary/20 overflow-hidden bg-muted">
               <Image
-                src={avatar.imageUrl}
-                alt={`Avatar ${index + 1}`}
+                src={property.imageUrl}
+                alt={`Propiedad ${index + 1}`}
                 width={32}
                 height={32}
                 className="w-full h-full object-cover"
@@ -60,8 +60,8 @@ export function AvatarCircles({
           </motion.div>
         ))}
 
-        {/* Plus circle for remaining people */}
-        {numPeople > 5 && (
+        {/* Plus circle for remaining properties */}
+        {numProperties > 5 && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -74,7 +74,7 @@ export function AvatarCircles({
             className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-background bg-primary flex items-center justify-center"
           >
             <span className="text-xs font-semibold text-primary-foreground">
-              +{numPeople - 5}
+              +{numProperties - 5}
             </span>
           </motion.div>
         )}
@@ -89,9 +89,9 @@ export function AvatarCircles({
       >
         más de{" "}
         <span className="font-medium text-primary">
-          {numPeople.toLocaleString()}
+          {numProperties.toLocaleString()}
         </span>{" "}
-        personas compraron con nosotros
+        propiedades para comercializar
       </motion.div>
     </div>
   );

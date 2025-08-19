@@ -798,9 +798,13 @@ export default function Properties() {
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
           <h2 className="text-2xl sm:text-4xl font-bold text-foreground mb-4">
-            {activeTab === "proyectos"
-              ? "Explora Proyectos"
-              : "Encuentra tu Propiedad Ideal"}
+            {activeTab === "proyectos" ? (
+              "Explora Proyectos"
+            ) : (
+              <>
+                <span className="text-primary">Ubi</span>ca tu próxima propiedad
+              </>
+            )}
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto">
             {activeTab === "proyectos"
