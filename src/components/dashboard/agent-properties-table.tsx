@@ -166,26 +166,29 @@ export function AgentPropertiesTable() {
     <>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <CardTitle>Mis Propiedades</CardTitle>
               <CardDescription>
                 Gestiona tus listados de propiedades y rastrea su estado
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <Button
                 variant="outline"
                 onClick={handleDownloadCSV}
                 disabled={!data?.properties || data.properties.length === 0}
+                className="w-full sm:w-auto"
               >
                 <Download className="mr-2 h-4 w-4" />
-                Exportar CSV
+                <span className="hidden sm:inline">Exportar CSV</span>
+                <span className="sm:hidden">Exportar</span>
               </Button>
-              <Button asChild>
+              <Button asChild className="w-full sm:w-auto">
                 <Link href="/properties/create">
                   <Plus className="mr-2 h-4 w-4" />
-                  Agregar Propiedad
+                  <span className="hidden sm:inline">Agregar Propiedad</span>
+                  <span className="sm:hidden">Agregar</span>
                 </Link>
               </Button>
             </div>

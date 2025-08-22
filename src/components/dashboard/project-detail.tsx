@@ -5,8 +5,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NumericInput } from "@/components/ui/numeric-input";
 import {
   Select,
   SelectContent,
@@ -539,15 +539,17 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
   return (
     <div className="space-y-6">
       {/* Project Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{project.name}</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold break-words">
+            {project.name}
+          </h1>
           <p className="text-muted-foreground flex items-center mt-2">
-            <MapPin className="mr-1 h-4 w-4" />
-            {project.location}
+            <MapPin className="mr-1 h-4 w-4 flex-shrink-0" />
+            <span className="truncate">{project.location}</span>
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <Badge variant={project.active ? "default" : "secondary"}>
             {project.active ? "Activo" : "Inactivo"}
           </Badge>
@@ -658,7 +660,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
       {/* Floors and Quadrants */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <CardTitle className="flex items-center">
               <Layers className="mr-2 h-5 w-5" />
               Pisos y cuadrantes
@@ -671,11 +673,17 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                     floorForm.reset({ number: 1 });
                     setShowFloorDialog(true);
                   }}
+                  className="w-full sm:w-auto"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Pisos
                 </Button>
-                <Button size="sm" onClick={persistChanges} disabled={isSaving}>
+                <Button
+                  size="sm"
+                  onClick={persistChanges}
+                  disabled={isSaving}
+                  className="w-full sm:w-auto"
+                >
                   {isSaving ? "Guardando..." : "Guardar"}
                 </Button>
               </div>
@@ -695,7 +703,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
             <div className="space-y-6">
               {localFloors.map((floor) => (
                 <div key={floor.id} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
                     <div>
                       <h3 className="text-lg font-semibold">
                         Piso {floor.number}
@@ -724,9 +732,13 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                           quadrantForm.reset();
                           setShowQuadrantDialog(true);
                         }}
+                        className="flex-1 sm:flex-none"
                       >
                         <Plus className="mr-2 h-4 w-4" />
-                        Agregar cuadrante
+                        <span className="hidden sm:inline">
+                          Agregar cuadrante
+                        </span>
+                        <span className="sm:hidden">Agregar</span>
                       </Button>
                     </div>
                   </div>
@@ -830,14 +842,14 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                       <FormItem>
                         <FormLabel>Área (m²)</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(parseFloat(e.target.value))
-                            }
+                          <NumericInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            min={0}
+                            step={0.01}
+                            suffix="m²"
+                            placeholder="0"
+                            aria-label="Área del cuadrante en metros cuadrados"
                           />
                         </FormControl>
                         <FormMessage />
@@ -851,13 +863,13 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                       <FormItem>
                         <FormLabel>Dormitorios</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            min="0"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(parseInt(e.target.value))
-                            }
+                          <NumericInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            min={0}
+                            step={1}
+                            placeholder="0"
+                            aria-label="Número de dormitorios del cuadrante"
                           />
                         </FormControl>
                         <FormMessage />
@@ -873,13 +885,13 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                       <FormItem>
                         <FormLabel>Baños</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            min="0"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(parseInt(e.target.value))
-                            }
+                          <NumericInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            min={0}
+                            step={1}
+                            placeholder="0"
+                            aria-label="Número de baños del cuadrante"
                           />
                         </FormControl>
                         <FormMessage />
@@ -893,14 +905,13 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                       <FormItem>
                         <FormLabel>Precio</FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(parseFloat(e.target.value))
-                            }
+                          <NumericInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            min={0}
+                            step={0.01}
+                            placeholder="0"
+                            aria-label="Precio del cuadrante"
                           />
                         </FormControl>
                         <FormMessage />
@@ -1011,13 +1022,13 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                     <FormItem>
                       <FormLabel>Número de piso</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          min="1"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseInt(e.target.value))
-                          }
+                        <NumericInput
+                          value={field.value}
+                          onChange={field.onChange}
+                          min={1}
+                          step={1}
+                          placeholder="1"
+                          aria-label="Número de piso"
                         />
                       </FormControl>
                       <FormMessage />

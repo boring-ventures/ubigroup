@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NumericInput } from "@/components/ui/numeric-input";
 import {
   Select,
   SelectContent,
@@ -283,27 +283,19 @@ export function PropertyFilters({
           Rango de precio
         </Label>
         <div className="grid grid-cols-2 gap-2">
-          <Input
-            type="number"
+          <NumericInput
+            value={filters.minPrice}
+            onChange={(value) => updateFilter("minPrice", value)}
             placeholder="Precio mín."
-            value={filters.minPrice || ""}
-            onChange={(e) =>
-              updateFilter(
-                "minPrice",
-                e.target.value ? parseFloat(e.target.value) : undefined
-              )
-            }
+            min={0}
+            aria-label="Precio mínimo"
           />
-          <Input
-            type="number"
+          <NumericInput
+            value={filters.maxPrice}
+            onChange={(value) => updateFilter("maxPrice", value)}
             placeholder="Precio máx."
-            value={filters.maxPrice || ""}
-            onChange={(e) =>
-              updateFilter(
-                "maxPrice",
-                e.target.value ? parseFloat(e.target.value) : undefined
-              )
-            }
+            min={0}
+            aria-label="Precio máximo"
           />
         </div>
       </div>
@@ -378,27 +370,23 @@ export function PropertyFilters({
               Área (m²)
             </Label>
             <div className="grid grid-cols-2 gap-2">
-              <Input
-                type="number"
+              <NumericInput
+                value={filters.minSquareMeters}
+                onChange={(value) => updateFilter("minSquareMeters", value)}
                 placeholder="Área mín."
-                value={filters.minSquareMeters || ""}
-                onChange={(e) =>
-                  updateFilter(
-                    "minSquareMeters",
-                    e.target.value ? parseFloat(e.target.value) : undefined
-                  )
-                }
+                min={0}
+                step={1}
+                suffix="m²"
+                aria-label="Área mínima en metros cuadrados"
               />
-              <Input
-                type="number"
+              <NumericInput
+                value={filters.maxSquareMeters}
+                onChange={(value) => updateFilter("maxSquareMeters", value)}
                 placeholder="Área máx."
-                value={filters.maxSquareMeters || ""}
-                onChange={(e) =>
-                  updateFilter(
-                    "maxSquareMeters",
-                    e.target.value ? parseFloat(e.target.value) : undefined
-                  )
-                }
+                min={0}
+                step={1}
+                suffix="m²"
+                aria-label="Área máxima en metros cuadrados"
               />
             </div>
           </div>

@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { NumericInput } from "@/components/ui/numeric-input";
 import {
   Select,
   SelectContent,
@@ -255,17 +256,12 @@ export function ProjectForm({
                     <FormItem>
                       <FormLabel>Latitud</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          step="0.000001"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value === ""
-                                ? undefined
-                                : parseFloat(e.target.value)
-                            )
-                          }
+                        <NumericInput
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="40.7128"
+                          step={0.000001}
+                          aria-label="Coordenada de latitud del proyecto"
                         />
                       </FormControl>
                       <FormMessage />
@@ -279,17 +275,12 @@ export function ProjectForm({
                     <FormItem>
                       <FormLabel>Longitud</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          step="0.000001"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value === ""
-                                ? undefined
-                                : parseFloat(e.target.value)
-                            )
-                          }
+                        <NumericInput
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="-74.0060"
+                          step={0.000001}
+                          aria-label="Coordenada de longitud del proyecto"
                         />
                       </FormControl>
                       <FormMessage />

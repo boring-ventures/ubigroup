@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NumericInput } from "@/components/ui/numeric-input";
 import {
   Select,
   SelectContent,
@@ -204,33 +205,29 @@ export function PropertyFilters({
             <Label className="text-sm font-medium">Precio</Label>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Input
-              type="number"
+            <NumericInput
+              value={filters.minPrice}
+              onChange={(value) =>
+                onFiltersChange({
+                  ...filters,
+                  minPrice: value,
+                })
+              }
               placeholder="Mín"
-              value={filters.minPrice || ""}
-              onChange={(e) =>
-                onFiltersChange({
-                  ...filters,
-                  minPrice: e.target.value
-                    ? parseFloat(e.target.value)
-                    : undefined,
-                })
-              }
-              className="h-9 sm:h-8 text-xs"
+              min={0}
+              aria-label="Precio mínimo"
             />
-            <Input
-              type="number"
-              placeholder="Máx"
-              value={filters.maxPrice || ""}
-              onChange={(e) =>
+            <NumericInput
+              value={filters.maxPrice}
+              onChange={(value) =>
                 onFiltersChange({
                   ...filters,
-                  maxPrice: e.target.value
-                    ? parseFloat(e.target.value)
-                    : undefined,
+                  maxPrice: value,
                 })
               }
-              className="h-9 sm:h-8 text-xs"
+              placeholder="Máx"
+              min={0}
+              aria-label="Precio máximo"
             />
           </div>
         </div>
@@ -242,33 +239,31 @@ export function PropertyFilters({
             <Label className="text-sm font-medium">Habitaciones</Label>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Input
-              type="number"
+            <NumericInput
+              value={filters.minBedrooms}
+              onChange={(value) =>
+                onFiltersChange({
+                  ...filters,
+                  minBedrooms: value,
+                })
+              }
               placeholder="Mín"
-              value={filters.minBedrooms || ""}
-              onChange={(e) =>
-                onFiltersChange({
-                  ...filters,
-                  minBedrooms: e.target.value
-                    ? parseInt(e.target.value)
-                    : undefined,
-                })
-              }
-              className="h-9 sm:h-8 text-xs"
+              min={0}
+              step={1}
+              aria-label="Dormitorios mínimos"
             />
-            <Input
-              type="number"
-              placeholder="Máx"
-              value={filters.maxBedrooms || ""}
-              onChange={(e) =>
+            <NumericInput
+              value={filters.maxBedrooms}
+              onChange={(value) =>
                 onFiltersChange({
                   ...filters,
-                  maxBedrooms: e.target.value
-                    ? parseInt(e.target.value)
-                    : undefined,
+                  maxBedrooms: value,
                 })
               }
-              className="h-9 sm:h-8 text-xs"
+              placeholder="Máx"
+              min={0}
+              step={1}
+              aria-label="Dormitorios máximos"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -276,33 +271,31 @@ export function PropertyFilters({
             <Label className="text-sm font-medium">Baños</Label>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Input
-              type="number"
+            <NumericInput
+              value={filters.minBathrooms}
+              onChange={(value) =>
+                onFiltersChange({
+                  ...filters,
+                  minBathrooms: value,
+                })
+              }
               placeholder="Mín"
-              value={filters.minBathrooms || ""}
-              onChange={(e) =>
-                onFiltersChange({
-                  ...filters,
-                  minBathrooms: e.target.value
-                    ? parseInt(e.target.value)
-                    : undefined,
-                })
-              }
-              className="h-9 sm:h-8 text-xs"
+              min={0}
+              step={0.5}
+              aria-label="Baños mínimos"
             />
-            <Input
-              type="number"
-              placeholder="Máx"
-              value={filters.maxBathrooms || ""}
-              onChange={(e) =>
+            <NumericInput
+              value={filters.maxBathrooms}
+              onChange={(value) =>
                 onFiltersChange({
                   ...filters,
-                  maxBathrooms: e.target.value
-                    ? parseInt(e.target.value)
-                    : undefined,
+                  maxBathrooms: value,
                 })
               }
-              className="h-9 sm:h-8 text-xs"
+              placeholder="Máx"
+              min={0}
+              step={0.5}
+              aria-label="Baños máximos"
             />
           </div>
         </div>
@@ -315,33 +308,33 @@ export function PropertyFilters({
           <Label className="text-sm font-medium">Área (m²)</Label>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <Input
-            type="number"
+          <NumericInput
+            value={filters.minSquareMeters}
+            onChange={(value) =>
+              onFiltersChange({
+                ...filters,
+                minSquareMeters: value,
+              })
+            }
             placeholder="Mínimo"
-            value={filters.minSquareMeters || ""}
-            onChange={(e) =>
-              onFiltersChange({
-                ...filters,
-                minSquareMeters: e.target.value
-                  ? parseFloat(e.target.value)
-                  : undefined,
-              })
-            }
-            className="h-9 sm:h-8 text-xs"
+            min={0}
+            step={1}
+            suffix="m²"
+            aria-label="Área mínima en metros cuadrados"
           />
-          <Input
-            type="number"
-            placeholder="Máximo"
-            value={filters.maxSquareMeters || ""}
-            onChange={(e) =>
+          <NumericInput
+            value={filters.maxSquareMeters}
+            onChange={(value) =>
               onFiltersChange({
                 ...filters,
-                maxSquareMeters: e.target.value
-                  ? parseFloat(e.target.value)
-                  : undefined,
+                maxSquareMeters: value,
               })
             }
-            className="h-9 sm:h-8 text-xs"
+            placeholder="Máximo"
+            min={0}
+            step={1}
+            suffix="m²"
+            aria-label="Área máxima en metros cuadrados"
           />
         </div>
       </div>

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { NumericInput } from "@/components/ui/numeric-input";
 import {
   Select,
   SelectContent,
@@ -542,21 +543,14 @@ export function PropertyForm({
                         Precio *
                       </FormLabel>
                       <FormControl>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400 text-base sm:text-lg">
-                            {currency === Currency.BOLIVIANOS ? "Bs" : "$"}
-                          </span>
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            className="h-10 sm:h-12 text-base sm:text-lg pl-10 sm:pl-12"
-                            {...field}
-                            onChange={(e) => {
-                              const value = parseFloat(e.target.value);
-                              field.onChange(isNaN(value) ? undefined : value);
-                            }}
-                          />
-                        </div>
+                        <NumericInput
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="0"
+                          min={0}
+                          prefix={currency === Currency.BOLIVIANOS ? "Bs" : "$"}
+                          aria-label="Precio de la propiedad"
+                        />
                       </FormControl>
                       <FormDescription className="text-xs sm:text-sm">
                         Ingresa el precio en{" "}
@@ -579,16 +573,14 @@ export function PropertyForm({
                           Tipo de cambio (Bs/$) *
                         </FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
+                          <NumericInput
+                            value={exchangeRate}
+                            onChange={setExchangeRate}
                             placeholder="6.96"
-                            className="h-10 sm:h-12 text-base sm:text-lg"
-                            value={exchangeRate || ""}
-                            onChange={(e) => {
-                              const value = parseFloat(e.target.value);
-                              setExchangeRate(isNaN(value) ? undefined : value);
-                            }}
+                            min={0}
+                            step={0.01}
+                            suffix="Bs/$"
+                            aria-label="Tipo de cambio de dólares a bolivianos"
                           />
                         </FormControl>
                         <FormDescription className="text-xs sm:text-sm">
@@ -744,16 +736,12 @@ export function PropertyForm({
                           Latitud
                         </FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            step="any"
+                          <NumericInput
+                            value={field.value}
+                            onChange={field.onChange}
                             placeholder="40.7128"
-                            className="h-12 text-lg"
-                            value={field.value || ""}
-                            onChange={(e) => {
-                              const value = parseFloat(e.target.value);
-                              field.onChange(isNaN(value) ? undefined : value);
-                            }}
+                            step={0.000001}
+                            aria-label="Coordenada de latitud"
                           />
                         </FormControl>
                         <FormDescription className="text-sm">
@@ -773,16 +761,12 @@ export function PropertyForm({
                           Longitud
                         </FormLabel>
                         <FormControl>
-                          <Input
-                            type="number"
-                            step="any"
+                          <NumericInput
+                            value={field.value}
+                            onChange={field.onChange}
                             placeholder="-74.0060"
-                            className="h-12 text-lg"
-                            value={field.value || ""}
-                            onChange={(e) => {
-                              const value = parseFloat(e.target.value);
-                              field.onChange(isNaN(value) ? undefined : value);
-                            }}
+                            step={0.000001}
+                            aria-label="Coordenada de longitud"
                           />
                         </FormControl>
                         <FormDescription className="text-sm">
@@ -826,16 +810,13 @@ export function PropertyForm({
                         <span>Dormitorios *</span>
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
+                        <NumericInput
+                          value={field.value}
+                          onChange={field.onChange}
                           placeholder="1"
-                          className="h-10 sm:h-12 text-base sm:text-lg"
-                          {...field}
-                          onChange={(e) => {
-                            const value = parseInt(e.target.value);
-                            field.onChange(isNaN(value) ? undefined : value);
-                          }}
+                          min={0}
+                          step={1}
+                          aria-label="Número de dormitorios"
                         />
                       </FormControl>
                       <FormMessage />
@@ -853,17 +834,13 @@ export function PropertyForm({
                         <span>Baños *</span>
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.5"
+                        <NumericInput
+                          value={field.value}
+                          onChange={field.onChange}
                           placeholder="1"
-                          className="h-10 sm:h-12 text-base sm:text-lg"
-                          {...field}
-                          onChange={(e) => {
-                            const value = parseFloat(e.target.value);
-                            field.onChange(isNaN(value) ? undefined : value);
-                          }}
+                          min={0}
+                          step={0.5}
+                          aria-label="Número de baños"
                         />
                       </FormControl>
                       <FormMessage />
@@ -881,16 +858,14 @@ export function PropertyForm({
                         <span>Área (m²) *</span>
                       </FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
+                        <NumericInput
+                          value={field.value}
+                          onChange={field.onChange}
                           placeholder="1000"
-                          className="h-10 sm:h-12 text-base sm:text-lg"
-                          {...field}
-                          onChange={(e) => {
-                            const value = parseInt(e.target.value);
-                            field.onChange(isNaN(value) ? undefined : value);
-                          }}
+                          min={0}
+                          step={1}
+                          suffix="m²"
+                          aria-label="Área de la propiedad en metros cuadrados"
                         />
                       </FormControl>
                       <FormMessage />
