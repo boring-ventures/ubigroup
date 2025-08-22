@@ -35,7 +35,7 @@ export default function CaptureBanner() {
                 aria-label="Ir al formulario de captura de propiedad"
               >
                 <MessageCircle className="h-4 w-4 mr-2" aria-hidden="true" />
-                Capturar propiedad
+                Contactános
                 <ArrowRight className="h-4 w-4 ml-2" aria-hidden="true" />
               </Link>
             </Button>

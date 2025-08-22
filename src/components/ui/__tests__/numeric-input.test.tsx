@@ -139,3 +139,4 @@ describe("NumericInput", () => {
     expect(mockOnChange).toHaveBeenCalledWith(5.5);
   });
 });
+

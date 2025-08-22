@@ -60,7 +60,7 @@ Button.displayName = "Button";
 const menuItems = [
   { name: "Propiedades", href: "/#properties" },
   { name: "Proyectos", href: "/?tab=proyectos#properties" },
-  { name: "¡Vende tu propiedad!", href: "/#capture-banner" },
+  { name: "¡Comercializa tu propiedad!", href: "/#capture-banner" },
 ];
 
 const HeroHeader = () => {
