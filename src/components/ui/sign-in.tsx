@@ -15,6 +15,7 @@ interface SignInPageProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
   heroImageSrc?: string;
+  heroLogo?: React.ReactNode;
   testimonials?: Testimonial[];
   onSignIn?: (event: React.FormEvent<HTMLFormElement>) => void;
   onResetPassword?: () => void;
@@ -63,6 +64,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   ),
   description = "Accede a tu cuenta y continúa tu viaje con nosotros",
   heroImageSrc,
+  heroLogo,
   testimonials = [],
   onSignIn,
   onResetPassword,
@@ -75,6 +77,12 @@ export const SignInPage: React.FC<SignInPageProps> = ({
       <section className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="flex flex-col gap-6">
+            {/* Mobile logo - shown only on mobile */}
+            {heroLogo && (
+              <div className="md:hidden flex justify-center mb-4">
+                {heroLogo}
+              </div>
+            )}
             <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">
               {title}
             </h1>
@@ -158,13 +166,19 @@ export const SignInPage: React.FC<SignInPageProps> = ({
         </div>
       </section>
 
-      {/* Right column: hero image + testimonials */}
-      {heroImageSrc && (
+      {/* Right column: hero logo + testimonials */}
+      {(heroImageSrc || heroLogo) && (
         <section className="hidden md:block flex-1 relative p-4">
-          <div
-            className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl bg-cover bg-center"
-            style={{ backgroundImage: `url(${heroImageSrc})` }}
-          ></div>
+          {heroLogo ? (
+            <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 backdrop-blur-sm border border-primary/20 flex items-center justify-center">
+              <div className="text-center">{heroLogo}</div>
+            </div>
+          ) : (
+            <div
+              className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl bg-cover bg-center"
+              style={{ backgroundImage: `url(${heroImageSrc})` }}
+            ></div>
+          )}
           {testimonials.length > 0 && (
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4 px-8 w-full justify-center">
               <TestimonialCard
