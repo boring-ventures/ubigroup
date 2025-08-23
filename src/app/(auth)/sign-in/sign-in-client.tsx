@@ -4,6 +4,8 @@ import { SignInPage, Testimonial } from "@/components/ui/sign-in";
 import { useAuth } from "@/providers/auth-provider";
 import { useRouter } from "next/navigation";
 import { toast } from "@/components/ui/use-toast";
+import Image from "next/image";
+import logoDark from "@logos/logo_dark.svg";
 
 const sampleTestimonials: Testimonial[] = [
   {
@@ -57,8 +59,24 @@ export default function SignInPageClient() {
     router.push("/forgot-password");
   };
 
+  const LogoComponent = () => (
+    <div className="flex flex-col items-center space-y-4">
+      <Image
+        src={logoDark}
+        alt="UbiGroup logo"
+        width={82}
+        height={82}
+        className="h-20 md:h-40 w-auto"
+        priority
+      />
+      <p className="text-sm md:text-lg text-muted-foreground text-center max-w-md">
+        Encontrando hogares ideales para un mejor mañana
+      </p>
+    </div>
+  );
+
   return (
-    <div className="bg-background text-foreground">
+    <div className="bg-background text-foreground dark">
       <SignInPage
         title={
           <span className="font-light text-foreground tracking-tighter">
@@ -66,7 +84,7 @@ export default function SignInPageClient() {
           </span>
         }
         description="Accede a tu cuenta y continúa tu viaje con nosotros"
-        heroImageSrc="https://images.unsplash.com/photo-1642615835477-d303d7dc9ee9?w=2160&q=80"
+        heroLogo={<LogoComponent />}
         testimonials={sampleTestimonials}
         onSignIn={handleSignIn}
         onResetPassword={handleResetPassword}
