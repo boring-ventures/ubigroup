@@ -8,7 +8,7 @@ export default function Footer() {
   return (
     <footer className="bg-secondary text-foreground py-12">
       <div className="container">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <Image
@@ -32,35 +32,6 @@ export default function Footer() {
             <p className="text-muted-foreground">
               Encontrando hogares ideales para un mejor mañana.
             </p>
-          </div>
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Enlaces Rápidos</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/#features"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Características
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/#about"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Acerca de
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/#testimonials"
-                  className="text-muted-foreground hover:text-primary transition-colors"
-                >
-                  Testimonios
-                </Link>
-              </li>
-            </ul>
           </div>
           <div>
             <h4 className="text-lg font-semibold mb-4">Legal</h4>

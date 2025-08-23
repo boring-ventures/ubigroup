@@ -10,6 +10,27 @@ import logoDark from "@logos/logo_dark.svg";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
+// Custom hook for smooth scrolling
+const useSmoothScroll = () => {
+  const scrollToSection = React.useCallback((href: string) => {
+    const targetId = href.split("#")[1];
+    if (targetId) {
+      const element = document.getElementById(targetId);
+      if (element) {
+        const headerHeight = 80; // Approximate header height
+        const elementPosition = element.offsetTop - headerHeight;
+
+        window.scrollTo({
+          top: elementPosition,
+          behavior: "smooth",
+        });
+      }
+    }
+  }, []);
+
+  return { scrollToSection };
+};
+
 // Button component (from shadcn/ui)
 const buttonVariants = cva(
   "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
@@ -60,6 +81,8 @@ Button.displayName = "Button";
 const menuItems = [
   { name: "Propiedades", href: "/#properties" },
   { name: "Proyectos", href: "/?tab=proyectos#properties" },
+  { name: "Oportunidades", href: "/#opportunities" },
+  { name: "Avalúos", href: "/#appraisal" },
   { name: "¡Comercializa tu propiedad!", href: "/#capture-banner" },
 ];
 
@@ -67,6 +90,7 @@ const HeroHeader = () => {
   const [menuState, setMenuState] = React.useState(false);
   const [isScrolled, setIsScrolled] = React.useState(false);
   const { user, isLoading } = useAuth();
+  const { scrollToSection } = useSmoothScroll();
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -75,6 +99,24 @@ const HeroHeader = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleNavClick = (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string
+  ) => {
+    e.preventDefault();
+
+    // Close mobile menu if open
+    setMenuState(false);
+
+    // Handle smooth scrolling for hash links
+    if (href.includes("#")) {
+      scrollToSection(href);
+    } else {
+      // For non-hash links, navigate normally
+      window.location.href = href;
+    }
+  };
 
   return (
     <header>
@@ -137,12 +179,13 @@ const HeroHeader = () => {
                 <ul className="flex gap-8 text-sm">
                   {menuItems.map((item, index) => (
                     <li key={index}>
-                      <Link
+                      <a
                         href={item.href}
-                        className="text-foreground hover:text-primary block duration-150"
+                        onClick={(e) => handleNavClick(e, item.href)}
+                        className="text-foreground hover:text-primary block duration-150 cursor-pointer"
                       >
                         <span>{item.name}</span>
-                      </Link>
+                      </a>
                     </li>
                   ))}
                 </ul>
@@ -159,12 +202,13 @@ const HeroHeader = () => {
                   <ul className="space-y-6 text-base">
                     {menuItems.map((item, index) => (
                       <li key={index}>
-                        <Link
+                        <a
                           href={item.href}
-                          className="text-foreground hover:text-primary block duration-150"
+                          onClick={(e) => handleNavClick(e, item.href)}
+                          className="text-foreground hover:text-primary block duration-150 cursor-pointer"
                         >
                           <span>{item.name}</span>
-                        </Link>
+                        </a>
                       </li>
                     ))}
                   </ul>

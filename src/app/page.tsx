@@ -3,6 +3,8 @@ import Header from "@/components/views/landing-page/Header";
 import Footer from "@/components/views/landing-page/Footer";
 import Properties from "@/components/views/landing-page/Properties";
 import HeroSearch from "@/components/views/landing-page/HeroSearch";
+import OpportunitiesSection from "@/components/views/landing-page/opportunities-section";
+import AppraisalSection from "@/components/views/landing-page/appraisal-section";
 import CaptureBanner from "@/components/views/landing-page/CaptureBanner";
 
 // Disable static generation for this page to avoid CSS build issues
@@ -23,6 +25,8 @@ export default function Home() {
           <Properties />
         </Suspense>
       </main>
+      <OpportunitiesSection />
+      <AppraisalSection />
       <CaptureBanner />
       <Footer />
     </div>

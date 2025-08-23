@@ -73,14 +73,36 @@ export default function CapturePropertyPage() {
       return;
     }
 
+    const getPropertyTypeLabel = (type: string) => {
+      switch (type) {
+        case "HOUSE":
+          return "Casa";
+        case "APARTMENT":
+          return "Departamento";
+        case "OFFICE":
+          return "Oficina";
+        case "LAND":
+          return "Terreno";
+        default:
+          return type;
+      }
+    };
+
     const message = encodeURIComponent(
-      `Nueva Captura de Propiedad\n\n` +
-        `Nombre: ${values.ownerName}\n` +
-        `Teléfono: ${values.ownerPhone}\n` +
-        `Tipo: ${values.propertyType}\n` +
-        `Ciudad: ${values.city}${values.neighborhood ? `, ${values.neighborhood}` : ""}\n` +
-        `${values.price ? `Precio aprox.: ${values.price}\n` : ""}` +
-        `${values.description ? `Detalle: ${values.description}\n` : ""}`
+      `🏠 *Nueva Propiedad para Comercializar*\n\n` +
+        `👋 *Hola! Soy ${values.ownerName}*\n` +
+        `📱 *Mi WhatsApp:* ${values.ownerPhone}\n\n` +
+        `🏘️ *Detalles de mi propiedad:*\n` +
+        `• Tipo: ${getPropertyTypeLabel(values.propertyType)}\n` +
+        `• Ubicación: ${values.city}${values.neighborhood ? `, ${values.neighborhood}` : ""}\n` +
+        `${values.price ? `• Precio aproximado: ${values.price}\n` : ""}` +
+        `${values.description ? `\n📝 *Información adicional:*\n${values.description}\n` : ""}` +
+        `\n✨ *Estoy interesado en:*\n` +
+        `• Recibir asesoría personalizada\n` +
+        `• Conocer el proceso de comercialización\n` +
+        `• Saber más sobre los servicios de UbiGroup\n\n` +
+        `📞 *Por favor contáctenme cuando puedan*\n` +
+        `Gracias! 🙏`
     );
 
     const wa = `https://wa.me/${companyWhatsApp.replace(/\D/g, "")}?text=${message}`;
