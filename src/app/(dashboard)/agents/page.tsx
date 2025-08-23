@@ -29,9 +29,11 @@ export default async function AgentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Agent Management
+            Gestión de Agentes
           </h1>
-          <p className="text-muted-foreground">Manage agents in your agency</p>
+          <p className="text-muted-foreground">
+            Gestiona los agentes de tu agencia
+          </p>
         </div>
       </div>
 

@@ -28,9 +28,11 @@ export default async function AllPropertiesPage() {
     <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">All Properties</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Todas las Propiedades
+          </h1>
           <p className="text-muted-foreground">
-            Platform-wide property management and oversight
+            Gestión y supervisión de propiedades a nivel de plataforma
           </p>
         </div>
       </div>

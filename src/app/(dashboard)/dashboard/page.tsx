@@ -44,10 +44,10 @@ export default async function DashboardPage() {
             <div className="bg-card rounded-lg p-6">
               <h2 className="text-2xl font-semibold mb-4">Dashboard</h2>
               <p className="text-muted-foreground">
-                Welcome to your dashboard. Your role access is being configured.
+                Bienvenido a tu panel. Tu acceso de rol está siendo configurado.
               </p>
               <p className="text-sm text-muted-foreground mt-2">
-                Current role: {userProfile.role}
+                Rol actual: {userProfile.role}
               </p>
             </div>
           </div>
