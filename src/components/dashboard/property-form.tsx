@@ -1085,13 +1085,13 @@ export function PropertyForm({
                     {uploadedImages.map((imageUrl, index) => (
                       <div
                         key={`uploaded-${index}`}
-                        className="relative group border-2 border-gray-200 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-800 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors"
+                        className="relative group border-2 border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors aspect-square"
                       >
                         <Image
                           src={imageUrl}
                           alt={`Imagen subida ${index + 1}`}
                           fill
-                          className="object-cover rounded"
+                          className="object-cover rounded-lg"
                         />
                         <button
                           type="button"
@@ -1111,13 +1111,13 @@ export function PropertyForm({
                     {images.map((file, index) => (
                       <div
                         key={`new-${index}`}
-                        className="relative group border-2 border-indigo-200 dark:border-indigo-600 rounded-lg p-2 bg-indigo-50 dark:bg-indigo-950/50 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors"
+                        className="relative group border-2 border-indigo-200 dark:border-indigo-600 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors aspect-square"
                       >
                         <Image
                           src={URL.createObjectURL(file)}
                           alt={`Imagen nueva ${index + 1}`}
                           fill
-                          className="object-cover rounded"
+                          className="object-cover rounded-lg"
                         />
                         <button
                           type="button"
@@ -1169,11 +1169,11 @@ export function PropertyForm({
                     {uploadedVideos.map((videoUrl, index) => (
                       <div
                         key={`uploaded-video-${index}`}
-                        className="relative group border-2 border-gray-200 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-800 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors"
+                        className="relative group border-2 border-gray-200 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors aspect-square"
                       >
                         <video
                           src={videoUrl}
-                          className="w-full h-24 object-cover rounded"
+                          className="w-full h-full object-cover rounded-lg"
                           controls={false}
                           muted
                         />
@@ -1195,11 +1195,11 @@ export function PropertyForm({
                     {videos.map((file, index) => (
                       <div
                         key={`new-video-${index}`}
-                        className="relative group border-2 border-indigo-200 dark:border-indigo-600 rounded-lg p-2 bg-indigo-50 dark:bg-indigo-950/50 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors"
+                        className="relative group border-2 border-indigo-200 dark:border-indigo-600 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 hover:border-indigo-300 dark:hover:border-indigo-500 transition-colors aspect-square"
                       >
                         <video
                           src={URL.createObjectURL(file)}
-                          className="w-full h-24 object-cover rounded"
+                          className="w-full h-full object-cover rounded-lg"
                           controls={false}
                           muted
                         />
