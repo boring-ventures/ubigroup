@@ -166,8 +166,8 @@ export const HeroSearch = () => {
             className="order-1 lg:order-1 space-y-4 lg:space-y-6"
             ref={mobileSearchRef}
           >
-            {/* Brand Card */}
-            <div className="absolute top-8 left-0 z-10">
+            {/* Brand Card - Desktop */}
+            <div className="absolute top-8 left-0 z-10 hidden lg:block">
               <div className="relative group">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/30 via-primary/20 to-primary/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-700 scale-110"></div>
                 <div className="relative bg-background/95 backdrop-blur-2xl rounded-3xl p-6 lg:p-8 border border-border/50 shadow-2xl transition-all duration-500">
@@ -182,9 +182,36 @@ export const HeroSearch = () => {
                     />
                     <div className="flex flex-col">
                       <h2 className="text-2xl lg:text-3xl font-bold text-foreground leading-tight">
-                        UBIGroup
+                        <span className="text-primary">Ubi</span>Group
                       </h2>
                       <p className="text-base lg:text-lg text-muted-foreground font-medium">
+                        Revolucionando el rubro inmobiliario
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Brand Card - Mobile */}
+            <div className="lg:hidden mb-6">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/30 via-primary/20 to-primary/30 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-700 scale-105"></div>
+                <div className="relative bg-background/95 backdrop-blur-xl rounded-2xl p-4 border border-border/50 shadow-xl transition-all duration-500">
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src="/assets/logos/logo_dark.svg"
+                      alt="UBIGroup Logo"
+                      width={48}
+                      height={48}
+                      className="h-12 w-auto transition-all duration-500"
+                      priority
+                    />
+                    <div className="flex flex-col">
+                      <h2 className="text-xl font-bold text-foreground leading-tight">
+                        <span className="text-primary">Ubi</span>Group
+                      </h2>
+                      <p className="text-sm text-muted-foreground font-medium">
                         Revolucionando el rubro inmobiliario
                       </p>
                     </div>
