@@ -14,12 +14,10 @@ import { Card } from "@/components/ui/card";
 import { PropertySearchBar } from "@/components/public/property-search-bar";
 import { Sparkles } from "lucide-react";
 import { ShineBorder } from "@/components/magicui/shine-border";
-import { WordPullUp } from "@/components/ui/word-pull-up";
+import { ContainerTextFlip } from "@/components/ui/container-text-flip";
 import { AvatarCircles } from "@/components/magicui/avatar-circles";
 import { usePublicLandingImages } from "@/hooks/use-public-landing-images";
 import Image from "next/image";
-import logoLight from "@logos/logo_ligth.svg";
-import logoDark from "@logos/logo_dark.svg";
 
 type TransactionTab = "venta" | "alquiler" | "anticretico" | "proyectos";
 // Hardcoded fallback images for immediate display
@@ -118,6 +116,9 @@ export const HeroSearch = () => {
     }
   }, [imageIndex, carouselImages, landingImages]);
 
+  const touchStartXRef = useRef<number | null>(null);
+  const touchEndXRef = useRef<number | null>(null);
+
   // Auto-advance carousel
   useEffect(() => {
     if (carouselImages.length === 0) return;
@@ -156,185 +157,277 @@ export const HeroSearch = () => {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden -mt-10 sm:-mt-28">
-      {/* Background Image Carousel */}
-      <div className="absolute inset-0 z-0">
-        {carouselImages.length > 0 ? (
-          <>
-            {carouselImages.map((img, idx) => {
-              return (
-                <div
-                  key={img}
-                  className={`absolute inset-0 bg-center bg-cover transition-opacity duration-1000 ease-in-out ${
-                    idx === imageIndex ? "opacity-100" : "opacity-0"
-                  }`}
-                  style={{ backgroundImage: `url(${img})` }}
-                  aria-hidden={idx !== imageIndex}
-                />
-              );
-            })}
-            {/* Overlay gradient for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
-
-            {/* Carousel dots */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-10">
-              {carouselImages.map((_, i) => (
-                <button
-                  key={i}
-                  aria-label={`Ir a imagen ${i + 1}`}
-                  onClick={() => setImageIndex(i)}
-                  className={`h-3 w-3 rounded-full transition-all duration-300 ${
-                    i === imageIndex ? "bg-white" : "bg-white/50"
-                  }`}
-                />
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-            <div className="text-white text-lg">
-              No hay imágenes disponibles
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Main Content Overlay */}
-      <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-32">
-        <div className="text-center space-y-6 lg:space-y-8">
-          {/* Centered Logo - Main Focus */}
-          <div className="flex justify-center">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/40 via-primary/30 to-primary/40 rounded-3xl blur-3xl group-hover:blur-4xl transition-all duration-700 scale-125"></div>
-              <div className="relative bg-background/95 backdrop-blur-2xl rounded-3xl p-6 lg:p-8 border border-border/50 shadow-2xl transition-all duration-500">
-                <div className="flex items-center gap-4 lg:gap-6">
-                  <Image
-                    src={logoLight}
-                    alt="UbiGroup logo"
-                    width={64}
-                    height={64}
-                    className="h-16 w-auto dark:hidden lg:h-20 lg:w-auto transition-all duration-500"
-                    priority
-                  />
-                  <Image
-                    src={logoDark}
-                    alt="UbiGroup logo"
-                    width={64}
-                    height={64}
-                    className="hidden h-16 w-auto dark:block lg:h-20 lg:w-auto transition-all duration-500"
-                    priority
-                  />
-                  <div className="flex flex-col">
-                    <h1 className="text-2xl lg:text-3xl font-bold text-foreground leading-tight">
-                      UbiGroup
-                    </h1>
-                    <p className="text-base lg:text-lg text-muted-foreground font-medium">
-                      Tu socio inmobiliario de confianza
-                    </p>
+    <section className="relative">
+      <div className="container">
+        {/* Visual hero with image on the right and content overlay */}
+        <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-6 items-center pt-8 sm:pt-20 md:pt-24 lg:pt-28 pb-14 lg:pb-16">
+          {/* Left copy */}
+          <div
+            className="order-1 lg:order-1 space-y-4 lg:space-y-6"
+            ref={mobileSearchRef}
+          >
+            {/* Brand Card */}
+            <div className="absolute top-8 left-0 z-10">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/30 via-primary/20 to-primary/30 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-700 scale-110"></div>
+                <div className="relative bg-background/95 backdrop-blur-2xl rounded-3xl p-6 lg:p-8 border border-border/50 shadow-2xl transition-all duration-500">
+                  <div className="flex items-center gap-4 lg:gap-6">
+                    <Image
+                      src="/assets/logos/logo_dark.svg"
+                      alt="UBIGroup Logo"
+                      width={64}
+                      height={64}
+                      className="h-16 w-auto lg:h-20 lg:w-auto transition-all duration-500"
+                      priority
+                    />
+                    <div className="flex flex-col">
+                      <h2 className="text-2xl lg:text-3xl font-bold text-foreground leading-tight">
+                        UBIGroup
+                      </h2>
+                      <p className="text-base lg:text-lg text-muted-foreground font-medium">
+                        Revolucionando el rubro inmobiliario
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Hero Text Content */}
-          <div className="space-y-4 lg:space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 bg-background/80 backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 bg-background/70 backdrop-blur-sm">
               <Sparkles className="h-4 w-4 text-primary" />
               <span className="text-sm text-muted-foreground">
                 Encuentra tu propiedad con confianza
               </span>
             </div>
-
-            <div className="space-y-4">
-              <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] text-white">
+            <h1 className="text-3xl sm:text-5xl lg:text-5xl font-bold leading-[1.1] text-foreground">
+              <div className="block">
                 <span className="block">Encuentra tu</span>
-              </h2>
-              <WordPullUp
-                words="Hogar Ideal"
-                className="text-3xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] text-primary"
-                wrapperFramerProps={{
-                  hidden: { opacity: 0 },
-                  show: {
-                    opacity: 1,
-                    transition: {
-                      staggerChildren: 0.1,
-                      delayChildren: 0.5,
-                    },
-                  },
-                }}
-                framerProps={{
-                  hidden: { y: 30, opacity: 0 },
-                  show: {
-                    y: 0,
-                    opacity: 1,
-                    transition: {
-                      type: "spring",
-                      stiffness: 100,
-                      damping: 10,
-                    },
-                  },
-                }}
-              />
-            </div>
-
-            <p className="text-base lg:text-lg text-white/90 max-w-xl mx-auto">
+                <ContainerTextFlip
+                  words={[
+                    "Hogar Ideal",
+                    "Departamento Ideal",
+                    "Casa Ideal",
+                    "Oficina Ideal",
+                    "Terreno Ideal",
+                  ]}
+                  className="block"
+                />
+              </div>
+            </h1>
+            <p className="text-base lg:text-lg text-muted-foreground max-w-xl">
               Busca por ciudad, barrio o tipo de propiedad. Filtra por venta o
               alquiler y empieza a explorar.
             </p>
 
             {/* Trust indicator */}
-            <div className="flex justify-center">
-              <AvatarCircles
-                numProperties={500}
-                propertyUrls={[
-                  {
-                    imageUrl:
-                      "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=150&h=150&fit=crop&crop=entropy",
-                  },
-                  {
-                    imageUrl:
-                      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=150&h=150&fit=crop&crop=entropy",
-                  },
-                  {
-                    imageUrl:
-                      "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=150&h=150&fit=crop&crop=entropy",
-                  },
-                  {
-                    imageUrl:
-                      "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=150&h=150&fit=crop&crop=entropy",
-                  },
-                  {
-                    imageUrl:
-                      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=150&h=150&fit=crop&crop=entropy",
-                  },
-                ]}
-              />
+            <AvatarCircles
+              numProperties={500}
+              propertyUrls={[
+                {
+                  imageUrl:
+                    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=150&h=150&fit=crop&crop=entropy",
+                },
+                {
+                  imageUrl:
+                    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=150&h=150&fit=crop&crop=entropy",
+                },
+                {
+                  imageUrl:
+                    "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=150&h=150&fit=crop&crop=entropy",
+                },
+                {
+                  imageUrl:
+                    "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=150&h=150&fit=crop&crop=entropy",
+                },
+                {
+                  imageUrl:
+                    "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=150&h=150&fit=crop&crop=entropy",
+                },
+              ]}
+            />
+
+            {/* Search Panel - mobile */}
+            <div className="lg:hidden w-full">
+              <ShineBorder className="p-1 rounded-2xl w-full">
+                <Card className="p-0 bg-background/80 backdrop-blur-xl shadow-2xl w-full border-0">
+                  <div className="flex flex-col gap-3 p-4 w-full">
+                    <div className="flex flex-col gap-1.5 w-full">
+                      <Tabs
+                        value={transaction}
+                        onValueChange={(v) =>
+                          setTransaction(v as TransactionTab)
+                        }
+                        className="w-full"
+                      >
+                        <TabsList className="w-full justify-start overflow-x-auto whitespace-nowrap min-w-0">
+                          <TabsTrigger value="venta" className="flex-shrink-0">
+                            Venta
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="alquiler"
+                            className="flex-shrink-0"
+                          >
+                            Alquiler
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="anticretico"
+                            className="flex-shrink-0"
+                          >
+                            Anticrético
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="proyectos"
+                            className="flex-shrink-0"
+                          >
+                            Proyectos
+                          </TabsTrigger>
+                        </TabsList>
+                      </Tabs>
+                      <Select
+                        value={type || "ALL"}
+                        onValueChange={(v: string) =>
+                          setType(
+                            v === "ALL"
+                              ? ""
+                              : (v as "HOUSE" | "APARTMENT" | "OFFICE" | "LAND")
+                          )
+                        }
+                      >
+                        <SelectTrigger className="w-full border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
+                          <SelectValue placeholder="Tipo" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                          <SelectItem
+                            value="ALL"
+                            className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                          >
+                            Todos
+                          </SelectItem>
+                          <SelectItem
+                            value="HOUSE"
+                            className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                          >
+                            Casa
+                          </SelectItem>
+                          <SelectItem
+                            value="APARTMENT"
+                            className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                          >
+                            Departamento
+                          </SelectItem>
+                          <SelectItem
+                            value="OFFICE"
+                            className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                          >
+                            Oficina
+                          </SelectItem>
+                          <SelectItem
+                            value="LAND"
+                            className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                          >
+                            Terreno
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <PropertySearchBar
+                      value={query}
+                      onSearch={handleSearch}
+                      placeholder="Buscar por ciudad, barrio o palabra clave"
+                      className="w-full [&_input]:border-[hsl(0_0%_25%)] [&_input]:bg-[hsl(0_0%_13%)] [&_input]:text-[hsl(0_0%_85%)] [&_input]:placeholder-[hsl(0_0%_65%)]"
+                    />
+                    <div className="text-xs text-muted-foreground">
+                      Búsqueda rápida. Para filtros avanzados, baja a la sección
+                      de propiedades.
+                    </div>
+                  </div>
+                </Card>
+              </ShineBorder>
             </div>
           </div>
 
-          {/* Search Panel - Centered */}
-          <div className="w-full max-w-3xl mx-auto" ref={mobileSearchRef}>
-            <ShineBorder className="p-1.5 rounded-2xl w-full">
-              <Card className="p-4 lg:p-6 bg-background/95 backdrop-blur-2xl shadow-2xl w-full border-0">
-                <div className="flex flex-col lg:flex-row items-center gap-3 lg:gap-4">
+          {/* Right image (carousel) */}
+          <div
+            className="order-2 lg:order-2 relative h-[240px] sm:h-[320px] lg:h-[480px] rounded-3xl overflow-hidden"
+            onTouchStart={(e) => {
+              touchStartXRef.current = e.changedTouches[0].clientX;
+              touchEndXRef.current = null;
+            }}
+            onTouchMove={(e) => {
+              touchEndXRef.current = e.changedTouches[0].clientX;
+            }}
+            onTouchEnd={() => {
+              const start = touchStartXRef.current;
+              const end = touchEndXRef.current;
+              if (start != null && end != null) {
+                const delta = end - start;
+                if (Math.abs(delta) > 40) {
+                  setImageIndex((prev) =>
+                    delta < 0
+                      ? (prev + 1) % carouselImages.length
+                      : (prev - 1 + carouselImages.length) %
+                        carouselImages.length
+                  );
+                }
+              }
+              touchStartXRef.current = null;
+              touchEndXRef.current = null;
+            }}
+          >
+            {/* Always show images immediately - no loading state */}
+            {carouselImages.length > 0 ? (
+              <>
+                {carouselImages.map((img, idx) => {
+                  return (
+                    <div
+                      key={img}
+                      className={`absolute inset-0 bg-center bg-cover transition-opacity duration-1000 ease-in-out ${
+                        idx === imageIndex ? "opacity-100" : "opacity-0"
+                      }`}
+                      style={{ backgroundImage: `url(${img})` }}
+                      aria-hidden={idx !== imageIndex}
+                    />
+                  );
+                })}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-black/10 to-transparent" />
+
+                {/* Carousel dots */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+                  {carouselImages.map((_, i) => (
+                    <button
+                      key={i}
+                      aria-label={`Ir a imagen ${i + 1}`}
+                      onClick={() => setImageIndex(i)}
+                      className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+                        i === imageIndex ? "bg-white" : "bg-white/50"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                <div className="text-white text-lg">
+                  No hay imágenes disponibles
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Search Panel - desktop overlay (raised higher) */}
+          <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 bottom-6 w-full max-w-5xl z-10">
+            <ShineBorder className="p-3 rounded-2xl">
+              <Card className="p-6 bg-background/90 backdrop-blur-xl border-border shadow-2xl w-full">
+                <div className="flex items-center gap-4">
                   <Tabs
                     value={transaction}
                     onValueChange={(v) => setTransaction(v as TransactionTab)}
                   >
-                    <TabsList className="flex-nowrap overflow-x-auto whitespace-nowrap h-9">
-                      <TabsTrigger value="venta" className="text-xs px-3">
-                        Venta
-                      </TabsTrigger>
-                      <TabsTrigger value="alquiler" className="text-xs px-3">
-                        Alquiler
-                      </TabsTrigger>
-                      <TabsTrigger value="anticretico" className="text-xs px-3">
-                        Anticrético
-                      </TabsTrigger>
-                      <TabsTrigger value="proyectos" className="text-xs px-3">
-                        Proyectos
-                      </TabsTrigger>
+                    <TabsList className="flex-nowrap overflow-x-auto whitespace-nowrap">
+                      <TabsTrigger value="venta">Venta</TabsTrigger>
+                      <TabsTrigger value="alquiler">Alquiler</TabsTrigger>
+                      <TabsTrigger value="anticretico">Anticrético</TabsTrigger>
+                      <TabsTrigger value="proyectos">Proyectos</TabsTrigger>
                     </TabsList>
                   </Tabs>
                   <Select
@@ -347,7 +440,7 @@ export const HeroSearch = () => {
                       )
                     }
                   >
-                    <SelectTrigger className="w-full lg:w-40 border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] h-9 text-sm">
+                    <SelectTrigger className="w-48 border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
                       <SelectValue placeholder="Tipo" />
                     </SelectTrigger>
                     <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
@@ -383,7 +476,7 @@ export const HeroSearch = () => {
                       </SelectItem>
                     </SelectContent>
                   </Select>
-                  <div className="flex-1 w-full">
+                  <div className="flex-1">
                     <PropertySearchBar
                       value={query}
                       onSearch={handleSearch}
