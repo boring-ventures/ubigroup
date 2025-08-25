@@ -6,6 +6,8 @@ export interface PendingProperty {
   title: string;
   description: string;
   price: number;
+  currency: string;
+  exchangeRate: number | null;
   propertyType: string;
   transactionType: string;
   address: string;
@@ -25,6 +27,7 @@ export interface PendingProperty {
     firstName: string;
     lastName: string;
     email: string;
+    phone: string | null;
   };
 }
 

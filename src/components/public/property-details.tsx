@@ -154,16 +154,35 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
   };
 
   const getTransactionBadge = (type: string) => {
+    let label = "Alquiler";
+    let variant: "default" | "secondary" = "secondary";
+    let className = "bg-green-600 hover:bg-green-700 text-white";
+
+    switch (type) {
+      case "SALE":
+        label = "Venta";
+        variant = "default";
+        className = "bg-primary hover:bg-primary/90";
+        break;
+      case "RENT":
+        label = "Alquiler";
+        variant = "secondary";
+        className = "bg-green-600 hover:bg-green-700 text-white";
+        break;
+      case "ANTICRÉTICO":
+        label = "Anticrético";
+        variant = "secondary";
+        className = "bg-purple-600 hover:bg-purple-700 text-white";
+        break;
+      default:
+        label = "Alquiler";
+        variant = "secondary";
+        className = "bg-green-600 hover:bg-green-700 text-white";
+    }
+
     return (
-      <Badge
-        variant={type === "SALE" ? "default" : "secondary"}
-        className={`${
-          type === "SALE"
-            ? "bg-primary hover:bg-primary/90"
-            : "bg-green-600 hover:bg-green-700 text-white"
-        }`}
-      >
-        {type === "SALE" ? "Venta" : "Alquiler"}
+      <Badge variant={variant} className={className}>
+        {label}
       </Badge>
     );
   };
@@ -184,7 +203,16 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
   };
 
   const getTransactionTypeLabel = (type: string) => {
-    return type === "SALE" ? "Venta" : "Alquiler";
+    switch (type) {
+      case "SALE":
+        return "Venta";
+      case "RENT":
+        return "Alquiler";
+      case "ANTICRÉTICO":
+        return "Anticrético";
+      default:
+        return "Alquiler";
+    }
   };
 
   const handleContactWhatsApp = () => {
@@ -676,7 +704,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Transacción:</span>
                   <span className="font-medium">
-                    {property.transactionType === "SALE" ? "Venta" : "Alquiler"}
+                    {getTransactionTypeLabel(property.transactionType)}
                   </span>
                 </div>
                 <div className="flex justify-between">

@@ -15,13 +15,25 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { CheckCircle, Home, Bed, Bath, MapPin, XCircle } from "lucide-react";
+import {
+  CheckCircle,
+  Home,
+  Bed,
+  Bath,
+  MapPin,
+  XCircle,
+  Eye,
+  Maximize2,
+} from "lucide-react";
+import Link from "next/link";
 import {
   usePendingProperties,
   useUpdatePropertyStatus,
   type UsePendingPropertiesParams,
+  type PendingProperty,
 } from "@/hooks/use-pending-properties";
 import { toast } from "@/components/ui/use-toast";
+import { PendingPropertyModal } from "./pending-property-modal";
 
 export function PendingPropertiesApproval() {
   const [params, setParams] = useState<UsePendingPropertiesParams>({
@@ -33,6 +45,10 @@ export function PendingPropertiesApproval() {
   const [actionType, setActionType] = useState<"approve" | "reject" | null>(
     null
   );
+  const [modalProperty, setModalProperty] = useState<PendingProperty | null>(
+    null
+  );
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { data, isLoading, error } = usePendingProperties(params);
   const updateStatusMutation = useUpdatePropertyStatus();
@@ -63,8 +79,8 @@ export function PendingPropertiesApproval() {
       });
 
       toast({
-        title: "Success",
-        description: `Property ${actionType === "approve" ? "approved" : "rejected"} successfully`,
+        title: "Éxito",
+        description: `Propiedad ${actionType === "approve" ? "aprobada" : "rechazada"} exitosamente`,
       });
 
       setSelectedProperty(null);
@@ -76,7 +92,7 @@ export function PendingPropertiesApproval() {
         description:
           error instanceof Error
             ? error.message
-            : "Failed to update property status",
+            : "Error al actualizar el estado de la propiedad",
         variant: "destructive",
       });
     }
@@ -88,11 +104,23 @@ export function PendingPropertiesApproval() {
     setRejectionReason("");
   };
 
+  const handleQuickView = (property: PendingProperty) => {
+    setModalProperty(property);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalProperty(null);
+  };
+
   if (error) {
     return (
       <Card>
         <CardContent className="pt-6">
-          <p className="text-destructive">Failed to load pending properties</p>
+          <p className="text-destructive">
+            Error al cargar propiedades pendientes
+          </p>
         </CardContent>
       </Card>
     );
@@ -126,9 +154,10 @@ export function PendingPropertiesApproval() {
           ) : !data?.properties || data.properties.length === 0 ? (
             <div className="text-center py-10">
               <CheckCircle className="mx-auto h-12 w-12 text-green-500/40" />
-              <h3 className="mt-4 text-lg font-medium">All caught up!</h3>
+              <h3 className="mt-4 text-lg font-medium">¡Todo al día!</h3>
               <p className="text-muted-foreground">
-                No pending properties require your review at this time.
+                No hay propiedades pendientes que requieran tu revisión en este
+                momento.
               </p>
             </div>
           ) : (
@@ -151,7 +180,7 @@ export function PendingPropertiesApproval() {
                               <div className="flex items-center space-x-1">
                                 <MapPin className="h-4 w-4" />
                                 <span>
-                                  {property.address || "No address"},{" "}
+                                  {property.address || "Sin dirección"},{" "}
                                   {property.city || "N/A"},{" "}
                                   {property.state || "N/A"}
                                 </span>
@@ -170,7 +199,7 @@ export function PendingPropertiesApproval() {
                                 : "N/A"}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              Submitted{" "}
+                              Enviado{" "}
                               {new Date(
                                 property.createdAt
                               ).toLocaleDateString()}
@@ -183,14 +212,14 @@ export function PendingPropertiesApproval() {
                           <div className="flex items-center space-x-2">
                             <Bed className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm">
-                              {property.bedrooms || 0} bed
+                              {property.bedrooms || 0} dormitorio
                               {(property.bedrooms || 0) !== 1 ? "s" : ""}
                             </span>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Bath className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm">
-                              {property.bathrooms || 0} bath
+                              {property.bathrooms || 0} baño
                               {(property.bathrooms || 0) !== 1 ? "s" : ""}
                             </span>
                           </div>
@@ -200,13 +229,13 @@ export function PendingPropertiesApproval() {
                               {property.area
                                 ? property.area.toLocaleString()
                                 : "N/A"}{" "}
-                              sq ft
+                              pies²
                             </span>
                           </div>
                           <div className="text-sm">
-                            <span className="text-muted-foreground">by </span>
+                            <span className="text-muted-foreground">por </span>
                             <span className="font-medium">
-                              {property.agent?.firstName || "Unknown"}{" "}
+                              {property.agent?.firstName || "Desconocido"}{" "}
                               {property.agent?.lastName || ""}
                             </span>
                           </div>
@@ -215,7 +244,8 @@ export function PendingPropertiesApproval() {
                         {/* Description */}
                         <div>
                           <p className="text-sm text-gray-600 line-clamp-2">
-                            {property.description || "No description available"}
+                            {property.description ||
+                              "No hay descripción disponible"}
                           </p>
                         </div>
 
@@ -236,7 +266,7 @@ export function PendingPropertiesApproval() {
                                 ))}
                               {property.features.length > 4 && (
                                 <Badge variant="outline" className="text-xs">
-                                  +{property.features.length - 4} more
+                                  +{property.features.length - 4} más
                                 </Badge>
                               )}
                             </div>
@@ -246,13 +276,27 @@ export function PendingPropertiesApproval() {
                         {/* Action Buttons */}
                         <div className="flex items-center justify-end space-x-3 pt-4">
                           <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleQuickView(property)}
+                          >
+                            <Maximize2 className="mr-2 h-4 w-4" />
+                            Vista Rápida
+                          </Button>
+                          <Link href={`/properties/pending/${property.id}`}>
+                            <Button variant="outline" size="sm">
+                              <Eye className="mr-2 h-4 w-4" />
+                              Detalles Completos
+                            </Button>
+                          </Link>
+                          <Button
                             variant="destructive"
                             size="sm"
                             onClick={() => handleReject(property.id)}
                             disabled={updateStatusMutation.isPending}
                           >
                             <XCircle className="mr-2 h-4 w-4" />
-                            Reject
+                            Rechazar
                           </Button>
                           <Button
                             size="sm"
@@ -260,7 +304,7 @@ export function PendingPropertiesApproval() {
                             disabled={updateStatusMutation.isPending}
                           >
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            Approve
+                            Aprobar
                           </Button>
                         </div>
                       </div>
@@ -273,9 +317,9 @@ export function PendingPropertiesApproval() {
               {data && data.totalPages > 1 && (
                 <div className="flex items-center justify-between pt-4">
                   <p className="text-sm text-muted-foreground">
-                    Showing {(data.currentPage - 1) * params.limit! + 1} to{" "}
-                    {Math.min(data.currentPage * params.limit!, data.total)} of{" "}
-                    {data.total} pending properties
+                    Mostrando {(data.currentPage - 1) * params.limit! + 1} a{" "}
+                    {Math.min(data.currentPage * params.limit!, data.total)} de{" "}
+                    {data.total} propiedades pendientes
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -284,10 +328,10 @@ export function PendingPropertiesApproval() {
                       onClick={() => handlePageChange(data.currentPage - 1)}
                       disabled={data.currentPage <= 1}
                     >
-                      Previous
+                      Anterior
                     </Button>
                     <span className="text-sm">
-                      Page {data.currentPage} of {data.totalPages}
+                      Página {data.currentPage} de {data.totalPages}
                     </span>
                     <Button
                       variant="outline"
@@ -295,7 +339,7 @@ export function PendingPropertiesApproval() {
                       onClick={() => handlePageChange(data.currentPage + 1)}
                       disabled={data.currentPage >= data.totalPages}
                     >
-                      Next
+                      Siguiente
                     </Button>
                   </div>
                 </div>
@@ -314,22 +358,22 @@ export function PendingPropertiesApproval() {
           <DialogHeader>
             <DialogTitle>
               {actionType === "approve"
-                ? "Approve Property"
-                : "Reject Property"}
+                ? "Aprobar Propiedad"
+                : "Rechazar Propiedad"}
             </DialogTitle>
             <DialogDescription>
               {actionType === "approve"
-                ? "This property will be approved and made visible to the public."
-                : "Please provide a reason for rejecting this property listing."}
+                ? "Esta propiedad será aprobada y será visible al público."
+                : "Por favor proporcione una razón para rechazar esta lista de propiedad."}
             </DialogDescription>
           </DialogHeader>
 
           {actionType === "reject" && (
             <div className="space-y-2">
-              <Label htmlFor="rejection-reason">Rejection Reason *</Label>
+              <Label htmlFor="rejection-reason">Razón de Rechazo *</Label>
               <Textarea
                 id="rejection-reason"
-                placeholder="Please explain why this property is being rejected..."
+                placeholder="Por favor explique por qué esta propiedad está siendo rechazada..."
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 rows={4}
@@ -343,7 +387,7 @@ export function PendingPropertiesApproval() {
               onClick={closeDialog}
               disabled={updateStatusMutation.isPending}
             >
-              Cancel
+              Cancelar
             </Button>
             <Button
               onClick={handleConfirmAction}
@@ -354,14 +398,21 @@ export function PendingPropertiesApproval() {
               variant={actionType === "approve" ? "default" : "destructive"}
             >
               {updateStatusMutation.isPending
-                ? "Processing..."
+                ? "Procesando..."
                 : actionType === "approve"
-                  ? "Approve Property"
-                  : "Reject Property"}
+                  ? "Aprobar Propiedad"
+                  : "Rechazar Propiedad"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Quick View Modal */}
+      <PendingPropertyModal
+        property={modalProperty}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </div>
   );
 }

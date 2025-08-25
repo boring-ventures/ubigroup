@@ -55,6 +55,34 @@ export function PropertyPdfDownload({
   mapSnapshotDataUrl,
   onBeforeGenerate,
 }: PropertyPdfDownloadProps) {
+  const getTransactionTypeLabel = (type: string) => {
+    switch (type) {
+      case "SALE":
+        return "Venta";
+      case "RENT":
+        return "Alquiler";
+      case "ANTICRÉTICO":
+        return "Anticrético";
+      default:
+        return "Alquiler";
+    }
+  };
+
+  const getPropertyTypeLabel = (type: string) => {
+    switch (type) {
+      case "HOUSE":
+        return "Casa";
+      case "APARTMENT":
+        return "Apartamento";
+      case "OFFICE":
+        return "Oficina";
+      case "LAND":
+        return "Terreno";
+      default:
+        return type;
+    }
+  };
+
   const formatPrice = (
     price: number,
     currency: string,
@@ -97,21 +125,6 @@ export function PropertyPdfDownload({
       }
 
       return transactionType === "RENT" ? `${formatted}/mes` : formatted;
-    }
-  };
-
-  const getPropertyTypeLabel = (type: string) => {
-    switch (type) {
-      case "HOUSE":
-        return "Casa";
-      case "APARTMENT":
-        return "Apartamento";
-      case "OFFICE":
-        return "Oficina";
-      case "LAND":
-        return "Terreno";
-      default:
-        return type;
     }
   };
 
@@ -208,7 +221,7 @@ export function PropertyPdfDownload({
                ${formatPrice(property.price, property.currency, property.exchangeRate, property.transactionType)}
              </div>
              <div style="font-size: 14px; color: #6b7280;">
-                ${property.squareMeters}m² • ${property.transactionType === "SALE" ? "Venta" : "Alquiler"} • ${getPropertyTypeLabel(property.type)}
+                ${property.squareMeters}m² • ${getTransactionTypeLabel(property.transactionType)} • ${getPropertyTypeLabel(property.type)}
              </div>
            </div>
 
@@ -488,7 +501,7 @@ export function PropertyPdfDownload({
             </h2>
               <div style="color: #6b7280; line-height: 1.8;">
                 <div><strong>Tipo:</strong> ${getPropertyTypeLabel(property.type)}</div>
-                <div><strong>Transacción:</strong> ${property.transactionType === "SALE" ? "Venta" : "Alquiler"}</div>
+                <div><strong>Transacción:</strong> ${getTransactionTypeLabel(property.transactionType)}</div>
                 <div><strong>ID de la Propiedad:</strong> ${property.id}</div>
                 <div><strong>Publicado:</strong> ${new Date(property.createdAt).toLocaleDateString()}</div>
               </div>

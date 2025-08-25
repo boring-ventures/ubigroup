@@ -29,10 +29,10 @@ export default async function PendingPropertiesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Pending Approvals
+            Aprobaciones Pendientes
           </h1>
           <p className="text-muted-foreground">
-            Review and approve property listings submitted by your agents
+            Revisa y aprueba las listas de propiedades enviadas por tus agentes
           </p>
         </div>
       </div>
