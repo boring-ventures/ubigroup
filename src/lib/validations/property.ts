@@ -27,6 +27,10 @@ export const createPropertySchema = z.object({
     .number()
     .int()
     .min(0, "Bathrooms must be a non-negative integer"),
+  garageSpaces: z
+    .number()
+    .int()
+    .min(0, "Garage spaces must be a non-negative integer"),
   area: z.number().min(0, "Area must be a positive number"),
   features: z.array(z.string()).default([]),
   images: z.array(z.string().url()).default([]),

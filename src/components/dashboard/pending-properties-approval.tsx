@@ -35,6 +35,20 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { PendingPropertyModal } from "./pending-property-modal";
 
+// Helper function to format price with correct currency
+const formatPrice = (price: number, currency: string) => {
+  if (!price) return "N/A";
+
+  const formatter = new Intl.NumberFormat("es-BO", {
+    style: "currency",
+    currency: currency === "DOLLARS" ? "USD" : "BOB",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+
+  return formatter.format(price);
+};
+
 export function PendingPropertiesApproval() {
   const [params, setParams] = useState<UsePendingPropertiesParams>({
     page: 1,
@@ -193,10 +207,7 @@ export function PendingPropertiesApproval() {
                           </div>
                           <div className="text-right">
                             <div className="text-2xl font-bold">
-                              $
-                              {property.price
-                                ? property.price.toLocaleString()
-                                : "N/A"}
+                              {formatPrice(property.price, property.currency)}
                             </div>
                             <div className="text-xs text-muted-foreground">
                               Enviado{" "}
@@ -229,7 +240,7 @@ export function PendingPropertiesApproval() {
                               {property.area
                                 ? property.area.toLocaleString()
                                 : "N/A"}{" "}
-                              pies²
+                              m²
                             </span>
                           </div>
                           <div className="text-sm">

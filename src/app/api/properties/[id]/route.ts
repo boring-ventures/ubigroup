@@ -149,7 +149,7 @@ export async function PUT(
       price: updateData.price,
       bedrooms: updateData.bedrooms,
       bathrooms: updateData.bathrooms,
-      garageSpaces: 0, // Default value
+      garageSpaces: updateData.garageSpaces,
       squareMeters: updateData.area, // Map area to squareMeters
       transactionType: updateData.transactionType,
       images: updateData.images,

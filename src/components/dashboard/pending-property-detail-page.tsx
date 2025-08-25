@@ -165,9 +165,11 @@ export function PendingPropertyDetailPage({
   };
 
   const formatPrice = (price: number, currency: string) => {
-    const formatter = new Intl.NumberFormat("en-US", {
+    const formatter = new Intl.NumberFormat("es-BO", {
       style: "currency",
       currency: currency === "DOLLARS" ? "USD" : "BOB",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     });
     return formatter.format(price);
   };
@@ -397,7 +399,7 @@ export function PendingPropertyDetailPage({
                   <div className="flex justify-between text-sm">
                     <span>Tipo de Cambio:</span>
                     <span className="font-medium">
-                      ${property.exchangeRate}
+                      Bs {property.exchangeRate.toFixed(2)}/$
                     </span>
                   </div>
                 )}

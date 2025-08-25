@@ -117,6 +117,7 @@ export function PropertyForm({
       longitude: initialData?.longitude || undefined,
       bedrooms: initialData?.bedrooms || 1,
       bathrooms: initialData?.bathrooms || 1,
+      garageSpaces: initialData?.garageSpaces || 0,
       area: initialData?.area || 0,
       features: initialData?.features || [],
       images: initialData?.images || [],
@@ -142,10 +143,43 @@ export function PropertyForm({
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      const validFiles = Array.from(files).filter((file) =>
-        validateFile(file, "image")
+      console.log(
+        `Selected ${files.length} image files:`,
+        Array.from(files).map((f) => f.name)
       );
+
+      // Check total size before processing
+      const totalSize = Array.from(files).reduce(
+        (sum, file) => sum + file.size,
+        0
+      );
+      const totalSizeMB = totalSize / (1024 * 1024);
+
+      if (totalSizeMB > 50) {
+        toast({
+          title: "Archivos muy grandes",
+          description: `El tamaño total (${totalSizeMB.toFixed(1)}MB) es muy grande. Los archivos se subirán en lotes automáticamente.`,
+          variant: "default",
+        });
+      }
+
+      const validFiles = Array.from(files).filter((file) => {
+        const isValid = validateFile(file, "image");
+        if (!isValid) {
+          console.log(`Invalid file: ${file.name}`);
+        }
+        return isValid;
+      });
+      console.log(`Valid files: ${validFiles.length}`);
       setImages((prev) => [...prev, ...validFiles]);
+
+      // Show success message for valid files
+      if (validFiles.length > 0) {
+        toast({
+          title: "Imágenes agregadas",
+          description: `${validFiles.length} imagen${validFiles.length !== 1 ? "es" : ""} agregada${validFiles.length !== 1 ? "s" : ""} exitosamente`,
+        });
+      }
     }
     // Clear the input so the same file can be selected again
     event.target.value = "";
@@ -162,10 +196,43 @@ export function PropertyForm({
   const handleVideoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
-      const validFiles = Array.from(files).filter((file) =>
-        validateFile(file, "video")
+      console.log(
+        `Selected ${files.length} video files:`,
+        Array.from(files).map((f) => f.name)
       );
+
+      // Check total size before processing
+      const totalSize = Array.from(files).reduce(
+        (sum, file) => sum + file.size,
+        0
+      );
+      const totalSizeMB = totalSize / (1024 * 1024);
+
+      if (totalSizeMB > 50) {
+        toast({
+          title: "Archivos muy grandes",
+          description: `El tamaño total (${totalSizeMB.toFixed(1)}MB) es muy grande. Los archivos se subirán en lotes automáticamente.`,
+          variant: "default",
+        });
+      }
+
+      const validFiles = Array.from(files).filter((file) => {
+        const isValid = validateFile(file, "video");
+        if (!isValid) {
+          console.log(`Invalid file: ${file.name}`);
+        }
+        return isValid;
+      });
+      console.log(`Valid files: ${validFiles.length}`);
       setVideos((prev) => [...prev, ...validFiles]);
+
+      // Show success message for valid files
+      if (validFiles.length > 0) {
+        toast({
+          title: "Videos agregados",
+          description: `${validFiles.length} video${validFiles.length !== 1 ? "s" : ""} agregado${validFiles.length !== 1 ? "s" : ""} exitosamente`,
+        });
+      }
     }
     // Clear the input so the same file can be selected again
     event.target.value = "";
@@ -191,8 +258,8 @@ export function PropertyForm({
       try {
         if (images.length > 0) {
           toast({
-            title: "Uploading images...",
-            description: "Please wait while images are being uploaded",
+            title: "Subiendo imágenes...",
+            description: "Por favor espera mientras se suben las imágenes",
           });
           const uploadedImageUrls = await uploadFiles(images, "images");
           imageUrls = [...imageUrls, ...uploadedImageUrls];
@@ -799,7 +866,7 @@ export function PropertyForm({
               </div>
             </CardHeader>
             <CardContent className="pt-4 sm:pt-6 space-y-4 sm:space-y-6">
-              <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-4">
                 <FormField
                   control={form.control}
                   name="bedrooms"
@@ -841,6 +908,30 @@ export function PropertyForm({
                           min={0}
                           step={0.5}
                           aria-label="Número de baños"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="garageSpaces"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm sm:text-base font-semibold flex items-center space-x-1 sm:space-x-2">
+                        <Home className="h-4 w-4 sm:h-5 sm:w-5" />
+                        <span>Plazas de garaje</span>
+                      </FormLabel>
+                      <FormControl>
+                        <NumericInput
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="0"
+                          min={0}
+                          step={1}
+                          aria-label="Número de plazas de garaje"
                         />
                       </FormControl>
                       <FormMessage />
@@ -967,15 +1058,25 @@ export function PropertyForm({
             <CardContent className="pt-4 sm:pt-6 space-y-6 sm:space-y-8">
               {/* Images Section */}
               <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-indigo-200 dark:border-indigo-700">
-                <div className="flex items-center space-x-2 mb-3 sm:mb-4">
-                  <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 dark:text-indigo-400" />
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200">
-                    Imágenes
-                  </h4>
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className="flex items-center space-x-2">
+                    <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 dark:text-indigo-400" />
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200">
+                      Imágenes
+                    </h4>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {uploadedImages.length + images.length} seleccionada
+                    {uploadedImages.length + images.length !== 1 ? "s" : ""}
+                  </Badge>
                 </div>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-4">
                   Tamaño máximo por archivo: 50MB. Formatos soportados: JPG,
-                  PNG, GIF
+                  PNG, GIF, WebP.
+                  <strong>
+                    {" "}
+                    Puedes seleccionar múltiples imágenes a la vez.
+                  </strong>
                 </p>
 
                 {/* Existing uploaded images */}
@@ -1037,21 +1138,29 @@ export function PropertyForm({
                     multiple
                     onChange={handleImageUpload}
                     className="flex-1 h-10 sm:h-12 text-sm sm:text-base file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600"
+                    title="Selecciona una o más imágenes (Ctrl+Click para seleccionar múltiples archivos)"
                   />
                 </div>
               </div>
 
               {/* Videos Section */}
               <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-indigo-200 dark:border-indigo-700">
-                <div className="flex items-center space-x-2 mb-3 sm:mb-4">
-                  <Video className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 dark:text-indigo-400" />
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200">
-                    Videos
-                  </h4>
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Video className="h-4 w-4 sm:h-5 sm:w-5 text-indigo-600 dark:text-indigo-400" />
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-gray-200">
+                      Videos
+                    </h4>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {uploadedVideos.length + videos.length} seleccionado
+                    {uploadedVideos.length + videos.length !== 1 ? "s" : ""}
+                  </Badge>
                 </div>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-4">
                   Tamaño máximo por archivo: 50MB. Formatos soportados: MP4,
-                  AVI, MOV, WebM. Se recomienda WebM para mejor compresión.
+                  AVI, MOV, WebM. Se recomienda WebM para mejor compresión.{" "}
+                  <strong>Puedes seleccionar múltiples videos a la vez.</strong>
                 </p>
 
                 {/* Existing uploaded videos */}
@@ -1113,6 +1222,7 @@ export function PropertyForm({
                     multiple
                     onChange={handleVideoUpload}
                     className="flex-1 h-10 sm:h-12 text-sm sm:text-base file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-indigo-500 file:text-white hover:file:bg-indigo-600"
+                    title="Selecciona uno o más videos (Ctrl+Click para seleccionar múltiples archivos)"
                   />
                 </div>
               </div>

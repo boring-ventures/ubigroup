@@ -99,6 +99,7 @@ export default async function EditPropertyPage({
     longitude: property.longitude ?? undefined,
     bedrooms: property.bedrooms ?? 0,
     bathrooms: property.bathrooms ?? 0,
+    garageSpaces: property.garageSpaces ?? 0,
     area: property.squareMeters ?? 0,
     features: property.features ?? [],
     images: property.images ?? [],

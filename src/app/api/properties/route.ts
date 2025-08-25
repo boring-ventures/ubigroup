@@ -375,7 +375,7 @@ export async function POST(request: NextRequest) {
       exchangeRate: propertyData!.exchangeRate,
       bedrooms: propertyData!.bedrooms,
       bathrooms: propertyData!.bathrooms,
-      garageSpaces: 0, // Default value
+      garageSpaces: propertyData!.garageSpaces,
       squareMeters: propertyData!.area, // Map area to squareMeters
       transactionType: propertyData!.transactionType,
       images: propertyData!.images,

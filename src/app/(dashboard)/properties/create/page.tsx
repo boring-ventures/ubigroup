@@ -67,10 +67,10 @@ export default function CreatePropertyPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Create Property
+            Crear Propiedad
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Add a new property listing for approval
+            Agrega una nueva lista de propiedad para aprobación
           </p>
         </div>
       </div>
