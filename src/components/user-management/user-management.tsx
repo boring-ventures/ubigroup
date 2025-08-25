@@ -113,11 +113,27 @@ const createUserSchema = z.object({
       return digits.length >= 8 && digits.length <= 9;
     }, "El teléfono debe tener 8 dígitos (fijo) o 9 dígitos (móvil)")
     .optional(),
-  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
+  agencyId: z.string().optional(),
+});
+
+const editUserSchema = z.object({
+  firstName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
+  lastName: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
+  role: z.enum(["SUPER_ADMIN", "AGENCY_ADMIN", "AGENT"]),
+  phone: z
+    .string()
+    .refine((val) => {
+      if (!val) return true; // Optional field
+      const digits = val.replace(/\D/g, "");
+      // Accept 8 digits (landline) or 9 digits (mobile) for Bolivia
+      return digits.length >= 8 && digits.length <= 9;
+    }, "El teléfono debe tener 8 dígitos (fijo) o 9 dígitos (móvil)")
+    .optional(),
   agencyId: z.string().optional(),
 });
 
 type CreateUserFormData = z.infer<typeof createUserSchema>;
+type EditUserFormData = z.infer<typeof editUserSchema>;
 
 interface UserManagementProps {
   onUserUpdate?: () => void;
@@ -175,16 +191,9 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
       lastName: "",
       role: "AGENT",
       phone: "",
-      password: "",
       agencyId: "",
     },
   });
-
-  // Generate password function
-  const handleGeneratePassword = () => {
-    const generatedPassword = generateSecurePassword();
-    form.setValue("password", generatedPassword);
-  };
 
   // Generate password for reset
   const handleGenerateResetPassword = () => {
@@ -197,10 +206,8 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
     }
   };
 
-  const editForm = useForm<Omit<CreateUserFormData, "email" | "password">>({
-    resolver: zodResolver(
-      createUserSchema.omit({ email: true, password: true })
-    ),
+  const editForm = useForm<EditUserFormData>({
+    resolver: zodResolver(editUserSchema),
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -273,13 +280,16 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
     try {
       setIsCreating(true);
 
+      // Generate a secure password automatically
+      const generatedPassword = generateSecurePassword();
+
       // Format phone number with Bolivia prefix if provided
       const formattedPhone = data.phone ? formatPhoneNumber(data.phone) : null;
 
-      // Prepare user data - send raw password, API will handle auth creation
+      // Prepare user data - send generated password, API will handle auth creation
       const userData = {
         email: data.email,
-        password: data.password, // Send raw password
+        password: generatedPassword, // Send generated password
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
@@ -311,7 +321,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
           );
           setCreatedUserCredentials({
             email: data.email,
-            password: data.password,
+            password: generatedPassword,
             firstName: data.firstName,
             lastName: data.lastName,
             role: data.role,
@@ -365,9 +375,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
     setIsEditDialogOpen(true);
   };
 
-  const onEditSubmit = async (
-    data: Omit<CreateUserFormData, "email" | "password">
-  ) => {
+  const onEditSubmit = async (data: EditUserFormData) => {
     if (!editingUser) return;
 
     try {
@@ -632,7 +640,8 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                   <DialogTitle>Crear Nuevo Usuario</DialogTitle>
                   <DialogDescription>
                     Crear una nueva cuenta de usuario con el rol y permisos
-                    especificados.
+                    especificados. La contraseña será generada automáticamente y
+                    se mostrará al finalizar.
                   </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
@@ -809,33 +818,13 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Contraseña</FormLabel>
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            <FormControl>
-                              <PasswordInput
-                                placeholder="********"
-                                {...field}
-                              />
-                            </FormControl>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={handleGeneratePassword}
-                              className="flex-shrink-0"
-                            >
-                              <Key className="h-4 w-4 mr-1" />
-                              Generar
-                            </Button>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                      <Key className="h-4 w-4 text-blue-600" />
+                      <p className="text-sm text-blue-800">
+                        La contraseña será generada automáticamente y se
+                        mostrará al crear el usuario.
+                      </p>
+                    </div>
 
                     <DialogFooter>
                       <Button type="submit" disabled={isCreating}>

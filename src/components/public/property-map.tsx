@@ -233,7 +233,7 @@ export function PropertyMap({
         }
 
         // Create map instance
-        const map = L.map(mapRef.current).setView([-16.5, -68.1], 10); // Default to La Paz, Bolivia
+        const map = L.map(mapRef.current).setView([-17.3895, -66.1568], 10); // Default to Cochabamba, Bolivia
         console.log("Map created successfully");
 
         // Use internal proxy tiles (matches single property page behavior)

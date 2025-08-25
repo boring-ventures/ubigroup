@@ -3,7 +3,7 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { formatPhoneNumber } from "@/lib/utils";
+import { formatPhoneNumber, generateSecurePassword } from "@/lib/utils";
 
 export async function GET() {
   try {
@@ -172,12 +172,15 @@ export async function POST(request: NextRequest) {
     const formattedPhone = phone ? formatPhoneNumber(phone) : null;
 
     // Validate required fields
-    if (!email || !password || !firstName || !lastName || !role) {
+    if (!email || !firstName || !lastName || !role) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
+
+    // Generate password if not provided (should always be provided by frontend)
+    const finalPassword = password || generateSecurePassword();
 
     // Validate role
     if (!["SUPER_ADMIN", "AGENCY_ADMIN", "AGENT"].includes(role)) {
@@ -265,7 +268,7 @@ export async function POST(request: NextRequest) {
       const { data: authUser, error: authError } =
         await supabaseAdmin.auth.admin.createUser({
           email,
-          password,
+          password: finalPassword,
           email_confirm: true, // Auto-confirm email
           user_metadata: {
             firstName,
@@ -354,9 +357,9 @@ export async function POST(request: NextRequest) {
           message:
             "User profile created. User needs to complete signup at /sign-up to enable login.",
           email,
-          password,
+          password: finalPassword,
           requiresSignup: true,
-          signupInstructions: `User must go to /sign-up with email: ${email} and password: ${password}`,
+          signupInstructions: `User must go to /sign-up with email: ${email} and password: ${finalPassword}`,
         },
         { status: 201 }
       );
