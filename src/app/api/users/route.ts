@@ -76,16 +76,20 @@ export async function GET() {
         try {
           if (user.userId && user.userId !== user.id) {
             // User has a real Supabase auth ID
-            const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(user.userId);
-            
+            const { data: authUser, error: authError } =
+              await supabaseAdmin.auth.admin.getUserById(user.userId);
+
             if (authError) {
-              console.error(`Failed to get email for user ${user.id}:`, authError);
+              console.error(
+                `Failed to get email for user ${user.id}:`,
+                authError
+              );
               return {
                 ...user,
                 email: user.userId, // Fallback to userId if we can't get email
               };
             }
-            
+
             return {
               ...user,
               email: authUser?.user?.email || user.userId,
