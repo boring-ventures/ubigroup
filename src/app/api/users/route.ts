@@ -250,19 +250,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check if user with this email already exists in database OR Supabase
+    // Check if user with this email already exists in database (old temporary approach)
     const existingUser = await prisma.user.findFirst({
       where: {
-        OR: [
-          { userId: email }, // Old temporary approach
-          // We'll also check by actual userId after creating auth user
-        ],
+        userId: email, // Check for old temporary approach where userId = email
       },
     });
 
     if (existingUser) {
       return NextResponse.json(
-        { error: "User with this email already exists" },
+        { error: "User with this email already exists in database" },
         { status: 400 }
       );
     }
@@ -283,6 +280,18 @@ export async function POST(request: NextRequest) {
 
       if (authError) {
         console.error("Failed to create auth user:", authError);
+
+        // Handle specific error cases
+        if (authError.message.includes("User already registered")) {
+          return NextResponse.json(
+            {
+              error:
+                "User with this email already exists in authentication system",
+            },
+            { status: 400 }
+          );
+        }
+
         return NextResponse.json(
           { error: `Failed to create auth user: ${authError.message}` },
           { status: 500 }

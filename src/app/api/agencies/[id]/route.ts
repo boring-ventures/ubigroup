@@ -3,6 +3,7 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function PATCH(
   request: NextRequest,
@@ -308,6 +309,26 @@ export async function DELETE(
     // Use a more robust deletion approach
     console.log("Starting deletion for agency:", id);
 
+    // First, delete all users from Supabase Auth
+    console.log("Deleting users from Supabase Auth...");
+    for (const user of agency.users) {
+      try {
+        if (user.userId && user.userId !== user.id) {
+          // Skip temporary users
+          await supabaseAdmin.auth.admin.deleteUser(user.userId);
+          console.log(
+            `Successfully deleted user ${user.userId} from Supabase Auth`
+          );
+        }
+      } catch (authDeleteError) {
+        console.warn(
+          `Failed to delete user ${user.userId} from Supabase Auth:`,
+          authDeleteError
+        );
+        // Continue with other users even if one fails
+      }
+    }
+
     try {
       // Use a transaction to ensure all deletions happen atomically
       await prisma.$transaction(async (tx) => {
@@ -328,7 +349,7 @@ export async function DELETE(
         });
 
         // Delete all users associated with this agency
-        console.log("Deleting users...");
+        console.log("Deleting users from database...");
         await tx.user.deleteMany({
           where: {
             agencyId: id,
@@ -349,7 +370,7 @@ export async function DELETE(
     }
 
     return NextResponse.json({
-      message: `Agency "${agency.name}" and all associated data (${agency._count.users} users, ${agency._count.properties} properties, ${agency._count.projects} projects) deleted successfully`,
+      message: `Agency "${agency.name}" and all associated data (${agency._count.users} users, ${agency._count.properties} properties, ${agency._count.projects} projects) deleted successfully from both database and authentication system`,
     });
   } catch (error) {
     console.error("Failed to delete agency:", error);

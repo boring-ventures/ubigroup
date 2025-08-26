@@ -355,24 +355,26 @@ export async function DELETE(
       );
     }
 
-    // Delete user from database (this will cascade delete properties and projects)
-    await prisma.user.delete({
-      where: { id },
-    });
-
-    // Try to delete user from Supabase Auth if possible
+    // Delete user from Supabase Auth first
     try {
-      if (existingUser.userId && existingUser.userId !== existingUser.id) {
-        // User has a real Supabase auth ID
+      if (existingUser.userId) {
         await supabaseAdmin.auth.admin.deleteUser(existingUser.userId);
+        console.log(
+          `Successfully deleted user ${existingUser.userId} from Supabase Auth`
+        );
       }
     } catch (authDeleteError) {
       console.warn(
         "Failed to delete user from Supabase Auth:",
         authDeleteError
       );
-      // Continue anyway - database deletion was successful
+      // Continue with database deletion even if auth deletion fails
     }
+
+    // Delete user from database (this will cascade delete properties and projects)
+    await prisma.user.delete({
+      where: { id },
+    });
 
     return NextResponse.json({ message: "User deleted successfully" });
   } catch (error) {
