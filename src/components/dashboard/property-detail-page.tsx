@@ -18,12 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   MapPin,
   Bed,
   Bath,
@@ -32,7 +26,6 @@ import {
   Phone,
   MessageCircle,
   ChevronLeft,
-  ChevronRight,
   Home,
   Building2,
   Edit,
@@ -45,7 +38,6 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { UserRole, Currency, TransactionType } from "@prisma/client";
 import Link from "next/link";
-import Image from "next/image";
 import { PropertySingleMap } from "./property-single-map";
 import { HorizontalImageGallery } from "@/components/ui/horizontal-image-gallery";
 import { ImageCarouselModal } from "@/components/ui/image-carousel-modal";
