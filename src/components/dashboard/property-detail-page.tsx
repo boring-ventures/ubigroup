@@ -47,6 +47,8 @@ import { UserRole, Currency, TransactionType } from "@prisma/client";
 import Link from "next/link";
 import Image from "next/image";
 import { PropertySingleMap } from "./property-single-map";
+import { HorizontalImageGallery } from "@/components/ui/horizontal-image-gallery";
+import { ImageCarouselModal } from "@/components/ui/image-carousel-modal";
 
 interface Property {
   id: string;
@@ -95,8 +97,8 @@ export function PropertyDetailPage({
   userRole,
   initialProperty,
 }: PropertyDetailPageProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [showImageGallery, setShowImageGallery] = useState(false);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<Property>>({});
   const queryClient = useQueryClient();
@@ -330,20 +332,9 @@ export function PropertyDetailPage({
     }
   };
 
-  const nextImage = () => {
-    if (property && property.images.length > 0) {
-      setCurrentImageIndex((prev) =>
-        prev === property.images.length - 1 ? 0 : prev + 1
-      );
-    }
-  };
-
-  const prevImage = () => {
-    if (property && property.images.length > 0) {
-      setCurrentImageIndex((prev) =>
-        prev === 0 ? property.images.length - 1 : prev - 1
-      );
-    }
+  const handleImageClick = (index: number) => {
+    setSelectedImageIndex(index);
+    setImageModalOpen(true);
   };
 
   const handleEdit = () => {
@@ -865,29 +856,12 @@ export function PropertyDetailPage({
         {/* Image Gallery */}
         {property.images.length > 0 && (
           <Card>
-            <CardHeader>
-              <CardTitle>Imágenes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {property.images.map((image, index) => (
-                  <div
-                    key={index}
-                    className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer group"
-                    onClick={() => {
-                      setCurrentImageIndex(index);
-                      setShowImageGallery(true);
-                    }}
-                  >
-                    <Image
-                      src={image}
-                      alt={`${property.title} - Imagen ${index + 1}`}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-                ))}
-              </div>
+            <CardContent className="p-6">
+              <HorizontalImageGallery
+                images={property.images}
+                onImageClick={handleImageClick}
+                title="Imágenes de la propiedad"
+              />
             </CardContent>
           </Card>
         )}
@@ -918,49 +892,14 @@ export function PropertyDetailPage({
         )}
       </div>
 
-      {/* Image Gallery Modal */}
-      <Dialog open={showImageGallery} onOpenChange={setShowImageGallery}>
-        <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
-          <DialogHeader>
-            <DialogTitle className="sr-only">Galería de Imágenes</DialogTitle>
-          </DialogHeader>
-          <div className="relative w-full h-full flex items-center justify-center bg-black">
-            <Image
-              src={property.images[currentImageIndex]}
-              alt={`${property.title} - Imagen ${currentImageIndex + 1}`}
-              fill
-              className="object-contain"
-            />
-
-            {/* Navigation */}
-            {property.images.length > 1 && (
-              <>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2"
-                  onClick={prevImage}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2"
-                  onClick={nextImage}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </>
-            )}
-
-            {/* Counter */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full">
-              {currentImageIndex + 1} / {property.images.length}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Image Carousel Modal */}
+      <ImageCarouselModal
+        isOpen={imageModalOpen}
+        onClose={() => setImageModalOpen(false)}
+        images={property.images}
+        initialIndex={selectedImageIndex}
+        title={`Imágenes de la propiedad - ${property.title}`}
+      />
     </>
   );
 }

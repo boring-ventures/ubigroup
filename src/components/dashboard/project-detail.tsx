@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -52,6 +53,7 @@ import { PropertyType, Currency, QuadrantStatus } from "@prisma/client";
 import { z } from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { HorizontalImageGallery } from "@/components/ui/horizontal-image-gallery";
 
 // Client-side only date formatter to prevent hydration errors
 function ClientDateFormatter({ date }: { date: string }) {
@@ -134,6 +136,8 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
+  const [showImageGallery, setShowImageGallery] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Local staged state
   const [localFloors, setLocalFloors] = useState<Project["floors"]>(
@@ -536,6 +540,23 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
     }
   };
 
+  const handleImageClick = (index: number) => {
+    setCurrentImageIndex(index);
+    setShowImageGallery(true);
+  };
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === project.images.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? project.images.length - 1 : prev - 1
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Project Header */}
@@ -562,22 +583,12 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
       {/* Project Images */}
       {project.images.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Imágenes del proyecto</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {project.images.map((image, index) => (
-                <Image
-                  key={index}
-                  src={image}
-                  alt={`Project image ${index + 1}`}
-                  width={200}
-                  height={150}
-                  className="rounded-lg object-cover w-full h-32"
-                />
-              ))}
-            </div>
+          <CardContent className="p-6">
+            <HorizontalImageGallery
+              images={project.images}
+              onImageClick={handleImageClick}
+              title="Imágenes del proyecto"
+            />
           </CardContent>
         </Card>
       )}
@@ -1051,6 +1062,50 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
           </DialogContent>
         </Dialog>
       </ClientOnly>
+
+      {/* Image Gallery Modal */}
+      <Dialog open={showImageGallery} onOpenChange={setShowImageGallery}>
+        <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{project.name}</DialogTitle>
+          </DialogHeader>
+          <div className="relative w-full h-full flex items-center justify-center bg-black">
+            <Image
+              src={project.images[currentImageIndex]}
+              alt={`${project.name} - Imagen ${currentImageIndex + 1}`}
+              fill
+              className="object-contain"
+            />
+
+            {/* Navigation */}
+            {project.images.length > 1 && (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2"
+                  onClick={prevImage}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2"
+                  onClick={nextImage}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+
+            {/* Counter */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full font-medium">
+              {currentImageIndex + 1} / {project.images.length}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
