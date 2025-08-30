@@ -24,7 +24,7 @@ async function createStorageBuckets() {
       "property-images",
       {
         public: true,
-        fileSizeLimit: 52428800, // 50MB
+        fileSizeLimit: 52428800, // 50MB (Supabase Free tier limit)
         allowedMimeTypes: [
           "image/jpeg",
           "image/png",

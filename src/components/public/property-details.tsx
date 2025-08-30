@@ -381,94 +381,219 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
 
       {/* Content */}
       <div className="container mx-auto px-4 py-8">
-        {/* Image Gallery */}
+        {/* Image Gallery and Contact */}
         <div className="mb-8">
           {property.images.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              {/* Main Image */}
-              <div className="lg:col-span-2">
-                <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted group cursor-pointer">
-                  <Image
-                    src={property.images[currentImageIndex]}
-                    alt={`${property.title} - Imagen ${currentImageIndex + 1}`}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    onClick={() => setShowImageGallery(true)}
-                  />
-
-                  {/* Navigation Arrows */}
-                  {property.images.length > 1 && (
-                    <>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="absolute left-4 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          prevImage();
-                        }}
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="absolute right-4 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          nextImage();
-                        }}
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </>
-                  )}
-
-                  {/* Image Counter */}
-                  <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium">
-                    {currentImageIndex + 1} / {property.images.length}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+              {/* Property Images */}
+              <div className="lg:col-span-3">
+                {property.images.length === 1 ? (
+                  /* Single Image Layout: Full width */
+                  <div className="h-full">
+                    <div
+                      className="relative w-full h-full rounded-lg overflow-hidden border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                      onClick={() => setShowImageGallery(true)}
+                    >
+                      <Image
+                        src={property.images[0]}
+                        alt={`${property.title} - Imagen principal`}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
                   </div>
-                </div>
-              </div>
+                ) : (
+                  /* Multiple Images Layout: Main image + thumbnails */
+                  <div className="grid grid-cols-3 gap-4 h-full">
+                    {/* Main Image - spans 2 columns */}
+                    <div className="col-span-2 h-full">
+                      <div
+                        className="relative w-full h-full rounded-lg overflow-hidden border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => setShowImageGallery(true)}
+                      >
+                        <Image
+                          src={property.images[0]}
+                          alt={`${property.title} - Imagen principal`}
+                          fill
+                          className="object-cover"
+                        />
+                        <div className="absolute bottom-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-sm">
+                          1 / {property.images.length}
+                        </div>
+                      </div>
+                    </div>
 
-              {/* Thumbnail Grid */}
-              <div className="hidden lg:flex lg:flex-col lg:space-y-4">
-                {property.images.slice(1, 3).map((image, index) => (
-                  <div
-                    key={index}
-                    className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer group"
-                    onClick={() => {
-                      setCurrentImageIndex(index + 1);
-                      setShowImageGallery(true);
-                    }}
-                  >
-                    <Image
-                      src={image}
-                      alt={`${property.title} - Imagen ${index + 2}`}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-                ))}
+                    {/* Thumbnails Column */}
+                    <div className="grid grid-rows-3 gap-4 h-full">
+                      {/* Thumbnail 2 */}
+                      {property.images.length > 1 && (
+                        <div className="h-full">
+                          <div
+                            className="relative w-full h-full rounded-lg overflow-hidden border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => {
+                              setCurrentImageIndex(1);
+                              setShowImageGallery(true);
+                            }}
+                          >
+                            <Image
+                              src={property.images[1]}
+                              alt={`${property.title} - Imagen 2`}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
 
-                {property.images.length > 3 && (
-                  <div
-                    className="aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer group relative"
-                    onClick={() => setShowImageGallery(true)}
-                  >
-                    <Image
-                      src={property.images[3]}
-                      alt={`${property.title} - Más imágenes`}
-                      fill
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                      <span className="text-white font-semibold text-sm">
-                        +{property.images.length - 3} fotos
-                      </span>
+                      {/* Thumbnail 3 */}
+                      {property.images.length > 2 && (
+                        <div className="h-full">
+                          <div
+                            className="relative w-full h-full rounded-lg overflow-hidden border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => {
+                              setCurrentImageIndex(2);
+                              setShowImageGallery(true);
+                            }}
+                          >
+                            <Image
+                              src={property.images[2]}
+                              alt={`${property.title} - Imagen 3`}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Thumbnail 4 or Overflow */}
+                      {property.images.length > 3 && (
+                        <div className="h-full">
+                          <div
+                            className="relative w-full h-full rounded-lg overflow-hidden border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                            onClick={() => {
+                              setCurrentImageIndex(3);
+                              setShowImageGallery(true);
+                            }}
+                          >
+                            <Image
+                              src={property.images[3]}
+                              alt={`${property.title} - ${property.images.length === 4 ? "Imagen 4" : "Más imágenes"}`}
+                              fill
+                              className="object-cover"
+                            />
+                            {property.images.length > 4 && (
+                              <div className="absolute inset-0 bg-black/70 flex items-center justify-center text-white font-medium">
+                                +{property.images.length - 4}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Contact and Info Sidebar */}
+              <div className="lg:col-span-1 space-y-6">
+                {/* Agent Contact */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Contacta al agente</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Agent Info */}
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={property.agent.avatarUrl || ""} />
+                        <AvatarFallback>
+                          {property.agent.firstName?.[0]}
+                          {property.agent.lastName?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-semibold">
+                          {property.agent.firstName} {property.agent.lastName}
+                        </div>
+                        <div className="text-sm text-muted-foreground flex items-center">
+                          <Building2 className="h-3 w-3 mr-1" />
+                          {property.agency.name}
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Contact Buttons */}
+                    <div className="space-y-3">
+                      {property.agent.phone && (
+                        <Button
+                          onClick={handleContactWhatsApp}
+                          className="w-full bg-green-600 hover:bg-green-700"
+                        >
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          WhatsApp
+                        </Button>
+                      )}
+
+                      {property.agent.phone && (
+                        <Button
+                          onClick={handleContactPhone}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          <Phone className="mr-2 h-4 w-4" />
+                          Llamar
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="text-xs text-muted-foreground text-center pt-2">
+                      Al contactar, menciona que viste esta propiedad en
+                      UbiGroup
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Quick Info */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Información rápida</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Tipo:</span>
+                      <span className="font-medium">
+                        {getPropertyTypeLabel(property.type)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        Transacción:
+                      </span>
+                      <span className="font-medium">
+                        {getTransactionTypeLabel(property.transactionType)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Publicado:</span>
+                      <span className="font-medium">
+                        {new Date(property.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    {/* PDF Download Button */}
+                    <div className="pt-3 border-t">
+                      <PropertyPdfDownload
+                        property={property}
+                        variant="sidebar"
+                        mapView={mapView}
+                        mapSnapshotDataUrl={mapSnapshot}
+                        onBeforeGenerate={captureMapSnapshot}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           ) : (
@@ -484,9 +609,9 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-8">
           {/* Property Information */}
-          <div className="lg:col-span-2 space-y-6 order-2 lg:order-1">
+          <div className="space-y-6">
             {/* Property Details */}
             <Card>
               <CardHeader>
@@ -494,30 +619,26 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-                  {property.bedrooms > 0 && (
-                    <div className="text-center">
-                      <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-2">
-                        <Bed className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="font-semibold">{property.bedrooms}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Habitaciones
-                      </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-2 mx-auto">
+                      <Bed className="h-6 w-6 text-primary" />
                     </div>
-                  )}
-
-                  {property.bathrooms > 0 && (
-                    <div className="text-center">
-                      <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-2">
-                        <Bath className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="font-semibold">{property.bathrooms}</div>
-                      <div className="text-sm text-muted-foreground">Baños</div>
+                    <div className="font-semibold">{property.bedrooms}</div>
+                    <div className="text-sm text-muted-foreground">
+                      Habitaciones
                     </div>
-                  )}
+                  </div>
 
                   <div className="text-center">
-                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-2">
+                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-2 mx-auto">
+                      <Bath className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="font-semibold">{property.bathrooms}</div>
+                    <div className="text-sm text-muted-foreground">Baños</div>
+                  </div>
+
+                  <div className="text-center">
+                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-2 mx-auto">
                       <Square className="h-6 w-6 text-primary" />
                     </div>
                     <div className="font-semibold">
@@ -526,19 +647,15 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                     <div className="text-sm text-muted-foreground">Área</div>
                   </div>
 
-                  {property.garageSpaces > 0 && (
-                    <div className="text-center">
-                      <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-2">
-                        <Car className="h-6 w-6 text-primary" />
-                      </div>
-                      <div className="font-semibold">
-                        {property.garageSpaces}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        Parqueos
-                      </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-2 mx-auto">
+                      <Car className="h-6 w-6 text-primary" />
                     </div>
-                  )}
+                    <div className="font-semibold">{property.garageSpaces}</div>
+                    <div className="text-sm text-muted-foreground">
+                      Parqueos
+                    </div>
+                  </div>
                 </div>
 
                 {/* Features */}
@@ -623,115 +740,6 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                   }}
                   onViewChange={setMapView}
                 />
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6 order-1 lg:order-2">
-            {/* Agent Contact */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Contacta al agente</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Agent Info */}
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={property.agent.avatarUrl || ""} />
-                      <AvatarFallback>
-                        {property.agent.firstName?.[0]}
-                        {property.agent.lastName?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-semibold">
-                        {property.agent.firstName} {property.agent.lastName}
-                      </div>
-                      <div className="text-sm text-muted-foreground flex items-center">
-                        <Building2 className="h-3 w-3 mr-1" />
-                        {property.agency.name}
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Contact Buttons */}
-                  <div className="space-y-3">
-                    {property.agent.phone && (
-                      <Button
-                        onClick={handleContactWhatsApp}
-                        className="w-full bg-green-600 hover:bg-green-700"
-                      >
-                        <MessageCircle className="mr-2 h-4 w-4" />
-                        WhatsApp
-                      </Button>
-                    )}
-
-                    {property.agent.phone && (
-                      <Button
-                        onClick={handleContactPhone}
-                        variant="outline"
-                        className="w-full"
-                      >
-                        <Phone className="mr-2 h-4 w-4" />
-                        Llamar
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="text-xs text-muted-foreground text-center pt-2">
-                    Al contactar, menciona que viste esta propiedad en UbiGroup
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Información rápida</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tipo:</span>
-                  <span className="font-medium">
-                    {getPropertyTypeLabel(property.type)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Transacción:</span>
-                  <span className="font-medium">
-                    {getTransactionTypeLabel(property.transactionType)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    ID de la Propiedad:
-                  </span>
-                  <span className="font-medium font-mono text-sm">
-                    {property.id}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Publicado:</span>
-                  <span className="font-medium">
-                    {new Date(property.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-
-                {/* PDF Download Button */}
-                <div className="pt-3 border-t">
-                  <PropertyPdfDownload
-                    property={property}
-                    variant="sidebar"
-                    mapView={mapView}
-                    mapSnapshotDataUrl={mapSnapshot}
-                    onBeforeGenerate={captureMapSnapshot}
-                  />
-                </div>
               </CardContent>
             </Card>
           </div>

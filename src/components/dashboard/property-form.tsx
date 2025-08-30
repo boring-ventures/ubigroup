@@ -155,10 +155,10 @@ export function PropertyForm({
       );
       const totalSizeMB = totalSize / (1024 * 1024);
 
-      if (totalSizeMB > 50) {
+      if (totalSizeMB > 100) {
         toast({
           title: "Archivos muy grandes",
-          description: `El tamaño total (${totalSizeMB.toFixed(1)}MB) es muy grande. Los archivos se subirán en lotes automáticamente.`,
+          description: `El tamaño total (${totalSizeMB.toFixed(1)}MB) excede el límite de 100MB. Los archivos se subirán en lotes automáticamente.`,
           variant: "default",
         });
       }
@@ -208,10 +208,10 @@ export function PropertyForm({
       );
       const totalSizeMB = totalSize / (1024 * 1024);
 
-      if (totalSizeMB > 50) {
+      if (totalSizeMB > 100) {
         toast({
           title: "Archivos muy grandes",
-          description: `El tamaño total (${totalSizeMB.toFixed(1)}MB) es muy grande. Los archivos se subirán en lotes automáticamente.`,
+          description: `El tamaño total (${totalSizeMB.toFixed(1)}MB) excede el límite de 100MB. Los archivos se subirán en lotes automáticamente.`,
           variant: "default",
         });
       }
@@ -1071,8 +1071,8 @@ export function PropertyForm({
                   </Badge>
                 </div>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-4">
-                  Tamaño máximo por archivo: 50MB. Formatos soportados: JPG,
-                  PNG, GIF, WebP.
+                  Máximo 50MB por imagen. Límite total: 100MB. Formatos
+                  soportados: JPG, PNG, GIF, WebP.
                   <strong>
                     {" "}
                     Puedes seleccionar múltiples imágenes a la vez.
@@ -1158,8 +1158,9 @@ export function PropertyForm({
                   </Badge>
                 </div>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-4">
-                  Tamaño máximo por archivo: 50MB. Formatos soportados: MP4,
-                  AVI, MOV, WebM. Se recomienda WebM para mejor compresión.{" "}
+                  Tamaño máximo por video: 50MB. Límite total: 100MB. Formatos
+                  soportados: MP4, AVI, MOV, WebM. Se recomienda WebM para mejor
+                  compresión.{" "}
                   <strong>Puedes seleccionar múltiples videos a la vez.</strong>
                 </p>
 

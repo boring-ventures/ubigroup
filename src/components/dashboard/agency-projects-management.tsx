@@ -125,7 +125,7 @@ export function AgencyProjectsManagement() {
       Nombre: project.name,
       Descripción: project.description,
       Ubicación: project.location,
-      Tipo_Propiedad: project.propertyType,
+
       Agente:
         `${project.agent?.firstName || ""} ${project.agent?.lastName || ""}`.trim() ||
         "N/A",
@@ -288,9 +288,7 @@ export function AgencyProjectsManagement() {
                         <TableCell>
                           <div className="space-y-1">
                             <div className="font-medium">{project.name}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {project.propertyType}
-                            </div>
+
                             {/* Mobile-only info */}
                             <div className="sm:hidden space-y-1 text-xs text-muted-foreground">
                               <div>

@@ -162,10 +162,10 @@ export function NumericInput({
           size="sm"
           onClick={handleIncrement}
           disabled={disabled || (max !== undefined && (value || 0) >= max)}
-          className="h-4 sm:h-5 w-6 sm:w-8 p-0 rounded-none rounded-t-sm border-b border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="h-4 sm:h-5 w-6 sm:w-8 p-0 rounded-none rounded-t-sm border-b border-gray-200 dark:border-gray-600 hover:bg-green-100 dark:hover:bg-green-900 transition-colors duration-200"
           aria-label="Increment"
         >
-          <ChevronUp className="h-3 w-3" />
+          <ChevronUp className="h-3 w-3 text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-300 transition-colors duration-200" />
         </Button>
         <Button
           type="button"
@@ -173,13 +173,12 @@ export function NumericInput({
           size="sm"
           onClick={handleDecrement}
           disabled={disabled || (min !== undefined && (value || 0) <= min)}
-          className="h-4 sm:h-5 w-6 sm:w-8 p-0 rounded-none rounded-b-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+          className="h-4 sm:h-5 w-6 sm:w-8 p-0 rounded-none rounded-b-sm hover:bg-green-100 dark:hover:bg-green-900 transition-colors duration-200"
           aria-label="Decrement"
         >
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="h-3 w-3 text-gray-600 dark:text-gray-300 hover:text-green-700 dark:hover:text-green-300 transition-colors duration-200" />
         </Button>
       </div>
     </div>
   );
 }
-

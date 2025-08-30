@@ -24,6 +24,7 @@ import {
   XCircle,
   Eye,
   Maximize2,
+  Car,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -33,6 +34,10 @@ import {
   type PendingProperty,
 } from "@/hooks/use-pending-properties";
 import { toast } from "@/components/ui/use-toast";
+import {
+  getPropertyTypeLabel,
+  getTransactionTypeLabel,
+} from "@/lib/translations";
 import { PendingPropertyModal } from "./pending-property-modal";
 
 // Helper function to format price with correct currency
@@ -200,8 +205,13 @@ export function PendingPropertiesApproval() {
                                 </span>
                               </div>
                               <Badge variant="secondary">
-                                {property.propertyType || "N/A"} •{" "}
-                                {property.transactionType || "N/A"}
+                                {getPropertyTypeLabel(
+                                  property.propertyType || ""
+                                )}{" "}
+                                •{" "}
+                                {getTransactionTypeLabel(
+                                  property.transactionType || ""
+                                )}
                               </Badge>
                             </div>
                           </div>
@@ -235,12 +245,32 @@ export function PendingPropertiesApproval() {
                             </span>
                           </div>
                           <div className="flex items-center space-x-2">
+                            <Car className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">
+                              {property.garageSpaces} garaje
+                              {property.garageSpaces !== 1 ? "s" : ""}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
                             <Home className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm">
                               {property.area
                                 ? property.area.toLocaleString()
                                 : "N/A"}{" "}
                               m²
+                            </span>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 py-2">
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">
+                              Tipo:{" "}
+                            </span>
+                            <span className="font-medium">
+                              {getPropertyTypeLabel(property.propertyType)} •{" "}
+                              {getTransactionTypeLabel(
+                                property.transactionType
+                              )}
                             </span>
                           </div>
                           <div className="text-sm">

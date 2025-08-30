@@ -1,13 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -167,12 +161,6 @@ export function AgentPropertiesTable() {
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <CardTitle>Mis Propiedades</CardTitle>
-              <CardDescription>
-                Gestiona tus listados de propiedades y rastrea su estado
-              </CardDescription>
-            </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
               <Button
                 variant="outline"

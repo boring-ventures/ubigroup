@@ -4,7 +4,7 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { authenticateUser } from "@/lib/auth/server-auth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+import { MAX_INDIVIDUAL_FILE_SIZE } from "@/lib/upload";
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,8 +44,8 @@ export async function POST(request: NextRequest) {
         `Upload API: Processing file ${file.name}, size: ${file.size}`
       );
 
-      // Validate file size
-      if (file.size > MAX_FILE_SIZE) {
+      // Validate file size for all files (Supabase Free tier limit)
+      if (file.size > MAX_INDIVIDUAL_FILE_SIZE) {
         console.error(`Upload API: File ${file.name} exceeds size limit`);
         return NextResponse.json(
           { error: `File ${file.name} exceeds 50MB limit` },

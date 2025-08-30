@@ -135,17 +135,9 @@ export async function POST(
     const body = await request.json();
     const validatedData = createQuadrantSchema.parse(body);
 
-    // Generate custom ID for quadrant
-    const quadrantCount = await prisma.quadrant.count({
-      where: { floorId: id },
-    });
-
-    const customId = `Q${String(quadrantCount + 1).padStart(3, "0")}`;
-
     const quadrant = await prisma.quadrant.create({
       data: {
         ...validatedData,
-        customId,
         floorId: id,
       },
     });

@@ -85,6 +85,7 @@ export async function GET(request: NextRequest) {
       zipCode: "", // Not in schema, using empty string
       bedrooms: property.bedrooms,
       bathrooms: property.bathrooms,
+      garageSpaces: property.garageSpaces,
       area: property.squareMeters, // Map squareMeters to area
       features: property.features,
       images: property.images,
@@ -184,12 +185,12 @@ export async function POST(request: NextRequest) {
       },
       include: {
         agent: {
-                      select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              phone: true,
-            },
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+          },
         },
         agency: {
           select: {

@@ -16,13 +16,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NumericInput } from "@/components/ui/numeric-input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Form,
   FormControl,
   FormDescription,
@@ -37,7 +30,7 @@ import {
   createProjectSchema,
   type CreateProjectInput,
 } from "@/lib/validations/project";
-import { PropertyType } from "@prisma/client";
+
 import {
   Building2,
   MapPin,
@@ -47,7 +40,7 @@ import {
   Loader,
 } from "lucide-react";
 import Image from "next/image";
-import { uploadFiles, validateFile } from "@/lib/upload";
+import { uploadFiles, validateFile, MAX_TOTAL_SIZE } from "@/lib/upload";
 
 interface ProjectFormProps {
   initialData?: Partial<CreateProjectInput>;
@@ -75,7 +68,7 @@ export function ProjectForm({
       name: initialData?.name || "",
       description: initialData?.description || "",
       location: initialData?.location || "",
-      propertyType: initialData?.propertyType || PropertyType.APARTMENT,
+
       images: initialData?.images || [],
       googleMapsUrl: initialData?.googleMapsUrl || "",
       latitude: initialData?.latitude || undefined,
@@ -94,6 +87,31 @@ export function ProjectForm({
           "Por favor sube solo archivos de imagen (JPG, PNG, GIF, WebP)",
         variant: "destructive",
       });
+    }
+
+    // Calculate total size of new files
+    const newFilesSize = validFiles.reduce(
+      (total, file) => total + file.size,
+      0
+    );
+
+    // Calculate total size of existing files
+    const existingFilesSize = images.reduce(
+      (total, file) => total + file.size,
+      0
+    );
+
+    // Check if total size would exceed the batch limit
+    const totalSize = existingFilesSize + newFilesSize;
+    if (totalSize > MAX_TOTAL_SIZE) {
+      const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+      const limitMB = (MAX_TOTAL_SIZE / (1024 * 1024)).toFixed(0);
+      toast({
+        title: "Tamaño total demasiado grande",
+        description: `El tamaño total de las imágenes (${totalSizeMB}MB) excede el límite de ${limitMB}MB. Por favor, selecciona menos imágenes o imágenes más pequeñas.`,
+        variant: "destructive",
+      });
+      return;
     }
 
     setImages((prev) => [...prev, ...validFiles]);
@@ -216,11 +234,11 @@ export function ProjectForm({
                   <FormItem>
                     <FormLabel className="flex items-center">
                       <MapPin className="mr-1 h-4 w-4" />
-                      Ubicación
+                      Dirección
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Ingresa la ubicación del proyecto"
+                        placeholder="Ingresa la dirección del proyecto"
                         {...field}
                       />
                     </FormControl>
@@ -259,7 +277,7 @@ export function ProjectForm({
                         <NumericInput
                           value={field.value}
                           onChange={field.onChange}
-                          placeholder="40.7128"
+                          placeholder="-40.7128"
                           step={0.000001}
                           aria-label="Coordenada de latitud del proyecto"
                         />
@@ -288,39 +306,6 @@ export function ProjectForm({
                   )}
                 />
               </div>
-
-              <FormField
-                control={form.control}
-                name="propertyType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tipo de propiedad</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona el tipo de propiedad" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value={PropertyType.HOUSE}>Casa</SelectItem>
-                        <SelectItem value={PropertyType.APARTMENT}>
-                          Departamento
-                        </SelectItem>
-                        <SelectItem value={PropertyType.OFFICE}>
-                          Oficina
-                        </SelectItem>
-                        <SelectItem value={PropertyType.LAND}>
-                          Terreno
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 control={form.control}
@@ -357,6 +342,17 @@ export function ProjectForm({
                       onChange={handleImageUpload}
                       className="cursor-pointer"
                     />
+                    {images.length > 0 && (
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        Tamaño total:{" "}
+                        {(
+                          images.reduce((total, file) => total + file.size, 0) /
+                          (1024 * 1024)
+                        ).toFixed(2)}
+                        MB de {(MAX_TOTAL_SIZE / (1024 * 1024)).toFixed(0)}MB
+                        máximo
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -13,7 +13,7 @@ export interface AgencyProjectsResponse {
     name: string;
     description: string;
     location: string;
-    propertyType: string;
+
     images: string[];
     createdAt: string;
     active: boolean;

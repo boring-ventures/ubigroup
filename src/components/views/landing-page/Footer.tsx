@@ -1,6 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
-import { FacebookIcon, InstagramIcon } from "lucide-react";
+import {
+  FacebookIcon,
+  InstagramIcon,
+  PhoneIcon,
+  MapPinIcon,
+} from "lucide-react";
 import logoLight from "@logos/logo_ligth.svg";
 import logoDark from "@logos/logo_dark.svg";
 
@@ -29,9 +34,66 @@ export default function Footer() {
               />
               <span className="text-2xl font-bold text-primary">UbiGroup</span>
             </div>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-4">
               Encontrando hogares ideales para un mejor mañana.
             </p>
+
+            {/* Contact Information */}
+            <div className="space-y-3">
+              {/* Ubigroup Central */}
+              <div className="flex flex-col space-y-2">
+                <h5 className="text-sm font-medium text-foreground">
+                  Ubigroup Central
+                </h5>
+                <div className="flex items-center space-x-4">
+                  <a
+                    href="https://wa.me/59160774049?text=Hola,%20me%20interesa%20obtener%20más%20información%20sobre%20sus%20propiedades."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <PhoneIcon size={16} />
+                    <span>+591 60774049</span>
+                  </a>
+                  <a
+                    href="https://maps.app.goo.gl/ZwpzJm4yj6XuEXfM9"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-1 text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <MapPinIcon size={16} />
+                    <span className="text-sm">Ver ubicación</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Ubi Group Inversiones */}
+              <div className="flex flex-col space-y-2">
+                <h5 className="text-sm font-medium text-foreground">
+                  Ubi Group Inversiones
+                </h5>
+                <div className="flex items-center space-x-4">
+                  <a
+                    href="https://wa.me/59171700830?text=Hola,%20me%20interesa%20obtener%20más%20información%20sobre%20sus%20propiedades."
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-2 text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <PhoneIcon size={16} />
+                    <span>+591 71700830</span>
+                  </a>
+                  <a
+                    href="https://maps.app.goo.gl/87EBZzyB4pBSZPPz9"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center space-x-1 text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <MapPinIcon size={16} />
+                    <span className="text-sm">Ver ubicación</span>
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
           <div>
             <h4 className="text-lg font-semibold mb-4">Legal</h4>

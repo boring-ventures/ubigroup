@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NumericInput } from "@/components/ui/numeric-input";
 import {
@@ -49,7 +50,7 @@ import {
   createFloorSchema,
   createQuadrantSchema,
 } from "@/lib/validations/project";
-import { PropertyType, Currency, QuadrantStatus } from "@prisma/client";
+import { Currency, QuadrantStatus, QuadrantType } from "@prisma/client";
 import { z } from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -64,6 +65,30 @@ function ClientDateFormatter({ date }: { date: string }) {
   }, [date]);
 
   return <span>{formattedDate}</span>;
+}
+
+// Helper function to format bedroom display
+function formatBedroomDisplay(bedrooms: number, type: QuadrantType): string {
+  if (type !== QuadrantType.DEPARTAMENTO) {
+    return "N/A";
+  }
+  return bedrooms === 0 ? "Monoambiente" : `${bedrooms} Dorm.`;
+}
+
+// Helper function to format quadrant type display
+function formatQuadrantTypeDisplay(type: QuadrantType): string {
+  switch (type) {
+    case QuadrantType.DEPARTAMENTO:
+      return "Depto";
+    case QuadrantType.OFICINA:
+      return "Oficina";
+    case QuadrantType.PARQUEO:
+      return "Parqueo";
+    case QuadrantType.BAULERA:
+      return "Baulera";
+    default:
+      return type;
+  }
 }
 
 // Client-side only wrapper to prevent hydration errors
@@ -86,7 +111,7 @@ interface Project {
   name: string;
   description: string;
   location: string;
-  propertyType: PropertyType;
+
   images: string[];
   createdAt: string;
   active: boolean;
@@ -108,11 +133,13 @@ interface Project {
     quadrants: {
       id: string;
       customId: string;
+      type: QuadrantType;
       area: number;
       bedrooms: number;
       bathrooms: number;
       price: number;
       currency: Currency;
+      exchangeRate?: number;
       status: QuadrantStatus;
       active: boolean;
     }[];
@@ -161,15 +188,22 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
   const quadrantForm = useForm({
     resolver: zodResolver(createQuadrantSchema),
     defaultValues: {
+      customId: "",
+      type: QuadrantType.DEPARTAMENTO,
       area: 0,
       bedrooms: 0,
       bathrooms: 0,
       price: 0,
       currency: Currency.BOLIVIANOS,
+      exchangeRate: undefined,
       status: QuadrantStatus.AVAILABLE,
       active: true,
     },
   });
+
+  // Watch form values for conditional rendering
+  const watchQuadrantType = quadrantForm.watch("type");
+  const watchCurrency = quadrantForm.watch("currency");
 
   // Staging helpers
   const generateTempId = () => `temp_${Math.random().toString(36).slice(2)}`;
@@ -233,6 +267,14 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
 
   const handleQuadrantSubmit = (data: CreateQuadrantInput) => {
     if (!selectedFloor) return;
+
+    // Set bedrooms and bathrooms to 0 for non-apartment types
+    const processedData = {
+      ...data,
+      bedrooms: data.type === QuadrantType.DEPARTAMENTO ? data.bedrooms : 0,
+      bathrooms: data.type === QuadrantType.DEPARTAMENTO ? data.bathrooms : 0,
+    };
+
     setLocalFloors((prev) =>
       prev.map((f) => {
         if (f.id !== selectedFloor.id) return f;
@@ -243,13 +285,16 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
               q.id === selectedQuadrant.id
                 ? {
                     ...q,
-                    area: data.area,
-                    bedrooms: data.bedrooms,
-                    bathrooms: data.bathrooms,
-                    price: data.price,
-                    currency: data.currency,
-                    status: data.status ?? q.status,
-                    active: data.active ?? q.active,
+                    customId: processedData.customId,
+                    type: processedData.type,
+                    area: processedData.area,
+                    bedrooms: processedData.bedrooms,
+                    bathrooms: processedData.bathrooms,
+                    price: processedData.price,
+                    currency: processedData.currency,
+                    exchangeRate: processedData.exchangeRate,
+                    status: processedData.status ?? q.status,
+                    active: processedData.active ?? q.active,
                   }
                 : q
             ),
@@ -261,14 +306,16 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
             ...f.quadrants,
             {
               id: generateTempId(),
-              customId: "TEMP",
-              area: data.area,
-              bedrooms: data.bedrooms,
-              bathrooms: data.bathrooms,
-              price: data.price,
-              currency: data.currency,
-              status: data.status ?? QuadrantStatus.AVAILABLE,
-              active: data.active ?? true,
+              customId: processedData.customId,
+              type: processedData.type,
+              area: processedData.area,
+              bedrooms: processedData.bedrooms,
+              bathrooms: processedData.bathrooms,
+              price: processedData.price,
+              currency: processedData.currency,
+              exchangeRate: processedData.exchangeRate,
+              status: processedData.status ?? QuadrantStatus.AVAILABLE,
+              active: processedData.active ?? true,
             } as Project["floors"][number]["quadrants"][number],
           ],
         };
@@ -503,11 +550,14 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
   const handleQuadrantClick = (quadrant: Quadrant) => {
     setSelectedQuadrant(quadrant);
     quadrantForm.reset({
+      customId: quadrant.customId,
+      type: quadrant.type,
       area: quadrant.area,
       bedrooms: quadrant.bedrooms,
       bathrooms: quadrant.bathrooms,
       price: quadrant.price,
       currency: quadrant.currency,
+      exchangeRate: quadrant.exchangeRate,
       status: quadrant.status,
       active: quadrant.active,
     });
@@ -606,10 +656,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                 {project.description}
               </p>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Tipo de propiedad:</span>
-              <Badge variant="outline">{project.propertyType}</Badge>
-            </div>
+
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Total de pisos:</span>
               <span className="font-medium">{localFloors.length}</span>
@@ -782,20 +829,40 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                           </div>
                           <div className="space-y-1 text-xs">
                             <div className="flex justify-between">
+                              <span>Tipo:</span>
+                              <span>
+                                {formatQuadrantTypeDisplay(quadrant.type)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
                               <span>Área:</span>
                               <span>{quadrant.area}m²</span>
                             </div>
-                            <div className="flex justify-between">
-                              <span>Dorm:</span>
-                              <span>{quadrant.bedrooms}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span>Baño:</span>
-                              <span>{quadrant.bathrooms}</span>
-                            </div>
+                            {quadrant.type === QuadrantType.DEPARTAMENTO && (
+                              <>
+                                <div className="flex justify-between">
+                                  <span>Dorm:</span>
+                                  <span>
+                                    {formatBedroomDisplay(
+                                      quadrant.bedrooms,
+                                      quadrant.type
+                                    )}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Baño:</span>
+                                  <span>{quadrant.bathrooms}</span>
+                                </div>
+                              </>
+                            )}
                             <div className="flex justify-between">
                               <span>Precio:</span>
-                              <span>${quadrant.price.toLocaleString()}</span>
+                              <span>
+                                {quadrant.currency === Currency.BOLIVIANOS
+                                  ? "Bs. "
+                                  : "$ "}
+                                {quadrant.price.toLocaleString()}
+                              </span>
                             </div>
                           </div>
                           <div className="mt-2 flex justify-end">
@@ -845,6 +912,67 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                 onSubmit={quadrantForm.handleSubmit(handleQuadrantSubmit)}
                 className="space-y-4"
               >
+                {/* Quadrant Name and Type */}
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={quadrantForm.control}
+                    name="customId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Ej: Depto A1, Oficina 101"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={quadrantForm.control}
+                    name="type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo</FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            // Reset bedrooms and bathrooms to 0 for non-apartment types
+                            if (value !== QuadrantType.DEPARTAMENTO) {
+                              quadrantForm.setValue("bedrooms", 0);
+                              quadrantForm.setValue("bathrooms", 0);
+                            }
+                          }}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value={QuadrantType.DEPARTAMENTO}>
+                              Departamento
+                            </SelectItem>
+                            <SelectItem value={QuadrantType.OFICINA}>
+                              Oficina
+                            </SelectItem>
+                            <SelectItem value={QuadrantType.PARQUEO}>
+                              Parqueo
+                            </SelectItem>
+                            <SelectItem value={QuadrantType.BAULERA}>
+                              Baulera
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={quadrantForm.control}
@@ -867,48 +995,63 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={quadrantForm.control}
-                    name="bedrooms"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Dormitorios</FormLabel>
-                        <FormControl>
-                          <NumericInput
-                            value={field.value}
-                            onChange={field.onChange}
-                            min={0}
-                            step={1}
-                            placeholder="0"
-                            aria-label="Número de dormitorios del cuadrante"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* Bedrooms - only show for apartments */}
+                  {watchQuadrantType === QuadrantType.DEPARTAMENTO && (
+                    <FormField
+                      control={quadrantForm.control}
+                      name="bedrooms"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Dormitorios</FormLabel>
+                          <Select
+                            onValueChange={(value) =>
+                              field.onChange(parseInt(value))
+                            }
+                            value={field.value.toString()}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="0">Monoambiente</SelectItem>
+                              <SelectItem value="1">1 Dormitorio</SelectItem>
+                              <SelectItem value="2">2 Dormitorios</SelectItem>
+                              <SelectItem value="3">3 Dormitorios</SelectItem>
+                              <SelectItem value="4">4 Dormitorios</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={quadrantForm.control}
-                    name="bathrooms"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Baños</FormLabel>
-                        <FormControl>
-                          <NumericInput
-                            value={field.value}
-                            onChange={field.onChange}
-                            min={0}
-                            step={1}
-                            placeholder="0"
-                            aria-label="Número de baños del cuadrante"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {/* Bathrooms - only show for apartments */}
+                  {watchQuadrantType === QuadrantType.DEPARTAMENTO && (
+                    <FormField
+                      control={quadrantForm.control}
+                      name="bathrooms"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Baños</FormLabel>
+                          <FormControl>
+                            <NumericInput
+                              value={field.value}
+                              onChange={field.onChange}
+                              min={0}
+                              step={1}
+                              placeholder="0"
+                              aria-label="Número de baños del cuadrante"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                   <FormField
                     control={quadrantForm.control}
                     name="price"
@@ -959,6 +1102,31 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                       </FormItem>
                     )}
                   />
+                  {/* Exchange Rate - only show when currency is DOLLARS */}
+                  {watchCurrency === Currency.DOLLARS && (
+                    <FormField
+                      control={quadrantForm.control}
+                      name="exchangeRate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo de cambio</FormLabel>
+                          <FormControl>
+                            <NumericInput
+                              value={field.value || 0}
+                              onChange={field.onChange}
+                              min={0}
+                              step={0.01}
+                              placeholder="6.96"
+                              aria-label="Tipo de cambio USD a BOB"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={quadrantForm.control}
                     name="status"

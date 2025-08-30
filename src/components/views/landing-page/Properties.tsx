@@ -286,7 +286,9 @@ export default function Properties() {
           }
         }
 
-        const response = await fetch(`/api/properties?${params.toString()}`);
+        const response = await fetch(
+          `/api/public/properties?${params.toString()}`
+        );
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }

@@ -16,6 +16,7 @@ export interface PendingProperty {
   zipCode: string;
   bedrooms: number;
   bathrooms: number;
+  garageSpaces: number;
   area: number;
   features: string[];
   images: string[];

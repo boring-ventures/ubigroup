@@ -34,9 +34,14 @@ import {
   DollarSign,
   Calendar,
   FileText,
+  Building2,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { Currency, TransactionType } from "@prisma/client";
+import {
+  getPropertyTypeLabel,
+  getTransactionTypeLabel,
+} from "@/lib/translations";
 import Link from "next/link";
 import Image from "next/image";
 import { PropertySingleMap } from "./property-single-map";
@@ -255,7 +260,7 @@ export function PendingPropertyDetailPage({
             </Card>
           )}
 
-          {/* Property Details */}
+          {/* Detalles de la Propiedad */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -294,10 +299,24 @@ export function PendingPropertyDetailPage({
                   </span>
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="flex items-center space-x-2">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    {getPropertyTypeLabel(property.type)}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    {getTransactionTypeLabel(property.transactionType)}
+                  </span>
+                </div>
+              </div>
 
               <Separator />
 
-              {/* Location */}
+              {/* Ubicación */}
               <div>
                 <h4 className="font-semibold mb-2">Ubicación</h4>
                 <div className="space-y-1 text-sm text-muted-foreground">
@@ -317,7 +336,7 @@ export function PendingPropertyDetailPage({
 
               <Separator />
 
-              {/* Description */}
+              {/* Descripción */}
               <div>
                 <h4 className="font-semibold mb-2">Descripción</h4>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">
@@ -325,7 +344,7 @@ export function PendingPropertyDetailPage({
                 </p>
               </div>
 
-              {/* Features */}
+              {/* Características */}
               {property.features && property.features.length > 0 && (
                 <>
                   <Separator />
@@ -364,7 +383,7 @@ export function PendingPropertyDetailPage({
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Price Card */}
+          {/* Tarjeta de Precio */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -407,7 +426,7 @@ export function PendingPropertyDetailPage({
             </CardContent>
           </Card>
 
-          {/* Agent Information */}
+          {/* Información del Agente */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">

@@ -84,6 +84,22 @@ export default async function ProjectPage({
         project={{
           ...project,
           createdAt: project.createdAt.toISOString(),
+          floors: project.floors.map((floor) => ({
+            ...floor,
+            quadrants: floor.quadrants.map((quadrant) => ({
+              id: quadrant.id,
+              customId: quadrant.customId,
+              type: quadrant.type,
+              area: quadrant.area,
+              bedrooms: quadrant.bedrooms,
+              bathrooms: quadrant.bathrooms,
+              price: quadrant.price,
+              currency: quadrant.currency,
+              exchangeRate: quadrant.exchangeRate ?? undefined,
+              status: quadrant.status,
+              active: quadrant.active,
+            })),
+          })),
         }}
       />
     </main>

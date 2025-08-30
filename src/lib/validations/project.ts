@@ -1,28 +1,29 @@
 import { z } from "zod";
-import { PropertyType, Currency, QuadrantStatus } from "@prisma/client";
+import { Currency, QuadrantStatus, QuadrantType } from "@prisma/client";
 
 // Project validation schema
 export const createProjectSchema = z.object({
   name: z
     .string()
-    .min(1, "Project name is required")
-    .max(100, "Project name must be less than 100 characters"),
+    .min(1, "El nombre del proyecto es requerido")
+    .max(100, "El nombre del proyecto debe tener menos de 100 caracteres"),
   description: z
     .string()
-    .min(10, "Description must be at least 10 characters")
-    .max(1000, "Description must be less than 1000 characters"),
+    .min(10, "La descripción debe tener al menos 10 caracteres")
+    .max(1000, "La descripción debe tener menos de 1000 caracteres"),
   location: z
     .string()
-    .min(1, "Location is required")
-    .max(200, "Location must be less than 200 characters"),
-  propertyType: z.nativeEnum(PropertyType, {
-    errorMap: () => ({ message: "Please select a valid property type" }),
-  }),
-  images: z.array(z.string().url("Invalid image URL")).optional().default([]),
+    .min(1, "La dirección es requerida")
+    .max(200, "La dirección debe tener menos de 200 caracteres"),
+
+  images: z
+    .array(z.string().url("URL de imagen inválida"))
+    .optional()
+    .default([]),
   // Treat empty string as undefined to avoid URL validation error when optional field is left blank
   googleMapsUrl: z.preprocess(
     (val) => (val === "" ? undefined : val),
-    z.string().url("Invalid Google Maps URL").optional()
+    z.string().url("URL de Google Maps inválida").optional()
   ),
   // Be tolerant to empty strings coming from forms; coerce to number when string provided
   latitude: z.preprocess(
@@ -52,10 +53,10 @@ export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
 
 // Floor validation schema
 export const createFloorSchema = z.object({
-  number: z.number().int().min(1, "Floor number must be at least 1"),
+  number: z.number().int().min(1, "El número de piso debe ser al menos 1"),
   name: z
     .string()
-    .max(50, "Floor name must be less than 50 characters")
+    .max(50, "El nombre del piso debe tener menos de 50 caracteres")
     .optional(),
 });
 
@@ -66,20 +67,31 @@ export type UpdateFloorInput = z.infer<typeof updateFloorSchema>;
 
 // Quadrant validation schema
 export const createQuadrantSchema = z.object({
-  area: z.number().positive("Area must be positive"),
-  bedrooms: z.number().int().min(0, "Bedrooms must be 0 or more"),
-  bathrooms: z.number().int().min(0, "Bathrooms must be 0 or more"),
-  price: z.number().positive("Price must be positive"),
+  customId: z
+    .string()
+    .min(1, "El nombre es requerido")
+    .max(50, "El nombre debe tener menos de 50 caracteres"),
+  type: z
+    .nativeEnum(QuadrantType, {
+      errorMap: () => ({
+        message: "Por favor selecciona un tipo de cuadrante válido",
+      }),
+    })
+    .default(QuadrantType.DEPARTAMENTO),
+  area: z.number().positive("El área debe ser positiva"),
+  bedrooms: z.number().int().min(0, "Los dormitorios deben ser 0 o más"),
+  bathrooms: z.number().int().min(0, "Los baños deben ser 0 o más"),
+  price: z.number().positive("El precio debe ser positivo"),
   currency: z.nativeEnum(Currency, {
-    errorMap: () => ({ message: "Please select a valid currency" }),
+    errorMap: () => ({ message: "Por favor selecciona una moneda válida" }),
   }),
   exchangeRate: z
     .number()
-    .positive("Exchange rate must be positive")
+    .positive("El tipo de cambio debe ser positivo")
     .optional(),
   status: z
     .nativeEnum(QuadrantStatus, {
-      errorMap: () => ({ message: "Please select a valid status" }),
+      errorMap: () => ({ message: "Por favor selecciona un estado válido" }),
     })
     .optional()
     .default(QuadrantStatus.AVAILABLE),

@@ -199,7 +199,7 @@ export function PropertySingleMap({
               <strong>Tipo:</strong> ${property.transactionType === "SALE" ? "Venta" : property.transactionType === "RENT" ? "Alquiler" : "Anticrético"}
             </p>
             <p style="margin: 0; font-size: 13px;">
-              <strong>Detalles:</strong> ${property.bedrooms} hab, ${property.bathrooms} baños, ${property.squareMeters}m²
+              <strong>Detalles:</strong> ${property.bedrooms} dormitorios, ${property.bathrooms} baños, ${property.squareMeters}m²
             </p>
           </div>
         `;

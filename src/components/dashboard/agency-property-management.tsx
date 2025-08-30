@@ -114,14 +114,20 @@ export function AgencyPropertyManagement() {
       REJECTED: XCircle,
     };
 
+    const labels = {
+      PENDING: "Pendiente",
+      APPROVED: "Aprobado",
+      REJECTED: "Rechazado",
+    };
+
     const Icon = icons[status];
 
     return (
       <div className="flex items-center gap-2">
         <Badge variant={variants[status]} className="flex items-center gap-1">
           <Icon className="h-3 w-3" />
-          <span className="hidden sm:inline">{status}</span>
-          <span className="sm:hidden">{status.charAt(0)}</span>
+          <span className="hidden sm:inline">{labels[status]}</span>
+          <span className="sm:hidden">{labels[status].charAt(0)}</span>
         </Badge>
       </div>
     );
@@ -229,7 +235,7 @@ export function AgencyPropertyManagement() {
                   {data?.totalCount || 0}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Total Properties
+                  Total de Propiedades
                 </p>
               </div>
             </div>
@@ -242,10 +248,10 @@ export function AgencyPropertyManagement() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle className="text-lg sm:text-xl">
-                  Property Management
+                  Gestión de Propiedades
                 </CardTitle>
                 <CardDescription className="text-sm">
-                  View and manage all properties submitted by your agents
+                  Ve y gestiona todas las propiedades enviadas por tus agentes
                 </CardDescription>
               </div>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -256,18 +262,18 @@ export function AgencyPropertyManagement() {
                   className="w-full sm:w-auto"
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Export CSV</span>
-                  <span className="sm:hidden">Export</span>
+                  <span className="hidden sm:inline">Exportar CSV</span>
+                  <span className="sm:hidden">Exportar</span>
                 </Button>
                 {stats.pending > 0 && (
                   <Button asChild className="w-full sm:w-auto">
                     <Link href="/properties/pending">
                       <Clock className="mr-2 h-4 w-4" />
                       <span className="hidden sm:inline">
-                        Review Pending ({stats.pending})
+                        Revisar Pendientes ({stats.pending})
                       </span>
                       <span className="sm:hidden">
-                        Pending ({stats.pending})
+                        Pendientes ({stats.pending})
                       </span>
                     </Link>
                   </Button>
@@ -305,12 +311,12 @@ export function AgencyPropertyManagement() {
                   </svg>
                 </div>
                 <h3 className="mt-4 text-lg font-medium">
-                  No properties found
+                  No se encontraron propiedades
                 </h3>
                 <p className="text-muted-foreground mb-4">
                   {Object.keys(filters).length > 0
-                    ? "No properties match your current filters"
-                    : "No properties have been submitted yet"}
+                    ? "Ninguna propiedad coincide con tus filtros actuales"
+                    : "Aún no se han enviado propiedades"}
                 </p>
               </div>
             ) : (
@@ -336,7 +342,7 @@ export function AgencyPropertyManagement() {
                         <div className="grid grid-cols-2 gap-4 text-xs">
                           <div>
                             <span className="text-muted-foreground">
-                              Agent:
+                              Agente:
                             </span>
                             <p className="font-medium">
                               {property.agent.firstName || ""}{" "}
@@ -344,12 +350,12 @@ export function AgencyPropertyManagement() {
                             </p>
                           </div>
                           <div>
-                            <span className="text-muted-foreground">Type:</span>
+                            <span className="text-muted-foreground">Tipo:</span>
                             <p className="font-medium">{property.type}</p>
                           </div>
                           <div>
                             <span className="text-muted-foreground">
-                              Price:
+                              Precio:
                             </span>
                             <p className="font-medium">
                               {property.currency === "DOLLARS" ? (
@@ -360,7 +366,9 @@ export function AgencyPropertyManagement() {
                             </p>
                           </div>
                           <div>
-                            <span className="text-muted-foreground">Date:</span>
+                            <span className="text-muted-foreground">
+                              Fecha:
+                            </span>
                             <p className="font-medium">
                               {new Date(
                                 property.createdAt
@@ -373,7 +381,7 @@ export function AgencyPropertyManagement() {
                           <Button size="sm" variant="ghost" asChild>
                             <Link href={`/properties/${property.id}`}>
                               <Eye className="h-4 w-4 mr-2" />
-                              View
+                              Ver
                             </Link>
                           </Button>
                         </div>
@@ -387,13 +395,13 @@ export function AgencyPropertyManagement() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Property</TableHead>
-                        <TableHead>Agent</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Submitted</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead>Propiedad</TableHead>
+                        <TableHead>Agente</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Precio</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Enviado</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -471,7 +479,7 @@ export function AgencyPropertyManagement() {
                                 size="sm"
                                 variant="ghost"
                                 asChild
-                                title="View Property Details"
+                                title="Ver Detalles de la Propiedad"
                               >
                                 <Link href={`/properties/${property.id}`}>
                                   <Eye className="h-4 w-4" />
@@ -489,13 +497,13 @@ export function AgencyPropertyManagement() {
                 {data && data.pagination.totalPages > 1 && (
                   <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-4">
                     <p className="text-sm text-muted-foreground text-center sm:text-left">
-                      Showing {(data.pagination.page - 1) * params.limit! + 1}{" "}
-                      to{" "}
+                      Mostrando {(data.pagination.page - 1) * params.limit! + 1}{" "}
+                      a{" "}
                       {Math.min(
                         data.pagination.page * params.limit!,
                         data.totalCount
                       )}{" "}
-                      of {data.totalCount} properties
+                      de {data.totalCount} propiedades
                     </p>
                     <div className="flex items-center gap-2">
                       <Button
@@ -506,10 +514,10 @@ export function AgencyPropertyManagement() {
                         }
                         disabled={data.pagination.page <= 1}
                       >
-                        Previous
+                        Anterior
                       </Button>
                       <span className="text-sm">
-                        Page {data.pagination.page} of{" "}
+                        Página {data.pagination.page} de{" "}
                         {data.pagination.totalPages}
                       </span>
                       <Button
@@ -522,7 +530,7 @@ export function AgencyPropertyManagement() {
                           data.pagination.page >= data.pagination.totalPages
                         }
                       >
-                        Next
+                        Siguiente
                       </Button>
                     </div>
                   </div>

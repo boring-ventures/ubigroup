@@ -409,13 +409,13 @@ export function PropertyMap({
                   ${property.address || ""}, ${property.locationCity}, ${property.locationState}
                 </p>
                 <p style="margin: 0 0 4px 0; font-size: 12px;">
-                  <strong>Price:</strong> ${property.currency === "DOLLARS" ? "$" : "Bs."} ${property.price.toLocaleString()}
+                  <strong>Precio:</strong> ${property.currency === "DOLLARS" ? "$" : "Bs."} ${property.price.toLocaleString()}
                 </p>
                 <p style="margin: 0 0 4px 0; font-size: 12px;">
-                  <strong>Type:</strong> ${property.transactionType}
+                  <strong>Tipo:</strong> ${property.transactionType === "SALE" ? "Venta" : property.transactionType === "RENT" ? "Alquiler" : "Anticrético"}
                 </p>
                 <p style="margin: 0 0 4px 0; font-size: 12px;">
-                  <strong>Details:</strong> ${property.bedrooms} bed, ${property.bathrooms} bath, ${property.squareMeters}m²
+                  <strong>Detalles:</strong> ${property.bedrooms} dormitorios, ${property.bathrooms} baños, ${property.squareMeters}m²
                 </p>
                 ${property.customId ? `<p style="margin: 0; font-size: 11px; color: #999;">ID: ${property.customId}</p>` : ""}
               </div>

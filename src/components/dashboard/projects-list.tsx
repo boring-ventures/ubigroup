@@ -43,7 +43,7 @@ interface Project {
   name: string;
   description: string;
   location: string;
-  propertyType: string;
+
   images: string[];
   createdAt: string;
   active: boolean;
@@ -91,7 +91,7 @@ export function ProjectsList() {
 
       const response = await fetch(`/api/projects?${params.toString()}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch projects");
+        throw new Error("Error al cargar los proyectos");
       }
       const data = await response.json();
       return data.projects || [];
@@ -263,18 +263,6 @@ export function ProjectsList() {
                   </p>
 
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm gap-2">
-                      <span className="text-muted-foreground">
-                        Tipo de propiedad:
-                      </span>
-                      <Badge
-                        variant="outline"
-                        className="flex-shrink-0 text-xs"
-                      >
-                        {project.propertyType}
-                      </Badge>
-                    </div>
-
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Pisos:</span>
                       <span className="font-medium">

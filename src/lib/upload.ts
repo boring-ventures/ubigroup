@@ -1,7 +1,7 @@
 import { toast } from "@/components/ui/use-toast";
 
-export const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-export const MAX_BATCH_SIZE = 10 * 1024 * 1024; // 10MB per batch to avoid 413 errors
+export const MAX_INDIVIDUAL_FILE_SIZE = 50 * 1024 * 1024; // 50MB per file (Supabase Free tier limit)
+export const MAX_TOTAL_SIZE = 100 * 1024 * 1024; // 100MB total for all files
 
 export async function uploadFiles(
   files: File[],
@@ -19,9 +19,9 @@ export async function uploadFiles(
   let currentBatchSize = 0;
 
   for (const file of files) {
-    // If adding this file would exceed batch size, start a new batch
+    // If adding this file would exceed total size, start a new batch
     if (
-      currentBatchSize + file.size > MAX_BATCH_SIZE &&
+      currentBatchSize + file.size > MAX_TOTAL_SIZE &&
       currentBatch.length > 0
     ) {
       batches.push([...currentBatch]);
@@ -139,11 +139,11 @@ async function uploadBatch(
 }
 
 export function validateFile(file: File, type: "image" | "video"): boolean {
-  // Check file size
-  if (file.size > MAX_FILE_SIZE) {
+  // Check file size for both images and videos (Supabase Free tier limit)
+  if (file.size > MAX_INDIVIDUAL_FILE_SIZE) {
     toast({
       title: "Archivo demasiado grande",
-      description: `${file.name} excede el límite de 50MB`,
+      description: `${file.name} excede el límite de 50MB por archivo`,
       variant: "destructive",
     });
     return false;

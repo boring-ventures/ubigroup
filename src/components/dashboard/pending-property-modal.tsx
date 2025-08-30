@@ -32,8 +32,13 @@ import {
   DollarSign,
   FileText,
   Building2,
+  Car,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import {
+  getPropertyTypeLabel,
+  getTransactionTypeLabel,
+} from "@/lib/translations";
 
 import Image from "next/image";
 import { useUpdatePropertyStatus } from "@/hooks/use-pending-properties";
@@ -53,6 +58,7 @@ interface Property {
   exchangeRate: number | null;
   bedrooms: number;
   bathrooms: number;
+  garageSpaces: number;
   area: number; // From API transformation (squareMeters)
   features: string[];
   images: string[];
@@ -110,8 +116,8 @@ export function PendingPropertyModal({
       });
 
       toast({
-        title: "Success",
-        description: `Property ${actionType === "approve" ? "approved" : "rejected"} successfully`,
+        title: "Éxito",
+        description: `Propiedad ${actionType === "approve" ? "aprobada" : "rechazada"} exitosamente`,
       });
 
       // Invalidate and refetch pending properties
@@ -127,7 +133,7 @@ export function PendingPropertyModal({
         description:
           error instanceof Error
             ? error.message
-            : "Failed to update property status",
+            : "Error al actualizar el estado de la propiedad",
         variant: "destructive",
       });
     }
@@ -186,11 +192,11 @@ export function PendingPropertyModal({
                 className="text-yellow-600 bg-yellow-50"
               >
                 <Clock className="mr-1 h-3 w-3" />
-                Pending Review
+                Pendiente de Revisión
               </Badge>
             </DialogTitle>
             <DialogDescription>
-              Submitted {formatDate(property.createdAt)} by{" "}
+              Enviado {formatDate(property.createdAt)} por{" "}
               {property.agent.firstName} {property.agent.lastName}
             </DialogDescription>
           </DialogHeader>
@@ -242,22 +248,31 @@ export function PendingPropertyModal({
                 {/* Basic Info */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Property Details</CardTitle>
+                    <CardTitle className="text-lg">
+                      Detalles de la Propiedad
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="flex items-center space-x-2">
                         <Bed className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm">
-                          {property.bedrooms} bed
+                          {property.bedrooms} dormitorio
                           {property.bedrooms !== 1 ? "s" : ""}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Bath className="h-4 w-4 text-muted-foreground" />
                         <span className="text-sm">
-                          {property.bathrooms} bath
+                          {property.bathrooms} baño
                           {property.bathrooms !== 1 ? "s" : ""}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Car className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {property.garageSpaces} garaje
+                          {property.garageSpaces !== 1 ? "s" : ""}
                         </span>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -266,9 +281,19 @@ export function PendingPropertyModal({
                           {property.area.toLocaleString()} m²
                         </span>
                       </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
                       <div className="flex items-center space-x-2">
                         <Building2 className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">{property.propertyType}</span>
+                        <span className="text-sm">
+                          {getPropertyTypeLabel(property.propertyType)}
+                        </span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">
+                          {getTransactionTypeLabel(property.transactionType)}
+                        </span>
                       </div>
                     </div>
 
@@ -276,12 +301,12 @@ export function PendingPropertyModal({
 
                     {/* Location */}
                     <div>
-                      <h4 className="font-semibold mb-2">Location</h4>
+                      <h4 className="font-semibold mb-2">Ubicación</h4>
                       <div className="space-y-1 text-sm text-muted-foreground">
                         <div className="flex items-center space-x-2">
                           <MapPin className="h-4 w-4" />
                           <span>
-                            {property.address || "No address specified"}
+                            {property.address || "Sin dirección especificada"}
                           </span>
                         </div>
                         <div className="ml-6">
@@ -294,7 +319,7 @@ export function PendingPropertyModal({
 
                     {/* Description */}
                     <div>
-                      <h4 className="font-semibold mb-2">Description</h4>
+                      <h4 className="font-semibold mb-2">Descripción</h4>
                       <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-4">
                         {property.description}
                       </p>
@@ -305,7 +330,9 @@ export function PendingPropertyModal({
                       <>
                         <Separator />
                         <div>
-                          <h4 className="font-semibold mb-2">Features</h4>
+                          <h4 className="font-semibold mb-2">
+                            Características
+                          </h4>
                           <div className="flex flex-wrap gap-2">
                             {property.features
                               .slice(0, 6)
@@ -320,7 +347,7 @@ export function PendingPropertyModal({
                               ))}
                             {property.features.length > 6 && (
                               <Badge variant="outline" className="text-xs">
-                                +{property.features.length - 6} more
+                                +{property.features.length - 6} más
                               </Badge>
                             )}
                           </div>
@@ -338,7 +365,7 @@ export function PendingPropertyModal({
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2 text-base">
                       <DollarSign className="h-4 w-4" />
-                      Price
+                      Precio
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -347,7 +374,7 @@ export function PendingPropertyModal({
                         {formatPrice(property.price, property.currency)}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {property.transactionType}
+                        {getTransactionTypeLabel(property.transactionType)}
                       </div>
                     </div>
 
@@ -355,14 +382,14 @@ export function PendingPropertyModal({
 
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span>Type:</span>
+                        <span>Tipo:</span>
                         <span className="font-medium">
-                          {property.propertyType}
+                          {getPropertyTypeLabel(property.propertyType)}
                         </span>
                       </div>
                       {property.exchangeRate && (
                         <div className="flex justify-between text-sm">
-                          <span>Exchange Rate:</span>
+                          <span>Tipo de Cambio:</span>
                           <span className="font-medium">
                             ${property.exchangeRate}
                           </span>
@@ -377,7 +404,7 @@ export function PendingPropertyModal({
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2 text-base">
                       <User className="h-4 w-4" />
-                      Agent
+                      Agente
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
@@ -411,7 +438,7 @@ export function PendingPropertyModal({
                 {/* Action Buttons */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-base">Actions</CardTitle>
+                    <CardTitle className="text-base">Acciones</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     <Button
@@ -421,7 +448,7 @@ export function PendingPropertyModal({
                       disabled={updateStatusMutation.isPending}
                     >
                       <CheckCircle className="mr-2 h-4 w-4" />
-                      Approve
+                      Aprobar
                     </Button>
                     <Button
                       variant="destructive"
@@ -431,7 +458,7 @@ export function PendingPropertyModal({
                       disabled={updateStatusMutation.isPending}
                     >
                       <XCircle className="mr-2 h-4 w-4" />
-                      Reject
+                      Rechazar
                     </Button>
                   </CardContent>
                 </Card>
@@ -450,22 +477,22 @@ export function PendingPropertyModal({
           <DialogHeader>
             <DialogTitle>
               {actionType === "approve"
-                ? "Approve Property"
-                : "Reject Property"}
+                ? "Aprobar Propiedad"
+                : "Rechazar Propiedad"}
             </DialogTitle>
             <DialogDescription>
               {actionType === "approve"
-                ? "This property will be approved and made visible to the public."
-                : "Please provide a reason for rejecting this property listing."}
+                ? "Esta propiedad será aprobada y será visible al público."
+                : "Por favor proporciona una razón para rechazar esta lista de propiedad."}
             </DialogDescription>
           </DialogHeader>
 
           {actionType === "reject" && (
             <div className="space-y-2">
-              <Label htmlFor="rejection-reason">Rejection Reason *</Label>
+              <Label htmlFor="rejection-reason">Razón de Rechazo *</Label>
               <Textarea
                 id="rejection-reason"
-                placeholder="Please explain why this property is being rejected..."
+                placeholder="Por favor explica por qué esta propiedad está siendo rechazada..."
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 rows={4}
@@ -479,7 +506,7 @@ export function PendingPropertyModal({
               onClick={closeActionDialog}
               disabled={updateStatusMutation.isPending}
             >
-              Cancel
+              Cancelar
             </Button>
             <Button
               onClick={handleConfirmAction}
@@ -490,10 +517,10 @@ export function PendingPropertyModal({
               variant={actionType === "approve" ? "default" : "destructive"}
             >
               {updateStatusMutation.isPending
-                ? "Processing..."
+                ? "Procesando..."
                 : actionType === "approve"
-                  ? "Approve Property"
-                  : "Reject Property"}
+                  ? "Aprobar Propiedad"
+                  : "Rechazar Propiedad"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -55,7 +55,6 @@ export default async function EditProjectPage({
           name: project.name,
           description: project.description,
           location: project.location,
-          propertyType: project.propertyType,
           images: project.images,
         }}
       />

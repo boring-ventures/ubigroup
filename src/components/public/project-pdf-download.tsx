@@ -11,7 +11,7 @@ interface Project {
   name: string;
   description: string;
   location: string;
-  propertyType: string;
+
   images: string[];
   active: boolean;
   floors?: Array<{
@@ -64,21 +64,6 @@ export function ProjectPdfDownload({
   const formatPrice = (price: number, currency: string = "USD") => {
     const currencySymbol = currency === "DOLLARS" ? "$" : "Bs.";
     return `${currencySymbol} ${price.toLocaleString()}`;
-  };
-
-  const getPropertyTypeLabel = (type: string) => {
-    switch (type) {
-      case "HOUSE":
-        return "Casa";
-      case "APARTMENT":
-        return "Apartamento";
-      case "OFFICE":
-        return "Oficina";
-      case "LAND":
-        return "Terreno";
-      default:
-        return type;
-    }
   };
 
   const getStatusLabel = (status: string) => {
@@ -194,7 +179,7 @@ export function ProjectPdfDownload({
               ${totalUnits} Unidades • ${availableUnits} Disponibles
             </div>
             <div style="font-size: 14px; color: #6b7280;">
-              ${getPropertyTypeLabel(project.propertyType)} • ${project.floors?.length || 0} Pisos • ${project.active ? "Activo" : "Inactivo"}
+${project.floors?.length || 0} Pisos • ${project.active ? "Activo" : "Inactivo"}
             </div>
           </div>
 
@@ -547,7 +532,7 @@ export function ProjectPdfDownload({
             </h2>
             <div style="color: #6b7280; line-height: 1.8;">
               <div><strong>Nombre:</strong> ${project.name}</div>
-              <div><strong>Tipo:</strong> ${getPropertyTypeLabel(project.propertyType)}</div>
+
               <div><strong>Estado:</strong> ${project.active ? "Activo" : "Inactivo"}</div>
               <div><strong>ID del Proyecto:</strong> ${project.id}</div>
               ${project.createdAt ? `<div><strong>Creado:</strong> ${new Date(project.createdAt).toLocaleDateString()}</div>` : ""}
