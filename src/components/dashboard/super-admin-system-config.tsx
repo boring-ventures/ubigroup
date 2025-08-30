@@ -39,13 +39,13 @@ import {
 const systemConfigSchema = z.object({
   platformName: z
     .string()
-    .min(2, "Platform name must be at least 2 characters"),
+    .min(2, "El nombre de la plataforma debe tener al menos 2 caracteres"),
   platformDescription: z.string().optional(),
-  supportEmail: z.string().email("Invalid email address"),
+  supportEmail: z.string().email("Dirección de correo electrónico inválida"),
   maxPropertiesPerAgent: z
     .number()
-    .min(1, "Must be at least 1")
-    .max(1000, "Cannot exceed 1000"),
+    .min(1, "Debe ser al menos 1")
+    .max(1000, "No puede exceder 1000"),
   autoApproveProperties: z.boolean(),
   requirePropertyVerification: z.boolean(),
   allowPublicRegistration: z.boolean(),
@@ -53,8 +53,8 @@ const systemConfigSchema = z.object({
   maintenanceMessage: z.string().optional(),
   maxImageUploadSize: z
     .number()
-    .min(1, "Must be at least 1 MB")
-    .max(50, "Cannot exceed 50 MB"),
+    .min(1, "Debe ser al menos 1 MB")
+    .max(50, "No puede exceder 50 MB"),
 });
 
 type SystemConfigFormData = z.infer<typeof systemConfigSchema>;
@@ -67,9 +67,9 @@ export function SuperAdminSystemConfig() {
   const form = useForm<SystemConfigFormData>({
     resolver: zodResolver(systemConfigSchema),
     defaultValues: {
-      platformName: "UbiGroup Real Estate Platform",
+      platformName: "Plataforma Inmobiliaria UbiGroup",
       platformDescription:
-        "A comprehensive real estate management platform for agencies and agents.",
+        "Una plataforma integral de gestión inmobiliaria para agencias y agentes.",
       supportEmail: "support@ubigroup.com",
       maxPropertiesPerAgent: 100,
       autoApproveProperties: false,
@@ -77,7 +77,7 @@ export function SuperAdminSystemConfig() {
       allowPublicRegistration: false,
       maintenanceMode: false,
       maintenanceMessage:
-        "The platform is currently under maintenance. Please check back later.",
+        "La plataforma está actualmente en mantenimiento. Por favor, vuelve más tarde.",
       maxImageUploadSize: 10,
     },
   });
@@ -90,15 +90,17 @@ export function SuperAdminSystemConfig() {
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
 
       toast({
-        title: "Settings Saved",
-        description: "System configuration has been updated successfully.",
+        title: "Configuración Guardada",
+        description:
+          "La configuración del sistema se ha actualizado exitosamente.",
       });
 
       setLastSaved(new Date());
     } catch {
       toast({
         title: "Error",
-        description: "Failed to save system configuration. Please try again.",
+        description:
+          "Error al guardar la configuración del sistema. Por favor, inténtalo de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -109,8 +111,9 @@ export function SuperAdminSystemConfig() {
   const handleReset = () => {
     form.reset();
     toast({
-      title: "Settings Reset",
-      description: "Configuration has been reset to default values.",
+      title: "Configuración Restablecida",
+      description:
+        "La configuración se ha restablecido a los valores predeterminados.",
     });
   };
 
@@ -118,14 +121,14 @@ export function SuperAdminSystemConfig() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">System Configuration</h2>
+          <h2 className="text-2xl font-bold">Configuración del Sistema</h2>
           <p className="text-muted-foreground">
-            Manage platform-wide settings and configurations
+            Gestiona configuraciones y ajustes de toda la plataforma
           </p>
         </div>
         {lastSaved && (
           <Badge variant="outline" className="text-green-600 border-green-200">
-            Last saved: {lastSaved.toLocaleTimeString()}
+            Última vez guardado: {lastSaved.toLocaleTimeString()}
           </Badge>
         )}
       </div>
@@ -137,10 +140,10 @@ export function SuperAdminSystemConfig() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Globe className="h-5 w-5" />
-                Platform Settings
+                Configuración de la Plataforma
               </CardTitle>
               <CardDescription>
-                Basic platform information and branding
+                Información básica de la plataforma y marca
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -149,15 +152,15 @@ export function SuperAdminSystemConfig() {
                 name="platformName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Platform Name</FormLabel>
+                    <FormLabel>Nombre de la Plataforma</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="UbiGroup Real Estate Platform"
+                        placeholder="Plataforma Inmobiliaria UbiGroup"
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      The name displayed across the platform
+                      El nombre mostrado en toda la plataforma
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -169,16 +172,16 @@ export function SuperAdminSystemConfig() {
                 name="platformDescription"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Platform Description</FormLabel>
+                    <FormLabel>Descripción de la Plataforma</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="A comprehensive real estate management platform..."
+                        placeholder="Una plataforma integral de gestión inmobiliaria..."
                         {...field}
                         rows={3}
                       />
                     </FormControl>
                     <FormDescription>
-                      Brief description shown on public pages
+                      Breve descripción mostrada en páginas públicas
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -190,7 +193,7 @@ export function SuperAdminSystemConfig() {
                 name="supportEmail"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Support Email</FormLabel>
+                    <FormLabel>Email de Soporte</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
@@ -199,7 +202,7 @@ export function SuperAdminSystemConfig() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Email address for user support inquiries
+                      Dirección de correo electrónico para consultas de soporte
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -213,10 +216,10 @@ export function SuperAdminSystemConfig() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Home className="h-5 w-5" />
-                Property Management
+                Gestión de Propiedades
               </CardTitle>
               <CardDescription>
-                Configure property listing and approval settings
+                Configura ajustes de listado y aprobación de propiedades
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -225,7 +228,7 @@ export function SuperAdminSystemConfig() {
                 name="maxPropertiesPerAgent"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Max Properties per Agent</FormLabel>
+                    <FormLabel>Máximo de Propiedades por Agente</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -236,7 +239,7 @@ export function SuperAdminSystemConfig() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Maximum number of properties an agent can list
+                      Número máximo de propiedades que un agente puede listar
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -250,11 +253,11 @@ export function SuperAdminSystemConfig() {
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
                       <FormLabel className="text-base">
-                        Auto-approve Properties
+                        Auto-aprobar Propiedades
                       </FormLabel>
                       <FormDescription>
-                        Automatically approve property listings without manual
-                        review
+                        Aprobar automáticamente listados de propiedades sin
+                        revisión manual
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -274,11 +277,11 @@ export function SuperAdminSystemConfig() {
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
                       <FormLabel className="text-base">
-                        Require Property Verification
+                        Requerir Verificación de Propiedades
                       </FormLabel>
                       <FormDescription>
-                        Require agents to provide verification documents for
-                        properties
+                        Requerir que los agentes proporcionen documentos de
+                        verificación para las propiedades
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -296,7 +299,7 @@ export function SuperAdminSystemConfig() {
                 name="maxImageUploadSize"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Max Image Upload Size (MB)</FormLabel>
+                    <FormLabel>Tamaño Máximo de Carga de Imagen (MB)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -307,7 +310,8 @@ export function SuperAdminSystemConfig() {
                       />
                     </FormControl>
                     <FormDescription>
-                      Maximum file size for property image uploads
+                      Tamaño máximo de archivo para cargas de imágenes de
+                      propiedades
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -321,10 +325,10 @@ export function SuperAdminSystemConfig() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                User Management
+                Gestión de Usuarios
               </CardTitle>
               <CardDescription>
-                Configure user registration and access settings
+                Configura ajustes de registro y acceso de usuarios
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -335,11 +339,11 @@ export function SuperAdminSystemConfig() {
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
                       <FormLabel className="text-base">
-                        Allow Public Registration
+                        Permitir Registro Público
                       </FormLabel>
                       <FormDescription>
-                        Allow users to register without invitation (agents and
-                        agency admins)
+                        Permitir que los usuarios se registren sin invitación
+                        (agentes y administradores de agencia)
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -359,10 +363,10 @@ export function SuperAdminSystemConfig() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
-                System Maintenance
+                Mantenimiento del Sistema
               </CardTitle>
               <CardDescription>
-                Configure system maintenance settings
+                Configura ajustes de mantenimiento del sistema
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -374,11 +378,11 @@ export function SuperAdminSystemConfig() {
                     <div className="space-y-0.5">
                       <FormLabel className="text-base flex items-center gap-2">
                         <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                        Maintenance Mode
+                        Modo de Mantenimiento
                       </FormLabel>
                       <FormDescription>
-                        Enable maintenance mode to prevent user access during
-                        updates
+                        Habilita el modo de mantenimiento para prevenir el
+                        acceso de usuarios durante actualizaciones
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -397,16 +401,16 @@ export function SuperAdminSystemConfig() {
                   name="maintenanceMessage"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Maintenance Message</FormLabel>
+                      <FormLabel>Mensaje de Mantenimiento</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="The platform is currently under maintenance..."
+                          placeholder="La plataforma está actualmente en mantenimiento..."
                           {...field}
                           rows={3}
                         />
                       </FormControl>
                       <FormDescription>
-                        Message displayed to users during maintenance
+                        Mensaje mostrado a los usuarios durante el mantenimiento
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -426,7 +430,7 @@ export function SuperAdminSystemConfig() {
                   onClick={handleReset}
                   disabled={isLoading}
                 >
-                  Reset to Defaults
+                  Restablecer a Predeterminados
                 </Button>
 
                 <div className="flex space-x-2">
@@ -434,12 +438,12 @@ export function SuperAdminSystemConfig() {
                     {isLoading ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
+                        Guardando...
                       </>
                     ) : (
                       <>
                         <Save className="mr-2 h-4 w-4" />
-                        Save Configuration
+                        Guardar Configuración
                       </>
                     )}
                   </Button>

@@ -812,10 +812,6 @@ export function PropertyDetailPage({
               <CardContent>
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">ID:</span>
-                    <span className="font-mono">{property.id}</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Tipo:</span>
                     <span>{getPropertyTypeLabel(property.type)}</span>
                   </div>
