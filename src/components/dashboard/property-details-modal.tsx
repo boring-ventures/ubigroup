@@ -559,12 +559,6 @@ export function PropertyDetailsModal({
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">
-                      ID de la Propiedad:
-                    </span>
-                    <span className="font-mono">{property.id}</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Estado:</span>
                     <span>{getStatusBadge(property.status)}</span>
                   </div>
