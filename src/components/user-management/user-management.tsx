@@ -64,7 +64,6 @@ import {
   Key,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { PasswordInput } from "@/components/utils/password-input";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   generateSecurePassword,
@@ -194,17 +193,6 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
       agencyId: "",
     },
   });
-
-  // Generate password for reset
-  const handleGenerateResetPassword = () => {
-    const generatedPassword = generateSecurePassword();
-    const passwordInput = document.querySelector(
-      'input[name="newPassword"]'
-    ) as HTMLInputElement;
-    if (passwordInput) {
-      passwordInput.value = generatedPassword;
-    }
-  };
 
   const editForm = useForm<EditUserFormData>({
     resolver: zodResolver(editUserSchema),
@@ -442,18 +430,22 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
     setIsPasswordDialogOpen(true);
   };
 
-  const onResetPasswordSubmit = async (data: { newPassword: string }) => {
+  const onResetPasswordConfirm = async () => {
     if (!passwordUser) return;
 
     try {
       setIsResettingPassword(true);
+      const generatedPassword = generateSecurePassword();
 
       const response = await fetch(`/api/users/${passwordUser.id}/password`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ password: data.newPassword }),
+        body: JSON.stringify({
+          password: generatedPassword,
+          email: passwordUser.email,
+        }),
       });
 
       const result = await response.json();
@@ -464,28 +456,27 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
           (agency) => agency.id === passwordUser.agencyId
         );
 
-        // Debug: Log the values to understand what we're getting
-        console.log("Password reset result:", result);
-        console.log("Password user:", passwordUser);
-        console.log(
-          "Using email:",
-          result.email || result.userId || passwordUser.userId
-        );
-
         // Use the user data from the API response if available
         const userData = result.user || passwordUser;
 
-        setResetUserCredentials({
+        const credentialsData = {
           email: result.email || userData.userId, // Use email from API response or fallback to userId
-          password: data.newPassword,
+          password: generatedPassword,
           firstName: userData.firstName || "",
           lastName: userData.lastName || "",
           role: userData.role,
           agencyName: selectedAgency?.name,
-        });
+        };
+
+        setResetUserCredentials(credentialsData);
         setIsResetCredentialsModalOpen(true);
         setIsPasswordDialogOpen(false);
         setPasswordUser(null);
+
+        toast({
+          title: "✅ Contraseña Restablecida",
+          description: "La contraseña ha sido restablecida exitosamente.",
+        });
       } else {
         throw new Error(result.error || "Error al restablecer contraseña");
       }
@@ -1014,7 +1005,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
               </DialogContent>
             </Dialog>
 
-            {/* Password Reset Dialog */}
+            {/* Password Reset Confirmation Dialog */}
             <Dialog
               open={isPasswordDialogOpen}
               onOpenChange={setIsPasswordDialogOpen}
@@ -1023,63 +1014,41 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                 <DialogHeader>
                   <DialogTitle>Restablecer Contraseña</DialogTitle>
                   <DialogDescription>
-                    Establecer una nueva contraseña para{" "}
+                    ¿Estás seguro de que quieres restablecer la contraseña de{" "}
                     <span className="font-semibold">
                       {passwordUser?.firstName} {passwordUser?.lastName}
                     </span>
+                    ?
                   </DialogDescription>
                 </DialogHeader>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const formData = new FormData(e.currentTarget);
-                    const newPassword = formData.get("newPassword") as string;
-                    onResetPasswordSubmit({ newPassword });
-                  }}
-                  className="space-y-4"
-                >
-                  <div>
-                    <label className="text-sm font-medium">
-                      Nueva Contraseña
-                    </label>
-                    <div className="flex flex-col sm:flex-row gap-2 mt-1">
-                      <PasswordInput
-                        name="newPassword"
-                        placeholder="Ingresa la nueva contraseña"
-                        className="flex-1"
-                        required
-                        minLength={8}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleGenerateResetPassword}
-                        className="flex-shrink-0"
-                      >
-                        <Key className="h-4 w-4 mr-1" />
-                        Generar
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      La contraseña debe tener al menos 8 caracteres
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <Key className="h-4 w-4 text-blue-600" />
+                    <p className="text-sm text-blue-800">
+                      Se generará automáticamente una nueva contraseña segura.
                     </p>
                   </div>
-                  <DialogFooter>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setIsPasswordDialogOpen(false)}
-                      disabled={isResettingPassword}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={isResettingPassword}>
-                      {isResettingPassword
-                        ? "Actualizando..."
-                        : "Actualizar Contraseña"}
-                    </Button>
-                  </DialogFooter>
-                </form>
+                </div>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setIsPasswordDialogOpen(false);
+                      setPasswordUser(null);
+                    }}
+                    disabled={isResettingPassword}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={onResetPasswordConfirm}
+                    disabled={isResettingPassword}
+                  >
+                    {isResettingPassword ? "Restableciendo..." : "Restablecer"}
+                  </Button>
+                </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>
@@ -1102,7 +1071,11 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los Roles</SelectItem>
-                <SelectItem value="SUPER_ADMIN">Super Administrador</SelectItem>
+                {currentUser?.role === "SUPER_ADMIN" && (
+                  <SelectItem value="SUPER_ADMIN">
+                    Super Administrador
+                  </SelectItem>
+                )}
                 <SelectItem value="AGENCY_ADMIN">
                   Administrador de Agencia
                 </SelectItem>
@@ -1203,6 +1176,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                               onClick={() => handleResetPassword(user)}
                               title="Restablecer contraseña"
                               className="text-blue-600 hover:text-blue-700"
+                              disabled={isResettingPassword}
                             >
                               <Key className="h-4 w-4" />
                             </Button>
@@ -1269,6 +1243,7 @@ export function UserManagement({ onUserUpdate }: UserManagementProps) {
                             onClick={() => handleResetPassword(user)}
                             title="Restablecer contraseña"
                             className="text-blue-600 hover:text-blue-700"
+                            disabled={isResettingPassword}
                           >
                             <Key className="h-4 w-4" />
                           </Button>

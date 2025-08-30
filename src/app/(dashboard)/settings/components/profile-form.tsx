@@ -57,18 +57,18 @@ export function ProfileForm() {
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to update profile");
+      if (!response.ok) throw new Error("Error al actualizar el perfil");
 
       toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully.",
+        title: "Perfil actualizado",
+        description: "Tu perfil ha sido actualizado exitosamente.",
       });
 
       form.reset(pendingChanges);
     } catch {
       toast({
         title: "Error",
-        description: "Failed to update profile. Please try again.",
+        description: "Error al actualizar el perfil. Inténtalo de nuevo.",
         variant: "destructive",
       });
     } finally {
@@ -103,10 +103,10 @@ export function ProfileForm() {
               name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>First Name</FormLabel>
+                  <FormLabel>Nombre</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="John"
+                      placeholder="Juan"
                       {...field}
                       value={field.value ?? ""}
                     />
@@ -121,10 +121,10 @@ export function ProfileForm() {
               name="lastName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Last Name</FormLabel>
+                  <FormLabel>Apellido</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Doe"
+                      placeholder="Pérez"
                       {...field}
                       value={field.value ?? ""}
                     />
@@ -138,7 +138,7 @@ export function ProfileForm() {
           <div className="flex items-center gap-4">
             <Button type="submit" disabled={isUpdating}>
               {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Update profile
+              Actualizar perfil
             </Button>
             <Button
               type="button"
@@ -146,7 +146,7 @@ export function ProfileForm() {
               onClick={() => form.reset()}
               disabled={isUpdating}
             >
-              Reset
+              Restablecer
             </Button>
           </div>
         </form>
@@ -156,8 +156,8 @@ export function ProfileForm() {
         open={showConfirmDialog}
         onOpenChange={setShowConfirmDialog}
         onConfirm={handleConfirmUpdate}
-        title="Update Profile"
-        description="Are you sure you want to update your profile? This action cannot be undone."
+        title="Actualizar Perfil"
+        description="¿Estás seguro de que quieres actualizar tu perfil? Esta acción no se puede deshacer."
       />
     </>
   );

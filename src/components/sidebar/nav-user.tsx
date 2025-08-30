@@ -52,7 +52,7 @@ export function NavUser() {
               <Avatar className="h-8 w-8 rounded-lg ring-2 ring-primary/10">
                 <AvatarImage
                   src={profile.avatarUrl || ""}
-                  alt={displayName || user.email || "User"}
+                  alt={displayName || user.email || "Usuario"}
                 />
                 <AvatarFallback className="rounded-lg bg-primary/10">
                   {getInitials()}
@@ -78,7 +78,7 @@ export function NavUser() {
                 <Avatar className="h-8 w-8 rounded-lg ring-2 ring-primary/10">
                   <AvatarImage
                     src={profile.avatarUrl || ""}
-                    alt={displayName || user.email || "User"}
+                    alt={displayName || user.email || "Usuario"}
                   />
                   <AvatarFallback className="rounded-lg bg-primary/10">
                     {getInitials()}
@@ -97,14 +97,14 @@ export function NavUser() {
               <DropdownMenuItem asChild>
                 <Link href="/settings">
                   <BadgeCheck />
-                  Account
+                  Cuenta
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => signOut()}>
               <LogOut />
-              Log out
+              Cerrar Sesión
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

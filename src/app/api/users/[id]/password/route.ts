@@ -49,7 +49,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const body = await request.json();
-    const { password } = body;
+    const { password, email: userEmail } = body;
 
     if (!password || password.length < 8) {
       return NextResponse.json(
@@ -119,10 +119,14 @@ export async function PATCH(
         });
 
         // Get the user's email from Supabase Auth
-        const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.getUserById(existingUser.userId);
-        
+        const { data: authUser, error: authError } =
+          await supabaseAdmin.auth.admin.getUserById(existingUser.userId);
+
         if (authError) {
-          console.error("Failed to get user email from Supabase Auth:", authError);
+          console.error(
+            "Failed to get user email from Supabase Auth:",
+            authError
+          );
         }
 
         return NextResponse.json({
@@ -139,11 +143,68 @@ export async function PATCH(
           },
         });
       } else {
-        // User doesn't have a real auth ID, we can't update password
-        return NextResponse.json(
-          { error: "Cannot reset password for this user type" },
-          { status: 400 }
-        );
+        // User doesn't have a real auth ID - try to create one in Supabase Auth
+        try {
+          // Use email from request body or fallback to userId
+          const emailToUse = userEmail || existingUser.userId;
+
+          // Validate email format
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(emailToUse)) {
+            return NextResponse.json(
+              { error: "Cannot reset password: invalid email format" },
+              { status: 400 }
+            );
+          }
+
+          // Create a user in Supabase Auth with the given password
+          const { data: newAuthUser, error: createError } =
+            await supabaseAdmin.auth.admin.createUser({
+              email: emailToUse,
+              password: password,
+              email_confirm: true, // Auto-confirm the email
+            });
+
+          if (createError) {
+            console.error(
+              "Failed to create user in Supabase Auth:",
+              createError
+            );
+            return NextResponse.json(
+              { error: "Cannot create authentication for this user" },
+              { status: 400 }
+            );
+          }
+
+          // Update the user record to use the new auth ID
+          await prisma.user.update({
+            where: { id },
+            data: {
+              userId: newAuthUser.user.id,
+              requiresPasswordChange: true,
+            },
+          });
+
+          return NextResponse.json({
+            message: "Password updated successfully",
+            userId: newAuthUser.user.id,
+            email: newAuthUser.user.email || emailToUse,
+            user: {
+              id: existingUser.id,
+              userId: newAuthUser.user.id,
+              firstName: existingUser.firstName,
+              lastName: existingUser.lastName,
+              role: existingUser.role,
+              agencyId: existingUser.agencyId,
+            },
+          });
+        } catch (fallbackError) {
+          console.error("Failed to create fallback auth user:", fallbackError);
+          return NextResponse.json(
+            { error: "Cannot reset password for this user type" },
+            { status: 400 }
+          );
+        }
       }
     } catch (authUpdateError) {
       console.error(

@@ -150,12 +150,12 @@ export function AgencyProfileManagement() {
           <div className="text-center">
             <Building2 className="mx-auto h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-semibold">
-              Error loading agency profile
+              Error al cargar el perfil de la agencia
             </h3>
             <p className="mt-2 text-sm text-muted-foreground">
               {error instanceof Error
                 ? error.message
-                : "Failed to load agency information"}
+                : "Error al cargar la información de la agencia"}
             </p>
           </div>
         </CardContent>
@@ -169,9 +169,11 @@ export function AgencyProfileManagement() {
         <CardContent className="pt-6">
           <div className="text-center">
             <Building2 className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-semibold">No agency found</h3>
+            <h3 className="mt-4 text-lg font-semibold">
+              No se encontró agencia
+            </h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              No agency is associated with your account.
+              No hay una agencia asociada con tu cuenta.
             </p>
           </div>
         </CardContent>
@@ -185,17 +187,17 @@ export function AgencyProfileManagement() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-2xl">Agency Profile</CardTitle>
+              <CardTitle className="text-2xl">Perfil de Agencia</CardTitle>
               <p className="text-muted-foreground">
-                Manage your agency information and contact details
+                Gestiona la información y detalles de contacto de tu agencia
               </p>
             </div>
             {!isEditing ? (
-              <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
+              <Button onClick={() => setIsEditing(true)}>Editar Perfil</Button>
             ) : (
               <div className="flex space-x-2">
                 <Button variant="outline" onClick={handleCancel}>
-                  Cancel
+                  Cancelar
                 </Button>
                 <Button
                   onClick={form.handleSubmit(onSubmit)}
@@ -204,12 +206,12 @@ export function AgencyProfileManagement() {
                   {updateAgencyProfile.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
+                      Guardando...
                     </>
                   ) : (
                     <>
                       <Save className="mr-2 h-4 w-4" />
-                      Save Changes
+                      Guardar Cambios
                     </>
                   )}
                 </Button>
@@ -257,12 +259,12 @@ export function AgencyProfileManagement() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Agency Name *</FormLabel>
+                        <FormLabel>Nombre de la Agencia *</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             disabled={!isEditing}
-                            placeholder="Enter agency name"
+                            placeholder="Ingresa el nombre de la agencia"
                           />
                         </FormControl>
                         <FormMessage />
@@ -281,7 +283,7 @@ export function AgencyProfileManagement() {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         <Phone className="mr-2 h-4 w-4" />
-                        Phone Number
+                        Número de Teléfono
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -304,13 +306,13 @@ export function AgencyProfileManagement() {
                   <FormItem>
                     <FormLabel className="flex items-center">
                       <MapPin className="mr-2 h-4 w-4" />
-                      Address
+                      Dirección
                     </FormLabel>
                     <FormControl>
                       <Textarea
                         {...field}
                         disabled={!isEditing}
-                        placeholder="Enter full agency address"
+                        placeholder="Ingresa la dirección completa de la agencia"
                         rows={3}
                       />
                     </FormControl>
@@ -326,24 +328,24 @@ export function AgencyProfileManagement() {
       {/* Agency Statistics */}
       <Card>
         <CardHeader>
-          <CardTitle>Agency Statistics</CardTitle>
+          <CardTitle>Estadísticas de la Agencia</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="text-center">
-              <div className="text-2xl font-bold">Active Since</div>
+              <div className="text-2xl font-bold">Activa Desde</div>
               <div className="text-sm text-muted-foreground">
                 {new Date(agency.createdAt).toLocaleDateString()}
               </div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold">Status</div>
+              <div className="text-2xl font-bold">Estado</div>
               <div className="text-sm text-muted-foreground">
-                {agency.active ? "Active" : "Inactive"}
+                {agency.active ? "Activa" : "Inactiva"}
               </div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold">Last Updated</div>
+              <div className="text-2xl font-bold">Última Actualización</div>
               <div className="text-sm text-muted-foreground">
                 {new Date(agency.updatedAt).toLocaleDateString()}
               </div>
