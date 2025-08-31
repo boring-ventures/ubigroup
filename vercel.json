@@ -8,8 +8,16 @@
   ],
   "functions": {
     "src/app/api/**/*.ts": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "memory": 1024
+    },
+    "src/app/api/upload/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
     }
+  },
+  "limits": {
+    "maxRequestBodySize": "50mb"
   },
   "env": {
     "NODE_ENV": "production"

@@ -10,7 +10,7 @@ export const createProjectSchema = z.object({
   description: z
     .string()
     .min(10, "La descripción debe tener al menos 10 caracteres")
-    .max(1000, "La descripción debe tener menos de 1000 caracteres"),
+    .max(2000, "La descripción debe tener menos de 2000 caracteres"),
   location: z
     .string()
     .min(1, "La dirección es requerida")
