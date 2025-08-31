@@ -16,9 +16,6 @@
       "memory": 1024
     }
   },
-  "limits": {
-    "maxRequestBodySize": "50mb"
-  },
   "env": {
     "NODE_ENV": "production"
   }
