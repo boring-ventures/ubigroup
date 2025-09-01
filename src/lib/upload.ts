@@ -5,7 +5,7 @@ import {
   needsCompression,
 } from "@/lib/image-processing";
 
-export const MAX_INDIVIDUAL_FILE_SIZE = 40 * 1024 * 1024;
+export const MAX_INDIVIDUAL_FILE_SIZE = 100 * 1024 * 1024;
 export const MAX_TOTAL_SIZE = 100 * 1024 * 1024; // 1MB total per batch to work with Vercel's strict limits
 
 export async function uploadFiles(
