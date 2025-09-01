@@ -1,7 +1,12 @@
 import { toast } from "@/components/ui/use-toast";
+import {
+  optimizeImage,
+  getCompressionSettings,
+  needsCompression,
+} from "@/lib/image-processing";
 
-export const MAX_INDIVIDUAL_FILE_SIZE = 50 * 1024 * 1024; // 50MB per file (Supabase Free tier limit)
-export const MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 4MB total per batch to work with Vercel limits
+export const MAX_INDIVIDUAL_FILE_SIZE = 50 * 1024 * 1024;
+export const MAX_TOTAL_SIZE = 40 * 1024 * 1024; // 1MB total per batch to work with Vercel's strict limits
 
 export async function uploadFiles(
   files: File[],
@@ -13,12 +18,44 @@ export async function uploadFiles(
 
   console.log(`Starting upload of ${files.length} ${type} files`);
 
+  // Compress images before processing
+  let processedFiles = files;
+  if (type === "images") {
+    console.log("Compressing images before upload...");
+    processedFiles = await Promise.all(
+      files.map(async (file) => {
+        if (file.type.startsWith("image/") && needsCompression(file, 0.8)) {
+          const settings = getCompressionSettings(file);
+          try {
+            const compressedFile = await optimizeImage(
+              file,
+              settings.quality,
+              settings.maxWidth,
+              settings.maxHeight
+            );
+            console.log(
+              `Compressed ${file.name}: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`
+            );
+            return compressedFile;
+          } catch (error) {
+            console.warn(
+              `Failed to compress ${file.name}, using original:`,
+              error
+            );
+            return file;
+          }
+        }
+        return file;
+      })
+    );
+  }
+
   // Split files into batches to avoid 413 errors
   const batches: File[][] = [];
   let currentBatch: File[] = [];
   let currentBatchSize = 0;
 
-  for (const file of files) {
+  for (const file of processedFiles) {
     // If adding this file would exceed total size, start a new batch
     if (
       currentBatchSize + file.size > MAX_TOTAL_SIZE &&
