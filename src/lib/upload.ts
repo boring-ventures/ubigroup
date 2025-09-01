@@ -10,7 +10,7 @@ export const MAX_TOTAL_SIZE = 100 * 1024 * 1024; // 1MB total per batch to work 
 
 export async function uploadFiles(
   files: File[],
-  type: "images" | "videos"
+  type: "images" | "videos" | "documents"
 ): Promise<string[]> {
   if (!files || files.length === 0) {
     throw new Error("No files provided for upload");
@@ -18,7 +18,7 @@ export async function uploadFiles(
 
   console.log(`Starting upload of ${files.length} ${type} files`);
 
-  // Compress images before processing
+  // Compress images before processing (skip for documents)
   let processedFiles = files;
   if (type === "images") {
     console.log("Compressing images before upload...");
@@ -111,7 +111,7 @@ export async function uploadFiles(
 
 async function uploadBatch(
   files: File[],
-  type: "images" | "videos"
+  type: "images" | "videos" | "documents"
 ): Promise<string[]> {
   const formData = new FormData();
 
@@ -175,7 +175,10 @@ async function uploadBatch(
   }
 }
 
-export function validateFile(file: File, type: "image" | "video"): boolean {
+export function validateFile(
+  file: File,
+  type: "image" | "video" | "document"
+): boolean {
   // Check file size for both images and videos (Supabase Free tier limit)
   if (file.size > MAX_INDIVIDUAL_FILE_SIZE) {
     toast({
@@ -201,6 +204,7 @@ export function validateFile(file: File, type: "image" | "video"): boolean {
     "video/avi",
     "video/mov",
   ];
+  const validDocumentTypes = ["application/pdf"];
 
   if (type === "image" && !validImageTypes.includes(file.type)) {
     toast({
@@ -215,6 +219,15 @@ export function validateFile(file: File, type: "image" | "video"): boolean {
     toast({
       title: "Tipo de archivo inválido",
       description: `${file.name} no es un formato de video válido`,
+      variant: "destructive",
+    });
+    return false;
+  }
+
+  if (type === "document" && !validDocumentTypes.includes(file.type)) {
+    toast({
+      title: "Tipo de archivo inválido",
+      description: `${file.name} debe ser un archivo PDF`,
       variant: "destructive",
     });
     return false;

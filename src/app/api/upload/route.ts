@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const files = formData
       .getAll("images")
-      .concat(formData.getAll("videos")) as File[];
+      .concat(formData.getAll("videos"))
+      .concat(formData.getAll("documents")) as File[];
 
     console.log("Upload API: Found files:", files.length);
 
@@ -64,7 +65,9 @@ export async function POST(request: NextRequest) {
       // Determine storage bucket based on file type
       const bucket = file.type.startsWith("image/")
         ? "property-images"
-        : "property-videos";
+        : file.type === "application/pdf"
+          ? "project-documents"
+          : "property-videos";
       const filePath = `${user.id}/${fileName}`;
 
       console.log(
@@ -99,13 +102,15 @@ export async function POST(request: NextRequest) {
                   "image/webp",
                   "image/jpg",
                 ]
-              : [
-                  "video/mp4",
-                  "video/webm",
-                  "video/ogg",
-                  "video/avi",
-                  "video/mov",
-                ],
+              : file.type === "application/pdf"
+                ? ["application/pdf"]
+                : [
+                    "video/mp4",
+                    "video/webm",
+                    "video/ogg",
+                    "video/avi",
+                    "video/mov",
+                  ],
           }
         );
 

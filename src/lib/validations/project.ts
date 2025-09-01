@@ -21,6 +21,10 @@ export const createProjectSchema = z.object({
     .optional()
     .default([]),
   // Treat empty string as undefined to avoid URL validation error when optional field is left blank
+  brochureUrl: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.string().url("URL de brochure inválida").optional()
+  ),
   googleMapsUrl: z.preprocess(
     (val) => (val === "" ? undefined : val),
     z.string().url("URL de Google Maps inválida").optional()

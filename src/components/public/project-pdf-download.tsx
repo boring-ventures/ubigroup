@@ -13,6 +13,7 @@ interface Project {
   location: string;
 
   images: string[];
+  brochureUrl?: string | null;
   active: boolean;
   floors?: Array<{
     id: string;

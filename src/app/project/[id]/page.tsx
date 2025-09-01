@@ -19,6 +19,7 @@ import {
   Share2,
   ChevronLeft,
   ChevronRight,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +44,7 @@ interface Project {
   location: string;
 
   images: string[];
+  brochureUrl?: string | null;
   active: boolean;
   floors?: Array<{
     id: string;
@@ -104,6 +106,8 @@ export default function ProjectDetailPage() {
         }
 
         const data = await response.json();
+        console.log("Project data received:", data.project);
+        console.log("Brochure URL:", data.project?.brochureUrl);
         setProject(data.project);
       } catch (error) {
         console.error("Error fetching project:", error);
@@ -315,6 +319,20 @@ export default function ProjectDetailPage() {
                 <Share2 className="h-4 w-4 mr-2" />
                 Compartir
               </Button>
+              {project?.brochureUrl && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    console.log("Opening brochure:", project.brochureUrl);
+                    window.open(project.brochureUrl!, "_blank");
+                  }}
+                  className="text-foreground border-border hover:bg-accent hover:text-accent-foreground"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Brochure
+                </Button>
+              )}
               {project && (
                 <ProjectPdfDownload
                   project={project}
@@ -557,8 +575,25 @@ export default function ProjectDetailPage() {
                     </div>
                   )}
 
-                  {/* PDF Download Button */}
-                  <div className="pt-3 border-t">
+                  {/* Brochure and PDF Download Buttons */}
+                  <div className="pt-3 border-t space-y-2">
+                    {project.brochureUrl && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          console.log(
+                            "Opening brochure from sidebar:",
+                            project.brochureUrl
+                          );
+                          window.open(project.brochureUrl!, "_blank");
+                        }}
+                      >
+                        <FileText className="h-4 w-4 mr-2" />
+                        Descargar Brochure
+                      </Button>
+                    )}
                     <ProjectPdfDownload
                       project={project}
                       variant="sidebar"

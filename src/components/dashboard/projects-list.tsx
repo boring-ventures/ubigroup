@@ -45,6 +45,7 @@ interface Project {
   location: string;
 
   images: string[];
+  brochureUrl?: string | null;
   createdAt: string;
   active: boolean;
   agent: {

@@ -33,6 +33,18 @@ export default async function EditProjectPage({
   // Fetch project and verify permissions
   const project = await prisma.project.findUnique({
     where: { id },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      location: true,
+      images: true,
+      brochureUrl: true,
+      googleMapsUrl: true,
+      latitude: true,
+      longitude: true,
+      agentId: true,
+    },
   });
 
   if (!project) {
@@ -56,6 +68,10 @@ export default async function EditProjectPage({
           description: project.description,
           location: project.location,
           images: project.images,
+          brochureUrl: project.brochureUrl || undefined,
+          googleMapsUrl: project.googleMapsUrl || undefined,
+          latitude: project.latitude || undefined,
+          longitude: project.longitude || undefined,
         }}
       />
     </main>

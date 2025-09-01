@@ -166,6 +166,7 @@ model Project {
   description String
   location    String
   images      String[] // Array of image URLs
+  brochureUrl String?  @map("brochure_url") // PDF brochure URL
   googleMapsUrl String?  @map("google_maps_url")
   latitude    Float?
   longitude   Float?

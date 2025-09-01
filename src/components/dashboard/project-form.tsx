@@ -38,6 +38,7 @@ import {
   X,
   Plus,
   Loader,
+  FileText,
 } from "lucide-react";
 import Image from "next/image";
 import { uploadFiles, validateFile, MAX_TOTAL_SIZE } from "@/lib/upload";
@@ -60,6 +61,19 @@ export function ProjectForm({
   const [uploadedImages, setUploadedImages] = useState<string[]>(
     initialData?.images || []
   );
+  const [brochureFile, setBrochureFile] = useState<File | null>(null);
+  const [uploadedBrochureUrl, setUploadedBrochureUrl] = useState<string | null>(
+    initialData?.brochureUrl || null
+  );
+
+  // Update brochure state when initialData changes (for edit mode)
+  React.useEffect(() => {
+    console.log("ProjectForm initialData:", initialData);
+    console.log("Initial brochure URL:", initialData?.brochureUrl);
+    if (initialData?.brochureUrl) {
+      setUploadedBrochureUrl(initialData.brochureUrl);
+    }
+  }, [initialData]);
   const router = useRouter();
 
   const form = useForm<CreateProjectInput>({
@@ -70,6 +84,7 @@ export function ProjectForm({
       location: initialData?.location || "",
 
       images: initialData?.images || [],
+      brochureUrl: initialData?.brochureUrl || "",
       googleMapsUrl: initialData?.googleMapsUrl || "",
       latitude: initialData?.latitude || undefined,
       longitude: initialData?.longitude || undefined,
@@ -125,6 +140,26 @@ export function ProjectForm({
     setUploadedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleBrochureUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && validateFile(file, "document")) {
+      setBrochureFile(file);
+      // Clear any existing uploaded brochure when a new one is selected
+      setUploadedBrochureUrl(null);
+      // Clear the form field as well
+      form.setValue("brochureUrl", "");
+    }
+  };
+
+  const removeBrochureFile = () => {
+    setBrochureFile(null);
+  };
+
+  const removeUploadedBrochure = () => {
+    setUploadedBrochureUrl(null);
+    form.setValue("brochureUrl", "");
+  };
+
   const onSubmit = async (data: CreateProjectInput) => {
     try {
       setIsSubmitting(true);
@@ -135,12 +170,20 @@ export function ProjectForm({
         newImageUrls = await uploadFiles(images, "images");
       }
 
+      // Upload new brochure
+      let newBrochureUrl: string | null = uploadedBrochureUrl;
+      if (brochureFile) {
+        const brochureUrls = await uploadFiles([brochureFile], "documents");
+        newBrochureUrl = brochureUrls[0] || null;
+      }
+
       // Combine uploaded images with existing ones
       const allImages = [...uploadedImages, ...newImageUrls];
 
       const projectData = {
         ...data,
         images: allImages,
+        brochureUrl: newBrochureUrl || data.brochureUrl || null,
       };
 
       const url = projectId ? `/api/projects/${projectId}` : "/api/projects";
@@ -405,6 +448,78 @@ export function ProjectForm({
                         </Button>
                       </div>
                     ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Brochure Upload Section */}
+              <div className="space-y-4">
+                <div>
+                  <Label className="flex items-center">
+                    <FileText className="mr-1 h-4 w-4" />
+                    Brochure del proyecto (PDF)
+                  </Label>
+                  <div className="mt-2">
+                    <Input
+                      type="file"
+                      accept=".pdf,application/pdf"
+                      onChange={handleBrochureUpload}
+                      className="cursor-pointer"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Opcional: Sube un brochure en formato PDF del proyecto
+                    </p>
+                  </div>
+                </div>
+
+                {/* Display uploaded brochure */}
+                {uploadedBrochureUrl && (
+                  <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+                    <div className="flex items-center space-x-2">
+                      <FileText className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">
+                        Brochure actual
+                      </span>
+                      <a
+                        href={uploadedBrochureUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Ver PDF
+                      </a>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      onClick={removeUploadedBrochure}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+
+                {/* Display new brochure file */}
+                {brochureFile && (
+                  <div className="flex items-center justify-between p-3 border rounded-lg bg-primary/5">
+                    <div className="flex items-center space-x-2">
+                      <FileText className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">
+                        {brochureFile.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        ({(brochureFile.size / (1024 * 1024)).toFixed(2)} MB)
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      onClick={removeBrochureFile}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
                   </div>
                 )}
               </div>
