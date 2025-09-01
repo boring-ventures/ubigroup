@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["@prisma/client", "prisma"],
   },
+  api: {
+    bodyParser: {
+      sizeLimit: "50mb",
+    },
+  },
   webpack: (config) => {
     config.resolve = config.resolve || {};
     config.resolve.alias = {

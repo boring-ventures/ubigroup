@@ -584,6 +584,7 @@ export function PropertyMap({
           <div
             ref={mapRef}
             className="w-full h-96 rounded-lg border"
+            data-map-container
             style={{
               minHeight: "400px",
               position: "relative",

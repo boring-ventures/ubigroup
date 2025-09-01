@@ -1,7 +1,7 @@
 import { toast } from "@/components/ui/use-toast";
 
 export const MAX_INDIVIDUAL_FILE_SIZE = 50 * 1024 * 1024; // 50MB per file (Supabase Free tier limit)
-export const MAX_TOTAL_SIZE = 40 * 1024 * 1024; // 40MB total per batch to work with Vercel limits
+export const MAX_TOTAL_SIZE = 10 * 1024 * 1024; // 4MB total per batch to work with Vercel limits
 
 export async function uploadFiles(
   files: File[],
