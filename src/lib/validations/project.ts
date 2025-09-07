@@ -21,33 +21,31 @@ export const createProjectSchema = z.object({
     .optional()
     .default([]),
   // Treat empty string as undefined to avoid URL validation error when optional field is left blank
-  brochureUrl: z.preprocess(
-    (val) => (val === "" ? undefined : val),
-    z.string().url("URL de brochure inválida").optional()
-  ),
-  googleMapsUrl: z.preprocess(
-    (val) => (val === "" ? undefined : val),
-    z.string().url("URL de Google Maps inválida").optional()
-  ),
+  brochureUrl: z.preprocess((val) => {
+    if (val === "" || val === null) return undefined;
+    return val;
+  }, z.string().url("URL de brochure inválida").optional()),
+  googleMapsUrl: z.preprocess((val) => {
+    if (val === "" || val === null) return undefined;
+    return val;
+  }, z.string().url("URL de Google Maps inválida").optional()),
   // Be tolerant to empty strings coming from forms; coerce to number when string provided
-  latitude: z.preprocess(
-    (val) =>
-      val === "" || val == null
-        ? undefined
-        : typeof val === "string"
-          ? parseFloat(val)
-          : val,
-    z.number().optional()
-  ),
-  longitude: z.preprocess(
-    (val) =>
-      val === "" || val == null
-        ? undefined
-        : typeof val === "string"
-          ? parseFloat(val)
-          : val,
-    z.number().optional()
-  ),
+  latitude: z.preprocess((val) => {
+    if (val === "" || val == null || val === undefined) return undefined;
+    if (typeof val === "string") {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) ? undefined : parsed;
+    }
+    return val;
+  }, z.number().optional()),
+  longitude: z.preprocess((val) => {
+    if (val === "" || val == null || val === undefined) return undefined;
+    if (typeof val === "string") {
+      const parsed = parseFloat(val);
+      return isNaN(parsed) ? undefined : parsed;
+    }
+    return val;
+  }, z.number().optional()),
 });
 
 export const updateProjectSchema = createProjectSchema.partial();

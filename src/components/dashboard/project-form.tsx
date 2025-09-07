@@ -183,7 +183,17 @@ export function ProjectForm({
       const projectData = {
         ...data,
         images: allImages,
-        brochureUrl: newBrochureUrl || data.brochureUrl || null,
+        brochureUrl:
+          newBrochureUrl ||
+          (data.brochureUrl && data.brochureUrl.trim() !== ""
+            ? data.brochureUrl
+            : undefined),
+        googleMapsUrl:
+          data.googleMapsUrl && data.googleMapsUrl.trim() !== ""
+            ? data.googleMapsUrl
+            : undefined,
+        latitude: data.latitude || undefined,
+        longitude: data.longitude || undefined,
       };
 
       const url = projectId ? `/api/projects/${projectId}` : "/api/projects";
