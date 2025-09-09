@@ -708,68 +708,67 @@ export default function ProjectDetailPage() {
                 <h3 className="text-xl font-bold text-foreground">
                   Pisos y Unidades
                 </h3>
-                {project.floors.map((floor) => (
-                  <Card key={floor.id}>
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        <span>
-                          Piso {floor.number}
-                          {floor.name && ` - ${floor.name}`}
-                        </span>
-                        <Badge variant="outline">
-                          {floor.quadrants?.length || 0} unidades
-                        </Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {floor.quadrants && floor.quadrants.length > 0 ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {floor.quadrants.map((quadrant) => (
-                            <Card key={quadrant.id} className="p-4">
-                              <div className="flex items-center justify-between mb-2">
-                                <h4 className="font-semibold">
-                                  Unidad {quadrant.customId}
-                                </h4>
-                                <Badge
-                                  variant={getStatusVariant(quadrant.status)}
-                                >
-                                  {getStatusLabel(quadrant.status)}
-                                </Badge>
-                              </div>
-                              {quadrant.price && (
-                                <p className="text-lg font-bold text-primary mb-2">
-                                  {formatPrice(
-                                    quadrant.price,
-                                    quadrant.currency || "USD"
-                                  )}
-                                </p>
-                              )}
-                              <div className="grid grid-cols-3 gap-2 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <Bed className="h-3 w-3" />
-                                  <span>{quadrant.bedrooms || 0}</span>
+                {project.floors
+                  .sort((a, b) => a.number - b.number)
+                  .map((floor) => (
+                    <Card key={floor.id}>
+                      <CardHeader>
+                        <CardTitle className="flex items-center justify-between">
+                          <span>{floor.name || `Piso ${floor.number}`}</span>
+                          <Badge variant="outline">
+                            {floor.quadrants?.length || 0} unidades
+                          </Badge>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {floor.quadrants && floor.quadrants.length > 0 ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {floor.quadrants.map((quadrant) => (
+                              <Card key={quadrant.id} className="p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h4 className="font-semibold">
+                                    Unidad {quadrant.customId}
+                                  </h4>
+                                  <Badge
+                                    variant={getStatusVariant(quadrant.status)}
+                                  >
+                                    {getStatusLabel(quadrant.status)}
+                                  </Badge>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <Bath className="h-3 w-3" />
-                                  <span>{quadrant.bathrooms || 0}</span>
+                                {quadrant.price && (
+                                  <p className="text-lg font-bold text-primary mb-2">
+                                    {formatPrice(
+                                      quadrant.price,
+                                      quadrant.currency || "USD"
+                                    )}
+                                  </p>
+                                )}
+                                <div className="grid grid-cols-3 gap-2 text-sm text-muted-foreground">
+                                  <div className="flex items-center gap-1">
+                                    <Bed className="h-3 w-3" />
+                                    <span>{quadrant.bedrooms || 0}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Bath className="h-3 w-3" />
+                                    <span>{quadrant.bathrooms || 0}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="font-medium">
+                                      {quadrant.area || 0} m²
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <span className="font-medium">
-                                    {quadrant.area || 0} m²
-                                  </span>
-                                </div>
-                              </div>
-                            </Card>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground">
-                          No hay unidades disponibles en este piso.
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                              </Card>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-muted-foreground">
+                            No hay unidades disponibles en este piso.
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
               </div>
             )}
           </div>

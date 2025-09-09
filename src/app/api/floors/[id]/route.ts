@@ -106,7 +106,13 @@ export async function PUT(
     const validatedData = updateFloorSchema.parse(body);
 
     // If updating number, ensure uniqueness per project
-    if (validatedData.number && validatedData.number !== floor.number) {
+    // Skip conflict check for temporary numbers (used in floor swaps)
+    // Temporary numbers are typically very high (original max + 1000)
+    if (
+      validatedData.number &&
+      validatedData.number !== floor.number &&
+      validatedData.number < 10000
+    ) {
       const conflict = await prisma.floor.findFirst({
         where: { projectId: floor.projectId, number: validatedData.number },
       });

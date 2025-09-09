@@ -44,6 +44,7 @@ import {
   XCircle,
   Clock,
   Trash,
+  Copy,
 } from "lucide-react";
 import Image from "next/image";
 import {
@@ -166,6 +167,10 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [showImageGallery, setShowImageGallery] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [floorToDuplicate, setFloorToDuplicate] = useState<
+    Project["floors"][0] | null
+  >(null);
 
   // Local staged state
   const [localFloors, setLocalFloors] = useState<Project["floors"]>(
@@ -205,6 +210,13 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
   // Watch form values for conditional rendering
   const watchQuadrantType = quadrantForm.watch("type");
   const watchCurrency = quadrantForm.watch("currency");
+
+  // Duplicate form
+  const duplicateForm = useForm({
+    defaultValues: {
+      count: 1,
+    },
+  });
 
   // Staging helpers
   const generateTempId = () => `temp_${Math.random().toString(36).slice(2)}`;
@@ -264,6 +276,44 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
       setDeletedFloorIds((prev) => [...prev, floorId]);
     }
     toast({ title: "Éxito", description: "Piso eliminado localmente" });
+  };
+
+  const handleDuplicateFloor = (data: { count: number }) => {
+    if (!floorToDuplicate) return;
+
+    const countToDuplicate = Math.max(1, Math.floor(data.count));
+    const maxNumber = localFloors.reduce(
+      (max, f) => Math.max(max, f.number),
+      0
+    );
+
+    const duplicatedFloors: Project["floors"] = [];
+    for (let i = 1; i <= countToDuplicate; i++) {
+      const newFloorNumber = maxNumber + i;
+      const originalName =
+        floorToDuplicate.name || `Piso ${floorToDuplicate.number}`;
+      const newName = `${originalName} Copy ${i}`;
+
+      duplicatedFloors.push({
+        id: generateTempId(),
+        number: newFloorNumber,
+        name: newName,
+        quadrants: floorToDuplicate.quadrants.map((q) => ({
+          ...q,
+          id: generateTempId(),
+        })),
+      } as Project["floors"][number]);
+    }
+
+    setLocalFloors((prev) => [...prev, ...duplicatedFloors]);
+    toast({
+      title: "Éxito",
+      description: `${countToDuplicate} piso(s) duplicado(s) localmente`,
+    });
+
+    setShowDuplicateDialog(false);
+    setFloorToDuplicate(null);
+    duplicateForm.reset();
   };
 
   const handleQuadrantSubmit = (data: CreateQuadrantInput) => {
@@ -353,7 +403,9 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
   const persistChanges = async () => {
     try {
       setIsSaving(true);
-      // Validate duplicates client-side before contacting server
+
+      // Validate floor numbers client-side before contacting server
+      // Only check for duplicates in the final floor numbers
       const numbers = new Map<number, number>();
       for (const f of localFloors) {
         numbers.set(f.number, (numbers.get(f.number) ?? 0) + 1);
@@ -366,6 +418,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
           `Número de piso duplicado: ${duplicateEntry[0]}. Cada piso debe tener un número único.`
         );
       }
+
       const originalFloorsMap = new Map(originalFloors.map((f) => [f.id, f]));
 
       // 0) Process deletions first
@@ -427,15 +480,99 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
         }
       }
 
+      // Update local state with real floor IDs
+      if (floorIdMap.size > 0) {
+        setLocalFloors((prev) =>
+          prev.map((f) => {
+            if (f.id.startsWith("temp_") && floorIdMap.has(f.id)) {
+              return { ...f, id: floorIdMap.get(f.id)! };
+            }
+            return f;
+          })
+        );
+      }
+
       // 2) Update existing floors
-      for (const f of localFloors) {
-        if (f.id.startsWith("temp_")) continue;
+      // First, collect all floors that need updates
+      const floorsToUpdate = localFloors.filter((f) => {
+        if (f.id.startsWith("temp_")) return false;
         const orig = originalFloorsMap.get(f.id);
-        if (!orig) continue;
-        if (
-          orig.number !== f.number ||
+        if (!orig) return false;
+        return (
+          orig.number !== f.number || (orig.name ?? null) !== (f.name ?? null)
+        );
+      });
+
+      // Separate floors that only need name updates from those that need number updates
+      const nameOnlyUpdates = floorsToUpdate.filter((f) => {
+        const orig = originalFloorsMap.get(f.id);
+        return (
+          orig &&
+          orig.number === f.number &&
           (orig.name ?? null) !== (f.name ?? null)
-        ) {
+        );
+      });
+
+      const numberUpdates = floorsToUpdate.filter((f) => {
+        const orig = originalFloorsMap.get(f.id);
+        return orig && orig.number !== f.number;
+      });
+
+      // Handle name-only updates first (no conflicts possible)
+      for (const f of nameOnlyUpdates) {
+        const res = await fetch(`/api/floors/${f.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            number: f.number,
+            name: f.name ?? undefined,
+          }),
+        });
+        if (!res.ok) {
+          let reason = "No se pudo actualizar un piso";
+          try {
+            const data = await res.json();
+            if (data?.error) reason = data.error;
+          } catch {}
+          throw new Error(reason);
+        }
+      }
+
+      // Handle number updates with smart conflict resolution
+      if (numberUpdates.length > 0) {
+        // Find the highest existing floor number and add 1000 to ensure it's unique
+        const maxExistingNumber = Math.max(
+          ...originalFloors.map((f) => f.number),
+          ...localFloors.map((f) => f.number)
+        );
+        const tempNumber = maxExistingNumber + 1000;
+
+        // Step 1: Move all floors with number changes to temporary numbers
+        for (const f of numberUpdates) {
+          console.log(
+            `Moving floor ${f.id} to temporary number ${tempNumber + numberUpdates.indexOf(f)}`
+          );
+          const res = await fetch(`/api/floors/${f.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              number: tempNumber + numberUpdates.indexOf(f),
+              name: f.name ?? undefined,
+            }),
+          });
+          if (!res.ok) {
+            let reason = "No se pudo actualizar un piso temporalmente";
+            try {
+              const data = await res.json();
+              if (data?.error) reason = data.error;
+            } catch {}
+            throw new Error(reason);
+          }
+        }
+
+        // Step 2: Move all floors to their final numbers
+        for (const f of numberUpdates) {
+          console.log(`Moving floor ${f.id} to final number ${f.number}`);
           const res = await fetch(`/api/floors/${f.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -445,7 +582,7 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
             }),
           });
           if (!res.ok) {
-            let reason = "No se pudo actualizar un piso";
+            let reason = "No se pudo completar la actualización del piso";
             try {
               const data = await res.json();
               if (data?.error) reason = data.error;
@@ -456,10 +593,19 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
       }
 
       // 3) Create/Update quadrants (skip deleted)
-      for (const f of localFloors) {
-        const persistedFloorId = f.id.startsWith("temp_")
-          ? floorIdMap.get(f.id)!
-          : f.id;
+      // Get the updated floors with real IDs for quadrant operations
+      const updatedFloors = localFloors.map((f) => ({
+        ...f,
+        id:
+          f.id.startsWith("temp_") && floorIdMap.has(f.id)
+            ? floorIdMap.get(f.id)!
+            : f.id,
+      }));
+
+      // Track quadrant ID mappings for updating local state
+      const quadrantIdMap = new Map<string, string>();
+
+      for (const f of updatedFloors) {
         const orig = originalFloorsMap.get(f.id);
         const origQMap = new Map((orig?.quadrants ?? []).map((q) => [q.id, q]));
 
@@ -467,22 +613,22 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
           if (deletedQuadrantIds.includes(q.id)) continue;
           const isNewQ = q.id.startsWith("temp_");
           if (isNewQ) {
-            const res = await fetch(
-              `/api/floors/${persistedFloorId}/quadrants`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  area: q.area,
-                  bedrooms: q.bedrooms,
-                  bathrooms: q.bathrooms,
-                  price: q.price,
-                  currency: q.currency,
-                  status: q.status,
-                  active: q.active,
-                }),
-              }
-            );
+            const res = await fetch(`/api/floors/${f.id}/quadrants`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                customId: q.customId,
+                type: q.type,
+                area: q.area,
+                bedrooms: q.bedrooms,
+                bathrooms: q.bathrooms,
+                price: q.price,
+                currency: q.currency,
+                exchangeRate: q.exchangeRate,
+                status: q.status,
+                active: q.active,
+              }),
+            });
             if (!res.ok) {
               let reason = "No se pudo crear un cuadrante";
               try {
@@ -491,35 +637,40 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
               } catch {}
               throw new Error(reason);
             }
+            const created = await res.json();
+            quadrantIdMap.set(q.id, created.id);
           } else {
             const oq = origQMap.get(q.id);
             if (!oq) continue;
             const changed =
+              oq.customId !== q.customId ||
+              oq.type !== q.type ||
               oq.area !== q.area ||
               oq.bedrooms !== q.bedrooms ||
               oq.bathrooms !== q.bathrooms ||
               oq.price !== q.price ||
               oq.currency !== q.currency ||
+              oq.exchangeRate !== q.exchangeRate ||
               oq.status !== q.status ||
               oq.active !== q.active;
             if (changed) {
-              const res = await fetch(
-                `/api/floors/${persistedFloorId}/quadrants`,
-                {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    quadrantId: q.id,
-                    area: q.area,
-                    bedrooms: q.bedrooms,
-                    bathrooms: q.bathrooms,
-                    price: q.price,
-                    currency: q.currency,
-                    status: q.status,
-                    active: q.active,
-                  }),
-                }
-              );
+              const res = await fetch(`/api/floors/${f.id}/quadrants`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  quadrantId: q.id,
+                  customId: q.customId,
+                  type: q.type,
+                  area: q.area,
+                  bedrooms: q.bedrooms,
+                  bathrooms: q.bathrooms,
+                  price: q.price,
+                  currency: q.currency,
+                  exchangeRate: q.exchangeRate,
+                  status: q.status,
+                  active: q.active,
+                }),
+              });
               if (!res.ok) {
                 let reason = "No se pudo actualizar un cuadrante";
                 try {
@@ -531,6 +682,21 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
             }
           }
         }
+      }
+
+      // Update local state with real quadrant IDs
+      if (quadrantIdMap.size > 0) {
+        setLocalFloors((prev) =>
+          prev.map((f) => ({
+            ...f,
+            quadrants: f.quadrants.map((q) => {
+              if (q.id.startsWith("temp_") && quadrantIdMap.has(q.id)) {
+                return { ...q, id: quadrantIdMap.get(q.id)! };
+              }
+              return q;
+            }),
+          }))
+        );
       }
 
       toast({ title: "Éxito", description: "Cambios guardados correctamente" });
@@ -763,16 +929,71 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
               {localFloors.map((floor) => (
                 <div key={floor.id} className="border rounded-lg p-4">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
-                    <div>
-                      <h3 className="text-lg font-semibold">
-                        Piso {floor.number}
-                      </h3>
+                    <div className="flex-1 space-y-2">
+                      <div className="flex gap-2 items-center">
+                        <div className="flex-1">
+                          <Label
+                            htmlFor={`floor-name-${floor.id}`}
+                            className="text-xs text-muted-foreground"
+                          >
+                            Nombre del piso
+                          </Label>
+                          <Input
+                            id={`floor-name-${floor.id}`}
+                            value={floor.name || ""}
+                            onChange={(e) => {
+                              setLocalFloors((prev) =>
+                                prev.map((f) =>
+                                  f.id === floor.id
+                                    ? { ...f, name: e.target.value || null }
+                                    : f
+                                )
+                              );
+                            }}
+                            placeholder="Nombre del piso (opcional)"
+                            className="text-sm"
+                          />
+                        </div>
+                        <div className="w-20">
+                          <Label
+                            htmlFor={`floor-number-${floor.id}`}
+                            className="text-xs text-muted-foreground"
+                          >
+                            Número
+                          </Label>
+                          <NumericInput
+                            value={floor.number}
+                            onChange={(value) => {
+                              setLocalFloors((prev) =>
+                                prev.map((f) =>
+                                  f.id === floor.id
+                                    ? { ...f, number: value ?? f.number }
+                                    : f
+                                )
+                              );
+                            }}
+                            min={1}
+                            className="text-sm"
+                          />
+                        </div>
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         {floor.quadrants.length} cuadrantes
                       </p>
                     </div>
                     <div className="flex gap-2">
-                      {null}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setFloorToDuplicate(floor);
+                          setShowDuplicateDialog(true);
+                        }}
+                        aria-label="Duplicar piso"
+                        title="Duplicar piso"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
@@ -1225,6 +1446,61 @@ export function ProjectDetail({ project }: ProjectDetailProps) {
                     Cancelar
                   </Button>
                   <Button type="submit">Agregar pisos</Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </ClientOnly>
+
+      {/* Duplicate Floor Dialog */}
+      <ClientOnly>
+        <Dialog
+          open={showDuplicateDialog}
+          onOpenChange={setShowDuplicateDialog}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Duplicar piso</DialogTitle>
+              <DialogDescription>
+                ¿Cuántas copias del piso &quot;
+                {floorToDuplicate?.name || `Piso ${floorToDuplicate?.number}`}
+                &quot; deseas crear?
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...duplicateForm}>
+              <form
+                onSubmit={duplicateForm.handleSubmit(handleDuplicateFloor)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={duplicateForm.control}
+                  name="count"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de copias</FormLabel>
+                      <FormControl>
+                        <NumericInput
+                          value={field.value}
+                          onChange={field.onChange}
+                          min={1}
+                          max={10}
+                          placeholder="1"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowDuplicateDialog(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit">Duplicar</Button>
                 </div>
               </form>
             </Form>
