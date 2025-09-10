@@ -586,9 +586,12 @@ export default function Properties() {
                     </SelectItem>
                     {locations?.cities && locations.cities.length > 0 ? (
                       locations.cities.map(
-                        (city: { value: string; label: string }) => (
+                        (
+                          city: { value: string; label: string },
+                          index: number
+                        ) => (
                           <SelectItem
-                            key={city.value}
+                            key={`${city.value}-${index}`}
                             value={city.value}
                             className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                           >
@@ -632,9 +635,12 @@ export default function Properties() {
                     {locations?.municipalities &&
                     locations.municipalities.length > 0 ? (
                       locations.municipalities.map(
-                        (municipality: { value: string; label: string }) => (
+                        (
+                          municipality: { value: string; label: string },
+                          index: number
+                        ) => (
                           <SelectItem
-                            key={municipality.value}
+                            key={`${municipality.value}-${index}`}
                             value={municipality.value}
                             className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                           >
@@ -1171,9 +1177,12 @@ export default function Properties() {
                         </SelectItem>
                         {locations?.cities && locations.cities.length > 0 ? (
                           locations.cities.map(
-                            (city: { value: string; label: string }) => (
+                            (
+                              city: { value: string; label: string },
+                              index: number
+                            ) => (
                               <SelectItem
-                                key={city.value}
+                                key={`${city.value}-${index}`}
                                 value={city.value}
                                 className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                               >
@@ -1220,12 +1229,15 @@ export default function Properties() {
                         {locations?.municipalities &&
                         locations.municipalities.length > 0 ? (
                           locations.municipalities.map(
-                            (municipality: {
-                              value: string;
-                              label: string;
-                            }) => (
+                            (
+                              municipality: {
+                                value: string;
+                                label: string;
+                              },
+                              index: number
+                            ) => (
                               <SelectItem
-                                key={municipality.value}
+                                key={`${municipality.value}-${index}`}
                                 value={municipality.value}
                                 className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
                               >

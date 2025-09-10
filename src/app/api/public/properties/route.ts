@@ -114,24 +114,30 @@ export async function GET(request: NextRequest) {
 
     const locationState = searchParams.get("locationState");
     if (locationState) {
+      // Use exact match with case-insensitive comparison for normalized values
+      // This works with the normalized values from the locations API
       whereClause.locationState = {
-        contains: locationState,
+        equals: locationState,
         mode: "insensitive",
       };
     }
 
     const locationCity = searchParams.get("locationCity");
     if (locationCity) {
+      // Use exact match with case-insensitive comparison for normalized values
+      // This works with the normalized values from the locations API
       whereClause.locationCity = {
-        contains: locationCity,
+        equals: locationCity,
         mode: "insensitive",
       };
     }
 
     const municipality = searchParams.get("municipality");
     if (municipality) {
+      // Use exact match with case-insensitive comparison for normalized values
+      // This works with the normalized values from the locations API
       whereClause.municipality = {
-        contains: municipality,
+        equals: municipality,
         mode: "insensitive",
       };
     }
