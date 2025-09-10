@@ -89,7 +89,7 @@ const menuItems = [
 const HeroHeader = () => {
   const [menuState, setMenuState] = React.useState(false);
   const [isScrolled, setIsScrolled] = React.useState(false);
-  const { user, isLoading } = useAuth();
+  const { user, profile, isLoading } = useAuth();
   const { scrollToSection } = useSmoothScroll();
 
   React.useEffect(() => {
@@ -225,7 +225,13 @@ const HeroHeader = () => {
                       ) : (
                         <Link href="/dashboard">
                           <Button size="sm">
-                            <span>Ir al Panel</span>
+                            <span>
+                              {profile?.firstName && profile?.lastName
+                                ? `${profile.firstName} ${profile.lastName}`
+                                : profile?.firstName ||
+                                  user.email?.split("@")[0] ||
+                                  "Usuario"}
+                            </span>
                           </Button>
                         </Link>
                       )}

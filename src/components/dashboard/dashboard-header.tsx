@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useAuth } from "@/providers/auth-provider";
 import { Button } from "@/components/ui/button";
@@ -6,15 +6,15 @@ import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export function DashboardHeader() {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const router = useRouter();
 
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.push('/');
+      router.push("/");
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     }
   };
 
@@ -23,7 +23,12 @@ export function DashboardHeader() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-medium">Welcome, {user?.email}</h2>
+            <h2 className="text-lg font-medium">
+              Welcome,{" "}
+              {profile?.firstName && profile?.lastName
+                ? `${profile.firstName} ${profile.lastName}`
+                : profile?.firstName || user?.email?.split("@")[0] || "Usuario"}
+            </h2>
           </div>
           <Button
             variant="outline"
@@ -37,4 +42,4 @@ export function DashboardHeader() {
       </div>
     </header>
   );
-} 
+}

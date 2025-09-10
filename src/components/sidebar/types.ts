@@ -8,7 +8,7 @@ interface User {
 
 interface Team {
   name: string;
-  logo: LucideIcon;
+  logo?: LucideIcon;
   plan: string;
 }
 

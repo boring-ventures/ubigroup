@@ -14,30 +14,46 @@ import {
 import type { UserRole } from "@prisma/client";
 import type { SidebarData } from "../types";
 
+type UserWithAgency = {
+  id: string;
+  userId: string;
+  avatarUrl: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  active: boolean;
+  firstName: string | null;
+  lastName: string | null;
+  role: UserRole;
+  phone: string | null;
+  requiresPasswordChange: boolean;
+  agencyId: string | null;
+  agency?: {
+    id: string;
+    name: string;
+  } | null;
+};
+
 // Default teams data for different roles
-const getDefaultTeams = (role: UserRole) => {
+const getDefaultTeams = (role: UserRole, user?: UserWithAgency | null) => {
   switch (role) {
     case "SUPER_ADMIN":
       return [
         {
-          name: "UbiGroup Platform",
-          logo: Shield,
+          name: "UbiGroup",
           plan: "Super Admin",
         },
       ];
     case "AGENCY_ADMIN":
       return [
         {
-          name: "Mi agencia",
-          logo: Building,
+          name: user?.agency?.name || "Mi agencia",
           plan: "Administrador de agencia",
         },
       ];
     case "AGENT":
       return [
         {
-          name: "Mi agencia",
-          logo: Building,
+          name: user?.agency?.name || "Mi agencia",
           plan: "Agente",
         },
       ];
@@ -45,7 +61,6 @@ const getDefaultTeams = (role: UserRole) => {
       return [
         {
           name: "UbiGroup",
-          logo: Building,
           plan: "Predeterminado",
         },
       ];
@@ -63,7 +78,10 @@ export const baseSidebarData: Omit<SidebarData, "navGroups"> = {
 };
 
 // Role-specific navigation configurations
-export const getRoleBasedSidebarData = (role: UserRole): SidebarData => {
+export const getRoleBasedSidebarData = (
+  role: UserRole,
+  user?: UserWithAgency | null
+): SidebarData => {
   const baseNavGroups = [];
 
   switch (role) {
@@ -244,7 +262,7 @@ export const getRoleBasedSidebarData = (role: UserRole): SidebarData => {
 
   return {
     ...baseSidebarData,
-    teams: getDefaultTeams(role),
+    teams: getDefaultTeams(role, user),
     navGroups: baseNavGroups,
   };
 };

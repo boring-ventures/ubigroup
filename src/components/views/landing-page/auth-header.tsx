@@ -5,7 +5,7 @@ import DashboardButton from "@/components/dashboard/dashboard-button";
 import Link from "next/link";
 
 export function AuthHeader() {
-  const { user, isLoading } = useAuth();
+  const { user, profile, isLoading } = useAuth();
 
   if (isLoading) {
     return <div className="h-9 w-[100px] animate-pulse rounded-md bg-muted" />;

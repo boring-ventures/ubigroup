@@ -17,7 +17,7 @@ import type { NavGroupProps } from "./types";
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { profile, isLoading } = useCurrentUser();
   const userRole = profile?.role || "AGENT";
-  const sidebarData = getRoleBasedSidebarData(userRole);
+  const sidebarData = getRoleBasedSidebarData(userRole, profile);
 
   if (isLoading) {
     return (
