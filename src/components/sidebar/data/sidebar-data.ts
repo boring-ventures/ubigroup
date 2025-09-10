@@ -7,7 +7,6 @@ import {
   Settings,
   UserCog,
   Building,
-  Shield,
   Layers,
   Image,
 } from "lucide-react";

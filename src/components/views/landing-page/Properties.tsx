@@ -100,7 +100,6 @@ export default function Properties() {
   const searchParams = useSearchParams();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"cards" | "list">("cards");
   const [activeTab, setActiveTab] = useState<
@@ -171,27 +170,10 @@ export default function Properties() {
     new Set()
   );
 
-  // Update URL with current filters
-  const updateURL = (newFilters: SearchFilters) => {
-    const params = new URLSearchParams();
-
-    Object.entries(newFilters).forEach(([key, value]) => {
-      if (value && value !== "ALL") {
-        params.set(key, value);
-      }
-    });
-
-    const newURL = params.toString()
-      ? `?${params.toString()}`
-      : window.location.pathname;
-    router.replace(newURL, { scroll: false });
-  };
-
   // Fetch properties from API with search and pagination
   const fetchProperties = useCallback(
     async (searchFilters?: SearchFilters, page = 1) => {
       try {
-        setSearchLoading(true);
         setError(null);
         const params = new URLSearchParams();
 
@@ -301,7 +283,6 @@ export default function Properties() {
         );
       } finally {
         setLoading(false);
-        setSearchLoading(false);
       }
     },
     [activeTab]
@@ -390,11 +371,6 @@ export default function Properties() {
   // Handle pagination
   const handlePageChange = (newPage: number) => {
     fetchProperties(filters, newPage);
-  };
-
-  const handleFilterChange = (key: keyof SearchFilters, value: string) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
   };
 
   const handlePropertyClick = (propertyId: string) => {
