@@ -11,15 +11,32 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { PropertySearchBar } from "@/components/public/property-search-bar";
-import { Sparkles } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Sparkles, Search } from "lucide-react";
 import { ShineBorder } from "@/components/magicui/shine-border";
 import { ContainerTextFlip } from "@/components/ui/container-text-flip";
 import { AvatarCircles } from "@/components/magicui/avatar-circles";
 import { usePublicLandingImages } from "@/hooks/use-public-landing-images";
+import { usePropertyLocations } from "@/hooks/use-property-search";
 import Image from "next/image";
 
 type TransactionTab = "venta" | "alquiler" | "anticretico" | "proyectos";
+
+interface SearchFilters {
+  searchTerm: string;
+  propertyType: string;
+  locationState: string;
+  locationCity: string;
+  municipality: string;
+  minPrice: string;
+  maxPrice: string;
+  minBedrooms: string;
+  maxBedrooms: string;
+  minBathrooms: string;
+  maxBathrooms: string;
+}
+
 // Hardcoded fallback images for immediate display
 const FALLBACK_IMAGES = [
   "https://plus.unsplash.com/premium_photo-1684175656320-5c3f701c082c?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
@@ -32,11 +49,24 @@ export const HeroSearch = () => {
   const pathname = usePathname();
   const { landingImages } = usePublicLandingImages();
 
-  const [query, setQuery] = useState("");
+  // Get dynamic locations
+  const { data: locations, isLoading: locationsLoading } =
+    usePropertyLocations();
+
   const [transaction, setTransaction] = useState<TransactionTab>("venta");
-  const [type, setType] = useState<
-    "" | "HOUSE" | "APARTMENT" | "OFFICE" | "LAND"
-  >("");
+  const [filters, setFilters] = useState<SearchFilters>({
+    searchTerm: "",
+    propertyType: "ALL",
+    locationState: "ALL",
+    locationCity: "ALL",
+    municipality: "ALL",
+    minPrice: "",
+    maxPrice: "",
+    minBedrooms: "",
+    maxBedrooms: "",
+    minBathrooms: "",
+    maxBathrooms: "",
+  });
 
   // Hero image carousel - smooth transition from hardcoded to DB images
   const [carouselImages, setCarouselImages] =
@@ -131,6 +161,7 @@ export const HeroSearch = () => {
 
   // Sticky search pill on mobile
   const [showStickySearch, setShowStickySearch] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const mobileSearchRef = React.useRef<HTMLDivElement | null>(null);
   const lastScrollYRef = useRef<number>(0);
   useEffect(() => {
@@ -144,12 +175,61 @@ export const HeroSearch = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleSearch = (value: string) => {
-    setQuery(value);
+  const handleFilterChange = (key: keyof SearchFilters, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSearch = () => {
     const params = new URLSearchParams();
-    if (value.trim()) params.set("search", value.trim());
-    if (type) params.set("type", type);
+
+    // Add search term
+    if (filters.searchTerm.trim()) {
+      params.set("search", filters.searchTerm.trim());
+    }
+
+    // Add property type
+    if (filters.propertyType && filters.propertyType !== "ALL") {
+      params.set("type", filters.propertyType);
+    }
+
+    // Add location filters
+    if (filters.locationState && filters.locationState !== "ALL") {
+      params.set("locationState", filters.locationState);
+    }
+    if (filters.locationCity && filters.locationCity !== "ALL") {
+      params.set("locationCity", filters.locationCity);
+    }
+    if (filters.municipality && filters.municipality !== "ALL") {
+      params.set("municipality", filters.municipality);
+    }
+
+    // Add price filters
+    if (filters.minPrice) {
+      params.set("minPrice", filters.minPrice);
+    }
+    if (filters.maxPrice) {
+      params.set("maxPrice", filters.maxPrice);
+    }
+
+    // Add bedroom filters
+    if (filters.minBedrooms) {
+      params.set("minBedrooms", filters.minBedrooms);
+    }
+    if (filters.maxBedrooms) {
+      params.set("maxBedrooms", filters.maxBedrooms);
+    }
+
+    // Add bathroom filters
+    if (filters.minBathrooms) {
+      params.set("minBathrooms", filters.minBathrooms);
+    }
+    if (filters.maxBathrooms) {
+      params.set("maxBathrooms", filters.maxBathrooms);
+    }
+
+    // Add transaction type tab
     params.set("tab", transaction);
+
     const url = params.toString()
       ? `${pathname}?${params.toString()}#properties`
       : `${pathname}#properties`;
@@ -311,13 +391,9 @@ export const HeroSearch = () => {
                         </TabsList>
                       </Tabs>
                       <Select
-                        value={type || "ALL"}
-                        onValueChange={(v: string) =>
-                          setType(
-                            v === "ALL"
-                              ? ""
-                              : (v as "HOUSE" | "APARTMENT" | "OFFICE" | "LAND")
-                          )
+                        value={filters.propertyType}
+                        onValueChange={(value) =>
+                          handleFilterChange("propertyType", value)
                         }
                       >
                         <SelectTrigger className="w-full border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
@@ -357,16 +433,209 @@ export const HeroSearch = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <PropertySearchBar
-                      value={query}
-                      onSearch={handleSearch}
-                      placeholder="Buscar por ciudad, barrio o palabra clave"
-                      className="w-full [&_input]:border-[hsl(0_0%_25%)] [&_input]:bg-[hsl(0_0%_13%)] [&_input]:text-[hsl(0_0%_85%)] [&_input]:placeholder-[hsl(0_0%_65%)]"
-                    />
-                    <div className="text-xs text-muted-foreground">
-                      Búsqueda rápida. Para filtros avanzados, baja a la sección
-                      de propiedades.
+
+                    {/* Search Input */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="Buscar por ciudad, barrio o palabra clave"
+                        value={filters.searchTerm}
+                        onChange={(e) =>
+                          handleFilterChange("searchTerm", e.target.value)
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSearch();
+                        }}
+                        className="pl-10 border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] placeholder-[hsl(0_0%_65%)]"
+                      />
                     </div>
+
+                    {/* Advanced Filters Toggle */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setShowAdvancedFilters(!showAdvancedFilters)
+                      }
+                      className="w-full"
+                    >
+                      {showAdvancedFilters
+                        ? "Ocultar filtros avanzados"
+                        : "Mostrar filtros avanzados"}
+                    </Button>
+
+                    {/* Advanced Filters - Collapsible */}
+                    {showAdvancedFilters && (
+                      <div className="space-y-3">
+                        {/* Location Filters */}
+                        <div className="grid grid-cols-1 gap-2">
+                          <Select
+                            value={filters.locationState}
+                            onValueChange={(value) =>
+                              handleFilterChange("locationState", value)
+                            }
+                            disabled={locationsLoading}
+                          >
+                            <SelectTrigger className="border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
+                              <SelectValue
+                                placeholder={
+                                  locationsLoading ? "Cargando..." : "Estado"
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                              <SelectItem
+                                value="ALL"
+                                className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                              >
+                                Todos los estados
+                              </SelectItem>
+                              {locations?.states &&
+                              locations.states.length > 0 ? (
+                                locations.states.map((state: string) => (
+                                  <SelectItem
+                                    key={state}
+                                    value={state}
+                                    className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                                  >
+                                    {state}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem
+                                  value="NO_STATES"
+                                  disabled
+                                  className="text-muted-foreground cursor-not-allowed"
+                                >
+                                  No hay estados disponibles
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+
+                          <Select
+                            value={filters.locationCity}
+                            onValueChange={(value) =>
+                              handleFilterChange("locationCity", value)
+                            }
+                            disabled={locationsLoading}
+                          >
+                            <SelectTrigger className="border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
+                              <SelectValue
+                                placeholder={
+                                  locationsLoading ? "Cargando..." : "Ciudad"
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                              <SelectItem
+                                value="ALL"
+                                className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                              >
+                                Todas las ciudades
+                              </SelectItem>
+                              {locations?.cities &&
+                              locations.cities.length > 0 ? (
+                                locations.cities.map(
+                                  (
+                                    city: { value: string; label: string },
+                                    index: number
+                                  ) => (
+                                    <SelectItem
+                                      key={`${city.value}-${index}`}
+                                      value={city.value}
+                                      className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                                    >
+                                      {city.label}
+                                    </SelectItem>
+                                  )
+                                )
+                              ) : (
+                                <SelectItem
+                                  value="NO_CITIES"
+                                  disabled
+                                  className="text-muted-foreground cursor-not-allowed"
+                                >
+                                  No hay ciudades disponibles
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {/* Price Range */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            placeholder="Precio mín."
+                            inputMode="numeric"
+                            value={filters.minPrice}
+                            onChange={(e) =>
+                              handleFilterChange("minPrice", e.target.value)
+                            }
+                            className="border-input bg-background text-foreground"
+                          />
+                          <Input
+                            placeholder="Precio máx."
+                            inputMode="numeric"
+                            value={filters.maxPrice}
+                            onChange={(e) =>
+                              handleFilterChange("maxPrice", e.target.value)
+                            }
+                            className="border-input bg-background text-foreground"
+                          />
+                        </div>
+
+                        {/* Bedrooms and Bathrooms */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            placeholder="Mín. hab."
+                            inputMode="numeric"
+                            value={filters.minBedrooms}
+                            onChange={(e) =>
+                              handleFilterChange("minBedrooms", e.target.value)
+                            }
+                            className="border-input bg-background text-foreground"
+                          />
+                          <Input
+                            placeholder="Máx. hab."
+                            inputMode="numeric"
+                            value={filters.maxBedrooms}
+                            onChange={(e) =>
+                              handleFilterChange("maxBedrooms", e.target.value)
+                            }
+                            className="border-input bg-background text-foreground"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <Input
+                            placeholder="Mín. baños"
+                            inputMode="numeric"
+                            value={filters.minBathrooms}
+                            onChange={(e) =>
+                              handleFilterChange("minBathrooms", e.target.value)
+                            }
+                            className="border-input bg-background text-foreground"
+                          />
+                          <Input
+                            placeholder="Máx. baños"
+                            inputMode="numeric"
+                            value={filters.maxBathrooms}
+                            onChange={(e) =>
+                              handleFilterChange("maxBathrooms", e.target.value)
+                            }
+                            className="border-input bg-background text-foreground"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Search Button */}
+                    <Button onClick={handleSearch} className="w-full">
+                      <Search className="h-4 w-4 mr-2" />
+                      Buscar Propiedades
+                    </Button>
                   </div>
                 </Card>
               </ShineBorder>
@@ -442,74 +711,246 @@ export const HeroSearch = () => {
           </div>
 
           {/* Search Panel - desktop overlay (raised higher) */}
-          <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 bottom-6 w-full max-w-5xl z-10">
+          <div className="hidden lg:block absolute left-1/2 -translate-x-1/2 -bottom-20 w-full max-w-6xl z-10">
             <ShineBorder className="p-3 rounded-2xl">
               <Card className="p-6 bg-background/90 backdrop-blur-xl border-border shadow-2xl w-full">
-                <div className="flex items-center gap-4">
-                  <Tabs
-                    value={transaction}
-                    onValueChange={(v) => setTransaction(v as TransactionTab)}
-                  >
-                    <TabsList className="flex-nowrap overflow-x-auto whitespace-nowrap">
-                      <TabsTrigger value="venta">Venta</TabsTrigger>
-                      <TabsTrigger value="alquiler">Alquiler</TabsTrigger>
-                      <TabsTrigger value="anticretico">Anticrético</TabsTrigger>
-                      <TabsTrigger value="proyectos">Proyectos</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                  <Select
-                    value={type || "ALL"}
-                    onValueChange={(v: string) =>
-                      setType(
-                        v === "ALL"
-                          ? ""
-                          : (v as "HOUSE" | "APARTMENT" | "OFFICE" | "LAND")
-                      )
-                    }
-                  >
-                    <SelectTrigger className="w-48 border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
-                      <SelectValue placeholder="Tipo" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
-                      <SelectItem
-                        value="ALL"
-                        className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
-                      >
-                        Todos
-                      </SelectItem>
-                      <SelectItem
-                        value="HOUSE"
-                        className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
-                      >
-                        Casa
-                      </SelectItem>
-                      <SelectItem
-                        value="APARTMENT"
-                        className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
-                      >
-                        Departamento
-                      </SelectItem>
-                      <SelectItem
-                        value="OFFICE"
-                        className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
-                      >
-                        Oficina
-                      </SelectItem>
-                      <SelectItem
-                        value="LAND"
-                        className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
-                      >
-                        Terreno
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <div className="flex-1">
-                    <PropertySearchBar
-                      value={query}
-                      onSearch={handleSearch}
-                      placeholder="Buscar por ciudad, barrio o palabra clave"
-                      className="w-full [&_input]:border-[hsl(0_0%_25%)] [&_input]:bg-[hsl(0_0%_13%)] [&_input]:text-[hsl(0_0%_85%)] [&_input]:placeholder-[hsl(0_0%_65%)]"
-                    />
+                <div className="space-y-4">
+                  {/* First Row: Tabs and Property Type */}
+                  <div className="flex items-center gap-4">
+                    <Tabs
+                      value={transaction}
+                      onValueChange={(v) => setTransaction(v as TransactionTab)}
+                    >
+                      <TabsList className="flex-nowrap overflow-x-auto whitespace-nowrap">
+                        <TabsTrigger value="venta">Venta</TabsTrigger>
+                        <TabsTrigger value="alquiler">Alquiler</TabsTrigger>
+                        <TabsTrigger value="anticretico">
+                          Anticrético
+                        </TabsTrigger>
+                        <TabsTrigger value="proyectos">Proyectos</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                    <Select
+                      value={filters.propertyType}
+                      onValueChange={(value) =>
+                        handleFilterChange("propertyType", value)
+                      }
+                    >
+                      <SelectTrigger className="w-48 border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
+                        <SelectValue placeholder="Tipo" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                        <SelectItem
+                          value="ALL"
+                          className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          Todos
+                        </SelectItem>
+                        <SelectItem
+                          value="HOUSE"
+                          className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          Casa
+                        </SelectItem>
+                        <SelectItem
+                          value="APARTMENT"
+                          className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          Departamento
+                        </SelectItem>
+                        <SelectItem
+                          value="OFFICE"
+                          className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          Oficina
+                        </SelectItem>
+                        <SelectItem
+                          value="LAND"
+                          className="hover:bg-[hsl(162_50%_33%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_50%_33%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          Terreno
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Second Row: Search Input and Location */}
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="text"
+                        placeholder="Buscar por ciudad, barrio o palabra clave"
+                        value={filters.searchTerm}
+                        onChange={(e) =>
+                          handleFilterChange("searchTerm", e.target.value)
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSearch();
+                        }}
+                        className="pl-10 border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] placeholder-[hsl(0_0%_65%)]"
+                      />
+                    </div>
+                    <Select
+                      value={filters.locationState}
+                      onValueChange={(value) =>
+                        handleFilterChange("locationState", value)
+                      }
+                      disabled={locationsLoading}
+                    >
+                      <SelectTrigger className="w-48 border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
+                        <SelectValue
+                          placeholder={
+                            locationsLoading ? "Cargando..." : "Estado"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                        <SelectItem
+                          value="ALL"
+                          className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          Todos los estados
+                        </SelectItem>
+                        {locations?.states && locations.states.length > 0 ? (
+                          locations.states.map((state: string) => (
+                            <SelectItem
+                              key={state}
+                              value={state}
+                              className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                            >
+                              {state}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem
+                            value="NO_STATES"
+                            disabled
+                            className="text-muted-foreground cursor-not-allowed"
+                          >
+                            No hay estados disponibles
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={filters.locationCity}
+                      onValueChange={(value) =>
+                        handleFilterChange("locationCity", value)
+                      }
+                      disabled={locationsLoading}
+                    >
+                      <SelectTrigger className="w-48 border-[hsl(0_0%_25%)] bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)]">
+                        <SelectValue
+                          placeholder={
+                            locationsLoading ? "Cargando..." : "Ciudad"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[hsl(0_0%_13%)] text-[hsl(0_0%_85%)] border-[hsl(0_0%_25%)] shadow-lg">
+                        <SelectItem
+                          value="ALL"
+                          className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                        >
+                          Todas las ciudades
+                        </SelectItem>
+                        {locations?.cities && locations.cities.length > 0 ? (
+                          locations.cities.map(
+                            (
+                              city: { value: string; label: string },
+                              index: number
+                            ) => (
+                              <SelectItem
+                                key={`${city.value}-${index}`}
+                                value={city.value}
+                                className="hover:bg-[hsl(162_54%_58%)] hover:text-[hsl(0_0%_85%)] focus:bg-[hsl(162_54%_58%)] focus:text-[hsl(0_0%_85%)]"
+                              >
+                                {city.label}
+                              </SelectItem>
+                            )
+                          )
+                        ) : (
+                          <SelectItem
+                            value="NO_CITIES"
+                            disabled
+                            className="text-muted-foreground cursor-not-allowed"
+                          >
+                            No hay ciudades disponibles
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Third Row: Price and Room Filters */}
+                  <div className="flex items-center gap-4">
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Precio mínimo"
+                        type="number"
+                        value={filters.minPrice}
+                        onChange={(e) =>
+                          handleFilterChange("minPrice", e.target.value)
+                        }
+                        className="w-32"
+                      />
+                      <Input
+                        placeholder="Precio máximo"
+                        type="number"
+                        value={filters.maxPrice}
+                        onChange={(e) =>
+                          handleFilterChange("maxPrice", e.target.value)
+                        }
+                        className="w-32"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Mín. habitaciones"
+                        type="number"
+                        value={filters.minBedrooms}
+                        onChange={(e) =>
+                          handleFilterChange("minBedrooms", e.target.value)
+                        }
+                        className="w-32"
+                      />
+                      <Input
+                        placeholder="Máx. habitaciones"
+                        type="number"
+                        value={filters.maxBedrooms}
+                        onChange={(e) =>
+                          handleFilterChange("maxBedrooms", e.target.value)
+                        }
+                        className="w-32"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Mín. baños"
+                        type="number"
+                        value={filters.minBathrooms}
+                        onChange={(e) =>
+                          handleFilterChange("minBathrooms", e.target.value)
+                        }
+                        className="w-24"
+                      />
+                      <Input
+                        placeholder="Máx. baños"
+                        type="number"
+                        value={filters.maxBathrooms}
+                        onChange={(e) =>
+                          handleFilterChange("maxBathrooms", e.target.value)
+                        }
+                        className="w-24"
+                      />
+                    </div>
+                    <Button
+                      onClick={handleSearch}
+                      className="flex items-center gap-2"
+                    >
+                      <Search className="h-4 w-4" />
+                      Buscar
+                    </Button>
                   </div>
                 </div>
               </Card>
