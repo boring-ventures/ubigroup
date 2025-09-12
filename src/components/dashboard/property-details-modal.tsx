@@ -28,7 +28,9 @@ import {
   Building2,
   Eye,
   User,
+  X,
 } from "lucide-react";
+import { Currency, TransactionType } from "@prisma/client";
 
 interface Property {
   id: string;
@@ -40,11 +42,13 @@ interface Property {
   locationNeigh: string;
   address: string | null;
   price: number;
+  currency: Currency;
+  exchangeRate: number | null;
   bedrooms: number;
   bathrooms: number;
   garageSpaces: number;
   squareMeters: number;
-  transactionType: string;
+  transactionType: TransactionType;
   status: string;
   rejectionMessage?: string | null;
   images: string[];
@@ -98,32 +102,50 @@ export function PropertyDetailsModal({
     enabled: !!propertyId && isOpen,
   });
 
-  const formatPrice = (price: number, transactionType: string) => {
-    const formatted = new Intl.NumberFormat("es-ES", {
-      style: "currency",
-      currency: "USD",
-    }).format(price);
-
-    return transactionType === "RENT" ? `${formatted}/mes` : formatted;
+  const getCurrencyCode = (currency: Currency): string => {
+    switch (currency) {
+      case Currency.BOLIVIANOS:
+        return "BOB";
+      case Currency.DOLLARS:
+        return "USD";
+      default:
+        return "BOB";
+    }
   };
 
-  const getTransactionBadge = (type: string) => {
+  const formatPrice = (
+    price: number,
+    transactionType: TransactionType,
+    currency: Currency = Currency.BOLIVIANOS
+  ) => {
+    const currencyCode = getCurrencyCode(currency);
+    const formatted = new Intl.NumberFormat("es-BO", {
+      style: "currency",
+      currency: currencyCode,
+    }).format(price);
+
+    return transactionType === TransactionType.RENT
+      ? `${formatted}/mes`
+      : formatted;
+  };
+
+  const getTransactionBadge = (type: TransactionType) => {
     let label = "Alquiler";
     let variant: "default" | "secondary" = "secondary";
     let className = "bg-green-600 hover:bg-green-700 text-white";
 
     switch (type) {
-      case "SALE":
+      case TransactionType.SALE:
         label = "Venta";
         variant = "default";
         className = "bg-blue-600 hover:bg-blue-700";
         break;
-      case "RENT":
+      case TransactionType.RENT:
         label = "Alquiler";
         variant = "secondary";
         className = "bg-green-600 hover:bg-green-700 text-white";
         break;
-      case "ANTICRÉTICO":
+      case TransactionType.ANTICRÉTICO:
         label = "Anticrético";
         variant = "secondary";
         className = "bg-purple-600 hover:bg-purple-700 text-white";
@@ -176,13 +198,13 @@ export function PropertyDetailsModal({
     }
   };
 
-  const getTransactionTypeLabel = (type: string) => {
+  const getTransactionTypeLabel = (type: TransactionType) => {
     switch (type) {
-      case "SALE":
+      case TransactionType.SALE:
         return "Venta";
-      case "RENT":
+      case TransactionType.RENT:
         return "Alquiler";
-      case "ANTICRÉTICO":
+      case TransactionType.ANTICRÉTICO:
         return "Anticrético";
       default:
         return "Alquiler";
@@ -192,7 +214,11 @@ export function PropertyDetailsModal({
   const handleContactWhatsApp = () => {
     if (property?.agent.phone) {
       const propertyUrl = `https://ubigroup.vercel.app/property/${property.id}`;
-      const price = formatPrice(property.price, property.transactionType);
+      const price = formatPrice(
+        property.price,
+        property.transactionType,
+        property.currency
+      );
       const location = `${property.locationCity}, ${property.locationState}`;
       const transactionType = getTransactionTypeLabel(property.transactionType);
       const propertyType = getPropertyTypeLabel(property.type);
@@ -330,7 +356,11 @@ export function PropertyDetailsModal({
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-primary mb-1">
-                  {formatPrice(property.price, property.transactionType)}
+                  {formatPrice(
+                    property.price,
+                    property.transactionType,
+                    property.currency
+                  )}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   {property.squareMeters}m²
@@ -342,11 +372,11 @@ export function PropertyDetailsModal({
             {property.images.length > 0 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Imágenes</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {property.images.slice(0, 4).map((image, index) => (
                     <div
                       key={index}
-                      className="aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer group"
+                      className="relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer group"
                       onClick={() => {
                         setCurrentImageIndex(index);
                         setShowImageGallery(true);
@@ -357,12 +387,13 @@ export function PropertyDetailsModal({
                         alt={`${property.title} - Imagen ${index + 1}`}
                         fill
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-inline-size: 640px) 100vw, (max-inline-size: 1024px) 50vw, (max-inline-size: 1280px) 33vw, 25vw"
                       />
                     </div>
                   ))}
                   {property.images.length > 4 && (
                     <div
-                      className="aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer group relative"
+                      className="relative aspect-square rounded-lg overflow-hidden bg-muted cursor-pointer group"
                       onClick={() => setShowImageGallery(true)}
                     >
                       <Image
@@ -370,11 +401,15 @@ export function PropertyDetailsModal({
                         alt={`${property.title} - Más imágenes`}
                         fill
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        sizes="(max-inline-size: 640px) 100vw, (max-inline-size: 1024px) 50vw, (max-inline-size: 1280px) 33vw, 25vw"
                       />
                       <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                        <span className="text-white font-semibold">
-                          +{property.images.length - 4} fotos
-                        </span>
+                        <div className="text-center">
+                          <span className="text-white font-semibold text-lg">
+                            +{property.images.length - 4}
+                          </span>
+                          <p className="text-white text-sm">más fotos</p>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -614,14 +649,21 @@ export function PropertyDetailsModal({
 
       {/* Image Gallery Modal */}
       <Dialog open={showImageGallery} onOpenChange={setShowImageGallery}>
-        <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
+        <DialogContent className="max-w-6xl w-full h-[90vh] p-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Galería de Imágenes - {property?.title}</DialogTitle>
+          </DialogHeader>
           <div className="relative w-full h-full flex items-center justify-center bg-black">
-            <Image
-              src={property.images[currentImageIndex]}
-              alt={`${property.title} - Imagen ${currentImageIndex + 1}`}
-              fill
-              className="object-contain"
-            />
+            <div className="relative w-full h-full max-w-5xl max-h-[85vh]">
+              <Image
+                src={property.images[currentImageIndex]}
+                alt={`${property.title} - Imagen ${currentImageIndex + 1}`}
+                fill
+                className="object-contain"
+                sizes="90vw"
+                priority
+              />
+            </div>
 
             {/* Navigation */}
             {property.images.length > 1 && (
@@ -629,7 +671,7 @@ export function PropertyDetailsModal({
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10"
                   onClick={prevImage}
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -637,7 +679,7 @@ export function PropertyDetailsModal({
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2"
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10"
                   onClick={nextImage}
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -646,9 +688,19 @@ export function PropertyDetailsModal({
             )}
 
             {/* Counter */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full">
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-full text-sm font-medium">
               {currentImageIndex + 1} / {property.images.length}
             </div>
+
+            {/* Close button */}
+            <Button
+              variant="secondary"
+              size="sm"
+              className="absolute top-4 right-4 z-10"
+              onClick={() => setShowImageGallery(false)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
