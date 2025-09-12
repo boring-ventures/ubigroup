@@ -136,6 +136,7 @@ model Property {
   squareMeters    Float           @map("square_meters")
   transactionType TransactionType @map("transaction_type")
   status          PropertyStatus  @default(PENDING)
+  rejectionMessage String?        @map("rejection_message") // Message when property is rejected
   images          String[]        // Array of image URLs
   videos          String[]        // Array of video URLs
   features        String[]        // Additional features like "Pool", "Garden", etc.

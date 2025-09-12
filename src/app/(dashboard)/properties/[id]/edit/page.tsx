@@ -2,8 +2,8 @@ import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { PropertyForm } from "@/components/dashboard/property-form";
 import type { CreatePropertyInput } from "@/lib/validations/property";
+import { PropertyEditWrapper } from "@/components/dashboard/property-edit-wrapper";
 
 export default async function EditPropertyPage({
   params,
@@ -52,6 +52,8 @@ export default async function EditPropertyPage({
       garageSpaces: true,
       squareMeters: true,
       transactionType: true,
+      status: true,
+      rejectionMessage: true,
       images: true,
       videos: true,
       features: true,
@@ -110,12 +112,37 @@ export default async function EditPropertyPage({
     <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Edit Property</h1>
-          <p className="text-muted-foreground">Update your property listing</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Editar Propiedad
+          </h1>
+          <p className="text-muted-foreground">
+            Actualiza tu listado de propiedad
+          </p>
         </div>
       </div>
 
-      <PropertyForm initialData={initialData} propertyId={property.id} />
+      {/* Rejection Reason Display */}
+      {property.status === "REJECTED" && property.rejectionMessage && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-start space-x-2">
+            <div className="flex-shrink-0">
+              <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                <span className="text-red-600 text-sm">!</span>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-medium text-red-800 mb-1">
+                Motivo de Rechazo
+              </h4>
+              <p className="text-sm text-red-700">
+                {property.rejectionMessage}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <PropertyEditWrapper initialData={initialData} propertyId={property.id} />
     </main>
   );
 }

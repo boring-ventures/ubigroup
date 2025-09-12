@@ -46,6 +46,7 @@ interface Property {
   squareMeters: number;
   transactionType: string;
   status: string;
+  rejectionMessage?: string | null;
   images: string[];
   videos: string[];
   features: string[];
@@ -304,6 +305,28 @@ export function PropertyDetailsModal({
                   </Badge>
                   {getStatusBadge(property.status)}
                 </div>
+
+                {/* Rejection Reason */}
+                {property.status === "REJECTED" &&
+                  property.rejectionMessage && (
+                    <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-start space-x-2">
+                        <div className="flex-shrink-0">
+                          <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                            <span className="text-red-600 text-sm">!</span>
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-red-800 mb-1">
+                            Motivo de Rechazo
+                          </h4>
+                          <p className="text-sm text-red-700">
+                            {property.rejectionMessage}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-primary mb-1">

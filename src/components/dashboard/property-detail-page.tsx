@@ -60,6 +60,7 @@ interface Property {
   squareMeters: number;
   transactionType: TransactionType;
   status: string;
+  rejectionMessage?: string | null;
   images: string[];
   videos: string[];
   features: string[];
@@ -329,25 +330,6 @@ export function PropertyDetailPage({
     setImageModalOpen(true);
   };
 
-  const handleEdit = () => {
-    if (property) {
-      setEditData({
-        title: property.title,
-        description: property.description,
-        price: property.price,
-        currency: property.currency,
-        exchangeRate: property.exchangeRate,
-        bedrooms: property.bedrooms,
-        bathrooms: property.bathrooms,
-        garageSpaces: property.garageSpaces,
-        squareMeters: property.squareMeters,
-        address: property.address,
-        features: property.features,
-      });
-      setIsEditing(true);
-    }
-  };
-
   const handleSave = () => {
     updatePropertyMutation.mutate(editData);
   };
@@ -435,9 +417,11 @@ export function PropertyDetailPage({
                   </Button>
                 </>
               ) : (
-                <Button onClick={handleEdit}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar
+                <Button asChild>
+                  <Link href={`/properties/${propertyId}/edit`}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                  </Link>
                 </Button>
               )}
             </div>
@@ -569,6 +553,30 @@ export function PropertyDetailPage({
                         {getTransactionBadge(property.transactionType)}
                         {getStatusBadge(property.status)}
                       </div>
+
+                      {/* Rejection Reason */}
+                      {property.status === "REJECTED" &&
+                        property.rejectionMessage && (
+                          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <div className="flex items-start space-x-2">
+                              <div className="flex-shrink-0">
+                                <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
+                                  <span className="text-red-600 text-sm">
+                                    !
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="text-sm font-medium text-red-800 mb-1">
+                                  Motivo de Rechazo
+                                </h4>
+                                <p className="text-sm text-red-700">
+                                  {property.rejectionMessage}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                     </div>
                   </>
                 )}
