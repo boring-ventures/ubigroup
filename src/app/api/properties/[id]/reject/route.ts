@@ -27,10 +27,13 @@ export async function POST(
       );
     }
 
-    // Only super admins can reject properties
-    if (user.role !== UserRole.SUPER_ADMIN) {
+    // Only super admins and agency admins can reject properties
+    if (
+      user.role !== UserRole.SUPER_ADMIN &&
+      user.role !== UserRole.AGENCY_ADMIN
+    ) {
       return NextResponse.json(
-        { error: "Only super admins can reject properties" },
+        { error: "Only super admins and agency admins can reject properties" },
         { status: 403 }
       );
     }
@@ -46,10 +49,15 @@ export async function POST(
       );
     }
 
-    // Check if property exists
+    // Check if property exists and get agency information
     const existingProperty = await prisma.property.findUnique({
       where: { id },
-      select: { id: true, title: true, status: true },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        agencyId: true,
+      },
     });
 
     if (!existingProperty) {
@@ -57,6 +65,16 @@ export async function POST(
         { error: "Property not found" },
         { status: 404 }
       );
+    }
+
+    // If user is agency admin, ensure they can only reject properties from their agency
+    if (user.role === UserRole.AGENCY_ADMIN) {
+      if (user.agencyId !== existingProperty.agencyId) {
+        return NextResponse.json(
+          { error: "You can only reject properties from your own agency" },
+          { status: 403 }
+        );
+      }
     }
 
     // Update property status to rejected and add rejection message

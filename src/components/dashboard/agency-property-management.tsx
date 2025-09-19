@@ -19,15 +19,36 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Eye, Clock, CheckCircle, XCircle, Download } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Eye,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Download,
+  Ban,
+  Trash2,
+} from "lucide-react";
 import {
   useAgencyProperties,
   type UseAgencyPropertiesParams,
+  type AgencyProperty,
 } from "@/hooks/use-agency-properties";
 import { PropertyStatus } from "@prisma/client";
 import Link from "next/link";
 import { exportToCSV } from "@/lib/utils";
 import { toast } from "@/components/ui/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   PropertyFilters,
   type PropertyFilters as PropertyFiltersType,
@@ -39,6 +60,14 @@ export function AgencyPropertyManagement() {
     limit: 10,
   });
   const [filters, setFilters] = useState<PropertyFiltersType>({});
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [isPermanentDeleteDialogOpen, setIsPermanentDeleteDialogOpen] =
+    useState(false);
+  const [propertyToReject, setPropertyToReject] =
+    useState<AgencyProperty | null>(null);
+  const [rejectionMessage, setRejectionMessage] = useState("");
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [isPermanentlyDeleting, setIsPermanentlyDeleting] = useState(false);
 
   // Merge filters with params
   const queryParams = {
@@ -47,6 +76,7 @@ export function AgencyPropertyManagement() {
   };
 
   const { data, isLoading, error } = useAgencyProperties(queryParams);
+  const queryClient = useQueryClient();
 
   const handleFiltersChange = (newFilters: PropertyFiltersType) => {
     setFilters(newFilters);
@@ -55,6 +85,28 @@ export function AgencyPropertyManagement() {
 
   const handlePageChange = (page: number) => {
     setParams((prev) => ({ ...prev, page }));
+  };
+
+  const handleRejectProperty = (property: AgencyProperty) => {
+    setPropertyToReject(property);
+    setRejectionMessage("");
+    setIsRejectDialogOpen(true);
+  };
+
+  const handleCloseRejectDialog = () => {
+    setIsRejectDialogOpen(false);
+    setPropertyToReject(null);
+    setRejectionMessage("");
+  };
+
+  const handlePermanentDelete = () => {
+    setIsRejectDialogOpen(false);
+    setIsPermanentDeleteDialogOpen(true);
+  };
+
+  const handleClosePermanentDeleteDialog = () => {
+    setIsPermanentDeleteDialogOpen(false);
+    setPropertyToReject(null);
   };
 
   const handleDownloadCSV = () => {
@@ -99,6 +151,99 @@ export function AgencyPropertyManagement() {
       title: "Descarga iniciada",
       description: "El archivo CSV se está descargando",
     });
+  };
+
+  // Reject property mutation
+  const rejectPropertyMutation = useMutation({
+    mutationFn: async ({
+      propertyId,
+      message,
+    }: {
+      propertyId: string;
+      message: string;
+    }) => {
+      const response = await fetch(`/api/properties/${propertyId}/reject`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ rejectionMessage: message }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error al rechazar la propiedad");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Éxito",
+        description: "Propiedad rechazada exitosamente",
+      });
+      queryClient.invalidateQueries({ queryKey: ["agency-properties"] });
+      handleCloseRejectDialog();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Error al rechazar la propiedad: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setIsRejecting(false);
+    },
+  });
+
+  // Permanent delete property mutation
+  const permanentDeletePropertyMutation = useMutation({
+    mutationFn: async (propertyId: string) => {
+      const response = await fetch(`/api/properties/${propertyId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(
+          error.error || "Error al eliminar permanentemente la propiedad"
+        );
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Éxito",
+        description: "Propiedad eliminada permanentemente",
+      });
+      queryClient.invalidateQueries({ queryKey: ["agency-properties"] });
+      handleClosePermanentDeleteDialog();
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Error al eliminar permanentemente la propiedad: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+    onSettled: () => {
+      setIsPermanentlyDeleting(false);
+    },
+  });
+
+  const confirmReject = () => {
+    if (propertyToReject && rejectionMessage.trim()) {
+      setIsRejecting(true);
+      rejectPropertyMutation.mutate({
+        propertyId: propertyToReject.id,
+        message: rejectionMessage.trim(),
+      });
+    }
+  };
+
+  const confirmPermanentDelete = () => {
+    if (propertyToReject) {
+      setIsPermanentlyDeleting(true);
+      permanentDeletePropertyMutation.mutate(propertyToReject.id);
+    }
   };
 
   const getStatusBadge = (status: PropertyStatus) => {
@@ -377,12 +522,21 @@ export function AgencyPropertyManagement() {
                           </div>
                         </div>
 
-                        <div className="flex justify-end">
+                        <div className="flex justify-end space-x-2">
                           <Button size="sm" variant="ghost" asChild>
                             <Link href={`/properties/${property.id}`}>
                               <Eye className="h-4 w-4 mr-2" />
                               Ver
                             </Link>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleRejectProperty(property)}
+                            className="text-orange-600 hover:text-orange-700"
+                            title="Rechazar propiedad"
+                          >
+                            <Ban className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
@@ -485,6 +639,15 @@ export function AgencyPropertyManagement() {
                                   <Eye className="h-4 w-4" />
                                 </Link>
                               </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleRejectProperty(property)}
+                                className="text-orange-600 hover:text-orange-700"
+                                title="Rechazar propiedad"
+                              >
+                                <Ban className="h-4 w-4" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -540,6 +703,96 @@ export function AgencyPropertyManagement() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Reject Property Dialog */}
+      <AlertDialog
+        open={isRejectDialogOpen}
+        onOpenChange={setIsRejectDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Rechazar propiedad?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción cambiará el estado de la propiedad{" "}
+              <strong>&quot;{propertyToReject?.title}&quot;</strong> a
+              rechazada.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label
+                htmlFor="rejection-message"
+                className="text-sm font-medium"
+              >
+                Mensaje de rechazo (obligatorio)
+              </label>
+              <Textarea
+                id="rejection-message"
+                placeholder="Explica por qué se rechaza esta propiedad..."
+                value={rejectionMessage}
+                onChange={(e) => setRejectionMessage(e.target.value)}
+                className="mt-2"
+                rows={3}
+              />
+            </div>
+          </div>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel onClick={handleCloseRejectDialog}>
+              Cancelar
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handlePermanentDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Eliminar Permanentemente
+            </Button>
+            <AlertDialogAction
+              onClick={confirmReject}
+              disabled={isRejecting || !rejectionMessage.trim()}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              {isRejecting ? "Rechazando..." : "Rechazar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Permanent Delete Confirmation Dialog */}
+      <AlertDialog
+        open={isPermanentDeleteDialogOpen}
+        onOpenChange={setIsPermanentDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600">
+              ⚠️ Eliminación Permanente
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              <strong>¡ATENCIÓN!</strong> Esta acción es IRREVERSIBLE. Se
+              eliminará permanentemente la propiedad{" "}
+              <strong>&quot;{propertyToReject?.title}&quot;</strong> y todos sus
+              datos asociados de la base de datos. Esta acción no se puede
+              deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleClosePermanentDeleteDialog}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmPermanentDelete}
+              disabled={isPermanentlyDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isPermanentlyDeleting
+                ? "Eliminando..."
+                : "Eliminar Permanentemente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
