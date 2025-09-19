@@ -159,7 +159,15 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} UbiGroup. All rights reserved.
           </p>
           <p className="text-muted-foreground text-sm mt-2">
-            Desarrollado por Boring Studios
+            Desarrollado por{" "}
+            <a
+              href="https://boring.lat"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline transition-colors"
+            >
+              Boring Studios
+            </a>
           </p>
         </div>
       </div>
