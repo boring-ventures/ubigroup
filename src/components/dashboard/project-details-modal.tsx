@@ -13,38 +13,42 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MapPin, Building2, Calendar, User, Building } from "lucide-react";
 import { PropertyStatus } from "@prisma/client";
 
+type ProjectData = {
+  id: string;
+  name: string;
+  description: string;
+  location: string;
+  status: PropertyStatus;
+  createdAt: string;
+  updatedAt: string;
+  agent: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    avatarUrl: string | null;
+  };
+  agency: {
+    id: string;
+    name: string;
+    logoUrl: string | null;
+  };
+  floors: Array<{
+    id: string;
+    name: string;
+    quadrants: Array<{
+      id: string;
+      name: string;
+      type?: string;
+      status?: string;
+    }>;
+  }>;
+};
+
 interface ProjectDetailsModalProps {
   projectId: string | null;
   isOpen: boolean;
   onClose: () => void;
-  project?: {
-    id: string;
-    name: string;
-    description: string;
-    location: string;
-    status: PropertyStatus;
-    createdAt: string;
-    updatedAt: string;
-    agent: {
-      id: string;
-      firstName: string | null;
-      lastName: string | null;
-      avatarUrl: string | null;
-    };
-    agency: {
-      id: string;
-      name: string;
-      logoUrl: string | null;
-    };
-    floors: Array<{
-      id: string;
-      name: string;
-      quadrants: Array<{
-        id: string;
-        name: string;
-      }>;
-    }>;
-  };
+  project?: ProjectData | null;
 }
 
 // Helper function to get status badge variant
@@ -76,11 +80,12 @@ const getStatusLabel = (status: PropertyStatus) => {
 };
 
 // Helper function to get total quadrants
-const getTotalQuadrants = (
-  floors: ProjectDetailsModalProps["project"]["floors"]
-) => {
+const getTotalQuadrants = (floors: ProjectData["floors"]) => {
   return (
-    floors?.reduce((total, floor) => total + floor.quadrants.length, 0) || 0
+    floors?.reduce(
+      (total: number, floor) => total + floor.quadrants.length,
+      0
+    ) || 0
   );
 };
 
