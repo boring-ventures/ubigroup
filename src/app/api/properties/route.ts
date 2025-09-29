@@ -250,7 +250,7 @@ export async function GET(request: NextRequest) {
       customId: property.customId,
       title: property.title,
       description: property.description,
-      type: property.type,
+      propertyType: property.type,
       locationState: property.locationState,
       locationCity: property.locationCity,
       locationNeigh: property.locationNeigh,

@@ -2,7 +2,7 @@ import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { CombinedPropertiesProjectsView } from "@/components/dashboard/combined-properties-projects-view";
+import { PropertiesProjectsTabs } from "@/components/dashboard/properties-projects-tabs";
 
 export default async function MyPropertiesPage() {
   const cookieStore = cookies();
@@ -46,7 +46,7 @@ export default async function MyPropertiesPage() {
         </div>
       </div>
 
-      <CombinedPropertiesProjectsView />
+      <PropertiesProjectsTabs />
     </main>
   );
 }
