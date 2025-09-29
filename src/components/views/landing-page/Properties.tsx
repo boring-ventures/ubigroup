@@ -32,6 +32,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PropertyMap } from "@/components/public/property-map";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { isValidCoordinates } from "@/lib/utils";
 import Image from "next/image";
 
 interface Property {
@@ -178,7 +179,8 @@ export default function Properties() {
         const params = new URLSearchParams();
 
         // Add pagination params
-        const limit = 6;
+        // For the "mapa" tab (Todos), fetch more properties to show on the map
+        const limit = activeTab === "mapa" ? 100 : 6;
         const offset = (page - 1) * limit;
         params.append("limit", limit.toString());
         params.append("offset", offset.toString());
@@ -205,14 +207,15 @@ export default function Properties() {
             alquiler: "RENT",
             anticretico: "ANTICRÉTICO",
           };
-          if (activeTab !== "proyectos") {
+          if (activeTab !== "proyectos" && activeTab !== "mapa") {
+            // Only filter by transaction type for specific property tabs, not for "mapa" (Todos)
             const tx = tabToTransaction[activeTab];
             if (tx) params.append("transactionType", tx);
           } else if (
             searchFilters.transactionType &&
             searchFilters.transactionType !== "ALL"
           ) {
-            // Fallback (shouldn't happen on proyectos tab)
+            // Fallback for proyectos tab or when filters specify a transaction type
             params.append("transactionType", searchFilters.transactionType);
           }
           if (
@@ -263,9 +266,33 @@ export default function Properties() {
         const data = await response.json();
         console.log("API Response:", data);
         console.log("Properties from API:", data.properties);
+
+        // Log invalid coordinates for debugging
+        const invalidCoordinates = data.properties?.filter(
+          (p: Property) =>
+            p.latitude !== null &&
+            p.latitude !== undefined &&
+            p.longitude !== null &&
+            p.longitude !== undefined &&
+            !isValidCoordinates(p.latitude, p.longitude)
+        );
+        if (invalidCoordinates && invalidCoordinates.length > 0) {
+          console.log(
+            "Properties with invalid coordinates (filtered out):",
+            invalidCoordinates.map((p: Property) => ({
+              id: p.id,
+              title: p.title,
+              latitude: p.latitude,
+              longitude: p.longitude,
+            }))
+          );
+        }
+
         console.log(
-          "Properties with coordinates:",
-          data.properties?.filter((p: Property) => p.latitude && p.longitude)
+          "Properties with valid coordinates:",
+          data.properties?.filter((p: Property) =>
+            isValidCoordinates(p.latitude, p.longitude)
+          )
         );
         setProperties(data.properties || []);
         setPagination({
@@ -540,12 +567,14 @@ export default function Properties() {
             properties={
               activeTab === "proyectos"
                 ? []
-                : properties.filter((p) => p.latitude && p.longitude)
+                : properties.filter((p) =>
+                    isValidCoordinates(p.latitude, p.longitude)
+                  )
             }
             projects={
               activeTab === "proyectos" || activeTab === "mapa"
                 ? projects
-                    .filter((p) => p.latitude && p.longitude)
+                    .filter((p) => isValidCoordinates(p.latitude, p.longitude))
                     .map((p) => ({
                       id: p.id,
                       name: p.name,

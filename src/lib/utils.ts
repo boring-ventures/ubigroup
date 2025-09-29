@@ -183,3 +183,50 @@ export function removePhonePrefix(phone: string): string {
   // Return as is if no prefix
   return phone;
 }
+
+/**
+ * Validates if latitude and longitude values are valid coordinates
+ * @param latitude - The latitude value
+ * @param longitude - The longitude value
+ * @returns true if coordinates are valid, false otherwise
+ */
+export function isValidCoordinates(
+  latitude?: number | null,
+  longitude?: number | null
+): boolean {
+  // Check if both values exist and are numbers
+  if (
+    latitude === null ||
+    latitude === undefined ||
+    longitude === null ||
+    longitude === undefined
+  ) {
+    return false;
+  }
+
+  if (typeof latitude !== "number" || typeof longitude !== "number") {
+    return false;
+  }
+
+  // Check if values are finite (not NaN or Infinity)
+  if (!isFinite(latitude) || !isFinite(longitude)) {
+    return false;
+  }
+
+  // Check valid latitude range (-90 to 90)
+  if (latitude < -90 || latitude > 90) {
+    return false;
+  }
+
+  // Check valid longitude range (-180 to 180)
+  if (longitude < -180 || longitude > 180) {
+    return false;
+  }
+
+  // Check for obviously invalid coordinates (0,0 is often a default/error value)
+  if (latitude === 0 && longitude === 0) {
+    return false;
+  }
+
+  return true;
+}

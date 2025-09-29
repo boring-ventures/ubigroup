@@ -3,7 +3,7 @@ import "leaflet/dist/leaflet.css";
 
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getPropertyPinColor } from "@/lib/utils";
+import { getPropertyPinColor, isValidCoordinates } from "@/lib/utils";
 import { TransactionType } from "@prisma/client";
 import type { Map, Marker } from "leaflet";
 
@@ -166,7 +166,11 @@ export function PropertyMap({
         if (markersRef.current.length > 0) {
           markersRef.current.forEach((marker) => {
             if (marker && marker.remove) {
-              marker.remove();
+              try {
+                marker.remove();
+              } catch (e) {
+                console.warn("Error removing marker:", e);
+              }
             }
           });
           markersRef.current = [];
@@ -174,7 +178,11 @@ export function PropertyMap({
 
         // Clear existing map
         if (mapInstanceRef.current) {
-          mapInstanceRef.current.remove();
+          try {
+            mapInstanceRef.current.remove();
+          } catch (e) {
+            console.warn("Error removing map:", e);
+          }
           mapInstanceRef.current = null;
           isInitializedRef.current = false;
         }
@@ -189,8 +197,8 @@ export function PropertyMap({
           } catch {}
         }
 
-        // Small delay to ensure DOM is clean
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Small delay to ensure DOM is clean and ready
+        await new Promise((resolve) => setTimeout(resolve, 200));
         if (isCancelledRef.current || !mapRef.current) return;
 
         // If container has no size (hidden), delay until it has layout
@@ -346,24 +354,55 @@ export function PropertyMap({
 
         // Add markers for each property
         console.log("Properties received:", properties);
+
+        // Log invalid coordinates for debugging
+        const invalidProperties = properties.filter(
+          (p: Property) =>
+            p.latitude !== null &&
+            p.latitude !== undefined &&
+            p.longitude !== null &&
+            p.longitude !== undefined &&
+            !isValidCoordinates(p.latitude, p.longitude)
+        );
+        if (invalidProperties.length > 0) {
+          console.log(
+            "Properties with invalid coordinates (filtered out):",
+            invalidProperties.map((p) => ({
+              id: p.id,
+              title: p.title,
+              latitude: p.latitude,
+              longitude: p.longitude,
+            }))
+          );
+        }
+
         console.log(
-          "Properties with coordinates:",
-          properties.filter((p: Property) => p.latitude && p.longitude)
+          "Properties with valid coordinates:",
+          properties.filter((p: Property) =>
+            isValidCoordinates(p.latitude, p.longitude)
+          )
         );
 
-        const validProperties = properties.filter(
-          (p: Property) => p.latitude && p.longitude
+        const validProperties = properties.filter((p: Property) =>
+          isValidCoordinates(p.latitude, p.longitude)
         );
 
-        const validProjects = (projects || []).filter(
-          (p: ProjectPin) => p.latitude && p.longitude
+        const validProjects = (projects || []).filter((p: ProjectPin) =>
+          isValidCoordinates(p.latitude, p.longitude)
         );
 
         if (validProperties.length > 0 || validProjects.length > 0) {
           const bounds = L.latLngBounds([]);
 
+          // Ensure map is ready before adding markers
+          if (!map || !map.getContainer()) {
+            console.warn("Map not ready, skipping marker creation");
+            return;
+          }
+
           validProperties.forEach((property) => {
-            if (!property.latitude || !property.longitude) return;
+            if (!isValidCoordinates(property.latitude, property.longitude))
+              return;
 
             const pinColor = getPropertyPinColor(property.transactionType);
 
@@ -422,22 +461,30 @@ export function PropertyMap({
             `;
 
             // Add marker to map
-            const marker = L.marker([property.latitude, property.longitude], {
-              icon: customIcon,
-            })
-              .addTo(map)
-              .bindPopup(popupContent);
+            try {
+              const marker = L.marker([property.latitude, property.longitude], {
+                icon: customIcon,
+              })
+                .addTo(map)
+                .bindPopup(popupContent);
 
-            console.log(
-              `Marker added for property: ${property.title} at [${property.latitude}, ${property.longitude}]`
-            );
-            markersRef.current.push(marker);
-            bounds.extend([property.latitude, property.longitude]);
+              console.log(
+                `Marker added for property: ${property.title} at [${property.latitude}, ${property.longitude}]`
+              );
+              markersRef.current.push(marker);
+              bounds.extend([property.latitude, property.longitude]);
+            } catch (e) {
+              console.warn(
+                `Error adding marker for property ${property.title}:`,
+                e
+              );
+            }
           });
 
           // Add markers for projects
           validProjects.forEach((project) => {
-            if (!project.latitude || !project.longitude) return;
+            if (!isValidCoordinates(project.latitude, project.longitude))
+              return;
 
             const projectIcon = L.divIcon({
               className: "custom-marker",
@@ -473,14 +520,21 @@ export function PropertyMap({
               </div>
             `;
 
-            const marker = L.marker([project.latitude, project.longitude], {
-              icon: projectIcon,
-            })
-              .addTo(map)
-              .bindPopup(popupContent);
+            try {
+              const marker = L.marker([project.latitude, project.longitude], {
+                icon: projectIcon,
+              })
+                .addTo(map)
+                .bindPopup(popupContent);
 
-            markersRef.current.push(marker);
-            bounds.extend([project.latitude, project.longitude]);
+              markersRef.current.push(marker);
+              bounds.extend([project.latitude, project.longitude]);
+            } catch (e) {
+              console.warn(
+                `Error adding marker for project ${project.name}:`,
+                e
+              );
+            }
           });
 
           // Fit map to show all markers
