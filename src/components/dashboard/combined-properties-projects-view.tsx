@@ -78,7 +78,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Ban, Trash2 } from "lucide-react";
+import { Ban } from "lucide-react";
 
 type FilterType = "all" | "properties" | "projects";
 
@@ -281,7 +281,7 @@ export function CombinedPropertiesProjectsView() {
     const properties = propertiesData?.properties || [];
     const projects = projectsData?.projects || [];
 
-    let csvData: any[] = [];
+    let csvData: Record<string, string | number>[] = [];
 
     if (filter === "all") {
       // Export both properties and projects
@@ -1018,8 +1018,9 @@ export function CombinedPropertiesProjectsView() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar permanentemente?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente "
-              {itemToReject?.title}" y todos sus datos asociados.
+              Esta acción no se puede deshacer. Se eliminará permanentemente
+              &quot;
+              {itemToReject?.title}&quot; y todos sus datos asociados.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
