@@ -35,7 +35,6 @@ import {
   useAgentProperties,
   useResendPropertyForApproval,
   type UseAgentPropertiesParams,
-  type AgentProperty,
 } from "@/hooks/use-agent-properties";
 import { toast } from "@/components/ui/use-toast";
 import { PropertyStatus } from "@prisma/client";

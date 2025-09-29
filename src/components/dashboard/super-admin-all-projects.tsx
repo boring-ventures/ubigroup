@@ -52,7 +52,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/components/ui/use-toast";
 import {
   useSuperAdminProjects,
@@ -111,8 +110,6 @@ export function SuperAdminAllProjects() {
   const [isPermanentDeleteDialogOpen, setIsPermanentDeleteDialogOpen] =
     useState(false);
   const [rejectionMessage, setRejectionMessage] = useState("");
-
-  const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useSuperAdminProjects({
     page: 1,
@@ -199,7 +196,7 @@ export function SuperAdminAllProjects() {
         description: "Proyecto rechazado exitosamente",
       });
       handleCloseRejectDialog();
-    } catch (error) {
+    } catch {
       toast({
         title: "Error",
         description: "Error al rechazar el proyecto",
@@ -387,7 +384,7 @@ export function SuperAdminAllProjects() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todas las agencias</SelectItem>
-                      {agencies.map((agency: any) => (
+                      {agencies.map((agency: { id: string; name: string }) => (
                         <SelectItem key={agency.id} value={agency.id}>
                           {agency.name}
                         </SelectItem>
@@ -771,7 +768,6 @@ export function SuperAdminAllProjects() {
 
       {/* Project Details Modal */}
       <ProjectDetailsModal
-        projectId={selectedProjectId}
         isOpen={isProjectModalOpen}
         onClose={handleCloseProjectModal}
         project={selectedProjectData}

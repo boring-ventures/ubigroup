@@ -45,7 +45,6 @@ type ProjectData = {
 };
 
 interface ProjectDetailsModalProps {
-  projectId: string | null;
   isOpen: boolean;
   onClose: () => void;
   project?: ProjectData | null;
@@ -90,7 +89,6 @@ const getTotalQuadrants = (floors: ProjectData["floors"]) => {
 };
 
 export function ProjectDetailsModal({
-  projectId,
   isOpen,
   onClose,
   project,
