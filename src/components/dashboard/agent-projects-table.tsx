@@ -13,96 +13,108 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import {
   CheckCircle,
   Building2,
   MapPin,
   XCircle,
   Eye,
+  RotateCcw,
   Calendar,
 } from "lucide-react";
 import Link from "next/link";
 import {
-  usePendingProjects,
-  useUpdateProjectStatus,
-  type UsePendingProjectsParams,
-  type PendingProject,
-} from "@/hooks/use-pending-projects";
+  useAgentProjects,
+  useResendProjectForApproval,
+  type UseAgentProjectsParams,
+  type AgentProject,
+} from "@/hooks/use-agent-projects";
 import { toast } from "@/components/ui/use-toast";
+import { PropertyStatus } from "@prisma/client";
 
+// Helper function to get status badge variant
+const getStatusBadgeVariant = (status: PropertyStatus) => {
+  switch (status) {
+    case "PENDING":
+      return "secondary";
+    case "APPROVED":
+      return "default";
+    case "REJECTED":
+      return "destructive";
+    default:
+      return "outline";
+  }
+};
 
-export function AgencyProjectsManagement() {
-  const [params, setParams] = useState<UsePendingProjectsParams>({
+// Helper function to get status label
+const getStatusLabel = (status: PropertyStatus) => {
+  switch (status) {
+    case "PENDING":
+      return "Pendiente";
+    case "APPROVED":
+      return "Aprobado";
+    case "REJECTED":
+      return "Rechazado";
+    default:
+      return status;
+  }
+};
+
+export function AgentProjectsTable() {
+  const [params, setParams] = useState<UseAgentProjectsParams>({
     page: 1,
-    limit: 5, // Show fewer per page for detailed review
+    limit: 10,
   });
   const [selectedProject, setSelectedProject] = useState<string | null>(null);
-  const [rejectionReason, setRejectionReason] = useState("");
-  const [actionType, setActionType] = useState<"approve" | "reject" | null>(
-    null
-  );
+  const [isResendDialogOpen, setIsResendDialogOpen] = useState(false);
 
-  const { data, isLoading, error } = usePendingProjects(params);
-  const updateStatusMutation = useUpdateProjectStatus();
+  const { data, isLoading, error } = useAgentProjects(params);
+  const resendMutation = useResendProjectForApproval();
 
   const handlePageChange = (page: number) => {
     setParams((prev) => ({ ...prev, page }));
   };
 
-  const handleApprove = (projectId: string) => {
+  const handleResend = (projectId: string) => {
     setSelectedProject(projectId);
-    setActionType("approve");
+    setIsResendDialogOpen(true);
   };
 
-  const handleReject = (projectId: string) => {
-    setSelectedProject(projectId);
-    setActionType("reject");
-    setRejectionReason("");
-  };
-
-  const handleConfirmAction = async () => {
-    if (!selectedProject || !actionType) return;
+  const handleConfirmResend = async () => {
+    if (!selectedProject) return;
 
     try {
-      await updateStatusMutation.mutateAsync({
-        projectId: selectedProject,
-        status: actionType === "approve" ? "APPROVED" : "REJECTED",
-        rejectionMessage: actionType === "reject" ? rejectionReason : undefined,
-      });
+      await resendMutation.mutateAsync(selectedProject);
 
       toast({
         title: "Éxito",
-        description: `Proyecto ${actionType === "approve" ? "aprobado" : "rechazado"} exitosamente`,
+        description: "Proyecto reenviado para aprobación exitosamente",
       });
 
       setSelectedProject(null);
-      setActionType(null);
-      setRejectionReason("");
+      setIsResendDialogOpen(false);
     } catch (error) {
       toast({
         title: "Error",
         description:
           error instanceof Error
             ? error.message
-            : "Error al actualizar el estado del proyecto",
+            : "Error al reenviar el proyecto para aprobación",
         variant: "destructive",
       });
     }
   };
 
-  const closeDialog = () => {
+  const closeResendDialog = () => {
     setSelectedProject(null);
-    setActionType(null);
-    setRejectionReason("");
+    setIsResendDialogOpen(false);
   };
 
-  const getTotalQuadrants = (floors: PendingProject["floors"]) => {
+  const getTotalQuadrants = (floors: AgentProject["floors"]) => {
     return floors.reduce((total, floor) => total + floor.quadrants.length, 0);
   };
 
-  const getStatusCounts = (floors: PendingProject["floors"]) => {
+  const getStatusCounts = (floors: AgentProject["floors"]) => {
     const counts = { available: 0, unavailable: 0, reserved: 0 };
     floors.forEach((floor) => {
       floor.quadrants.forEach((quadrant) => {
@@ -119,7 +131,7 @@ export function AgencyProjectsManagement() {
       <Card>
         <CardContent className="pt-6">
           <p className="text-destructive">
-            Error al cargar proyectos pendientes
+            Error al cargar proyectos
           </p>
         </CardContent>
       </Card>
@@ -153,12 +165,19 @@ export function AgencyProjectsManagement() {
             </div>
           ) : !data?.projects || data.projects.length === 0 ? (
             <div className="text-center py-10">
-              <CheckCircle className="mx-auto h-12 w-12 text-green-500/40" />
-              <h3 className="mt-4 text-lg font-medium">¡Todo al día!</h3>
+              <Building2 className="mx-auto h-12 w-12 text-muted-foreground/40" />
+              <h3 className="mt-4 text-lg font-medium">No hay proyectos</h3>
               <p className="text-muted-foreground">
-                No hay proyectos pendientes que requieran tu revisión en este
-                momento.
+                Aún no has creado ningún proyecto.
               </p>
+              <div className="mt-4">
+                <Button asChild>
+                  <Link href="/projects/create">
+                    <Building2 className="mr-2 h-4 w-4" />
+                    Crear Proyecto
+                  </Link>
+                </Button>
+              </div>
             </div>
           ) : (
             <>
@@ -170,7 +189,13 @@ export function AgencyProjectsManagement() {
                   return (
                     <Card
                       key={project.id}
-                      className="border-l-4 border-l-yellow-500"
+                      className={`border-l-4 ${
+                        project.status === "PENDING"
+                          ? "border-l-yellow-500"
+                          : project.status === "APPROVED"
+                          ? "border-l-green-500"
+                          : "border-l-red-500"
+                      }`}
                     >
                       <CardContent className="p-6">
                         <div className="space-y-4">
@@ -185,19 +210,18 @@ export function AgencyProjectsManagement() {
                                   <MapPin className="h-4 w-4" />
                                   <span>{project.location}</span>
                                 </div>
-                                <Badge variant="secondary">
-                                  {totalQuadrants} unidades
+                                <Badge variant={getStatusBadgeVariant(project.status)}>
+                                  {getStatusLabel(project.status)}
                                 </Badge>
                               </div>
                             </div>
                             <div className="text-right">
                               <div className="text-sm text-muted-foreground">
-                                Enviado{" "}
-                                {new Date(project.createdAt).toLocaleDateString()}
+                                {totalQuadrants} unidades
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                por {project.agent?.firstName || "Desconocido"}{" "}
-                                {project.agent?.lastName || ""}
+                                Creado{" "}
+                                {new Date(project.createdAt).toLocaleDateString()}
                               </div>
                             </div>
                           </div>
@@ -239,6 +263,15 @@ export function AgencyProjectsManagement() {
                             </p>
                           </div>
 
+                          {/* Rejection Message */}
+                          {project.status === "REJECTED" && project.rejectionMessage && (
+                            <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                              <p className="text-sm text-red-800">
+                                <strong>Razón de rechazo:</strong> {project.rejectionMessage}
+                              </p>
+                            </div>
+                          )}
+
                           {/* Action Buttons */}
                           <div className="flex items-center justify-end space-x-3 pt-4">
                             <Link href={`/projects/${project.id}`}>
@@ -247,23 +280,17 @@ export function AgencyProjectsManagement() {
                                 Ver Detalles
                               </Button>
                             </Link>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => handleReject(project.id)}
-                              disabled={updateStatusMutation.isPending}
-                            >
-                              <XCircle className="mr-2 h-4 w-4" />
-                              Rechazar
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => handleApprove(project.id)}
-                              disabled={updateStatusMutation.isPending}
-                            >
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Aprobar
-                            </Button>
+                            {project.status === "REJECTED" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleResend(project.id)}
+                                disabled={resendMutation.isPending}
+                              >
+                                <RotateCcw className="mr-2 h-4 w-4" />
+                                Reenviar
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </CardContent>
@@ -278,7 +305,7 @@ export function AgencyProjectsManagement() {
                   <p className="text-sm text-muted-foreground">
                     Mostrando {(data.currentPage - 1) * params.limit! + 1} a{" "}
                     {Math.min(data.currentPage * params.limit!, data.total)} de{" "}
-                    {data.total} proyectos pendientes
+                    {data.total} proyectos
                   </p>
                   <div className="flex items-center gap-2">
                     <Button
@@ -308,59 +335,30 @@ export function AgencyProjectsManagement() {
         </CardContent>
       </Card>
 
-      {/* Approval/Rejection Dialog */}
-      <Dialog
-        open={!!selectedProject}
-        onOpenChange={(open) => !open && closeDialog()}
-      >
+      {/* Resend Confirmation Dialog */}
+      <Dialog open={isResendDialogOpen} onOpenChange={setIsResendDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {actionType === "approve"
-                ? "Aprobar Proyecto"
-                : "Rechazar Proyecto"}
-            </DialogTitle>
+            <DialogTitle>Reenviar Proyecto para Aprobación</DialogTitle>
             <DialogDescription>
-              {actionType === "approve"
-                ? "Este proyecto será aprobado y será visible al público."
-                : "Por favor proporcione una razón para rechazar este proyecto."}
+              ¿Estás seguro de que quieres reenviar este proyecto para aprobación? 
+              El proyecto volverá al estado pendiente y será revisado nuevamente por el administrador.
             </DialogDescription>
           </DialogHeader>
-
-          {actionType === "reject" && (
-            <div className="space-y-2">
-              <Label htmlFor="rejection-reason">Razón de Rechazo *</Label>
-              <Textarea
-                id="rejection-reason"
-                placeholder="Por favor explique por qué este proyecto está siendo rechazado..."
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                rows={4}
-              />
-            </div>
-          )}
 
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={closeDialog}
-              disabled={updateStatusMutation.isPending}
+              onClick={closeResendDialog}
+              disabled={resendMutation.isPending}
             >
               Cancelar
             </Button>
             <Button
-              onClick={handleConfirmAction}
-              disabled={
-                updateStatusMutation.isPending ||
-                (actionType === "reject" && !rejectionReason.trim())
-              }
-              variant={actionType === "approve" ? "default" : "destructive"}
+              onClick={handleConfirmResend}
+              disabled={resendMutation.isPending}
             >
-              {updateStatusMutation.isPending
-                ? "Procesando..."
-                : actionType === "approve"
-                  ? "Aprobar Proyecto"
-                  : "Rechazar Proyecto"}
+              {resendMutation.isPending ? "Reenviando..." : "Reenviar Proyecto"}
             </Button>
           </DialogFooter>
         </DialogContent>

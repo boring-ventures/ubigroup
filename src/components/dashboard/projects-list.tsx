@@ -13,6 +13,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -23,7 +30,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Building2, MapPin, Calendar, Eye, Trash2 } from "lucide-react";
+import {
+  Plus,
+  Building2,
+  MapPin,
+  Calendar,
+  Eye,
+  Trash2,
+  Filter,
+  Edit,
+} from "lucide-react";
 import Link from "next/link";
 import { toast } from "@/components/ui/use-toast";
 
@@ -43,7 +59,8 @@ interface Project {
   name: string;
   description: string;
   location: string;
-
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  rejectionMessage?: string | null;
   images: string[];
   brochureUrl?: string | null;
   createdAt: string;
@@ -73,6 +90,7 @@ interface Project {
 
 export function ProjectsList() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [deletingProjectId, setDeletingProjectId] = useState<string | null>(
     null
   );
@@ -83,11 +101,14 @@ export function ProjectsList() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["projects", searchQuery],
+    queryKey: ["projects", searchQuery, statusFilter],
     queryFn: async (): Promise<Project[]> => {
       const params = new URLSearchParams();
       if (searchQuery.trim()) {
         params.append("search", searchQuery.trim());
+      }
+      if (statusFilter !== "all") {
+        params.append("status", statusFilter);
       }
 
       const response = await fetch(`/api/projects?${params.toString()}`);
@@ -149,6 +170,34 @@ export function ProjectsList() {
     return counts;
   };
 
+  const getProjectStatusBadge = (status: Project["status"]) => {
+    switch (status) {
+      case "PENDING":
+        return (
+          <Badge variant="secondary" className="text-xs">
+            Pendiente
+          </Badge>
+        );
+      case "APPROVED":
+        return (
+          <Badge
+            variant="default"
+            className="text-xs bg-green-600 hover:bg-green-700"
+          >
+            Aprobado
+          </Badge>
+        );
+      case "REJECTED":
+        return (
+          <Badge variant="destructive" className="text-xs">
+            Rechazado
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -184,24 +233,43 @@ export function ProjectsList() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <input
-            type="text"
-            placeholder="Buscar proyectos..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
-          />
+    <div className="space-y-4 sm:space-y-6">
+      {/* Search and Filter Section */}
+      <div className="space-y-3 sm:space-y-4">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <div className="flex-1 min-w-0">
+            <input
+              type="text"
+              placeholder="Buscar proyectos..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+            />
+          </div>
+          <div className="flex gap-2 sm:gap-3">
+            <div className="flex-1 sm:flex-none sm:w-40">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="PENDING">Pendiente</SelectItem>
+                  <SelectItem value="APPROVED">Aprobado</SelectItem>
+                  <SelectItem value="REJECTED">Rechazado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button asChild className="flex-1 sm:flex-none">
+              <Link href="/projects/create">
+                <Plus className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">Crear proyecto</span>
+                <span className="sm:hidden">Crear</span>
+              </Link>
+            </Button>
+          </div>
         </div>
-        <Button asChild className="w-full sm:w-auto">
-          <Link href="/projects/create">
-            <Plus className="mr-2 h-4 w-4" />
-            <span className="hidden sm:inline">Crear nuevo proyecto</span>
-            <span className="sm:hidden">Crear proyecto</span>
-          </Link>
-        </Button>
       </div>
 
       {projects.length === 0 ? (
@@ -229,7 +297,7 @@ export function ProjectsList() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
           {projects.map((project) => {
             const totalQuadrants = getTotalQuadrants(project.floors);
             const statusCounts = getStatusCounts(project.floors);
@@ -239,39 +307,44 @@ export function ProjectsList() {
                 key={project.id}
                 className="hover:shadow-lg transition-shadow"
               >
-                <CardHeader>
+                <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
-                      <CardTitle className="text-lg break-words">
+                      <CardTitle className="text-base sm:text-lg break-words">
                         {project.name}
                       </CardTitle>
-                      <CardDescription className="flex items-center mt-2">
-                        <MapPin className="mr-1 h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">{project.location}</span>
+                      <CardDescription className="flex items-center mt-1 sm:mt-2">
+                        <MapPin className="mr-1 h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                        <span className="truncate text-xs sm:text-sm">
+                          {project.location}
+                        </span>
                       </CardDescription>
                     </div>
-                    <Badge
-                      variant={project.active ? "default" : "secondary"}
-                      className="flex-shrink-0"
-                    >
-                      {project.active ? "Activo" : "Inactivo"}
-                    </Badge>
+                    <div className="flex flex-col gap-1 items-end">
+                      {getProjectStatusBadge(project.status)}
+                      <Badge
+                        variant={project.active ? "default" : "secondary"}
+                        className="text-xs"
+                      >
+                        {project.active ? "Activo" : "Inactivo"}
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                <CardContent className="pt-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4 line-clamp-2">
                     {project.description}
                   </p>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
+                  <div className="space-y-2 sm:space-y-3">
+                    <div className="flex items-center justify-between text-xs sm:text-sm">
                       <span className="text-muted-foreground">Pisos:</span>
                       <span className="font-medium">
                         {project.floors.length}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between text-xs sm:text-sm">
                       <span className="text-muted-foreground">
                         Cuadrantes totales:
                       </span>
@@ -279,8 +352,10 @@ export function ProjectsList() {
                     </div>
 
                     {totalQuadrants > 0 && (
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm gap-2">
-                        <span className="text-muted-foreground">Estado:</span>
+                      <div className="flex flex-col gap-2 text-xs sm:text-sm">
+                        <span className="text-muted-foreground">
+                          Estado cuadrantes:
+                        </span>
                         <div className="flex flex-wrap gap-1">
                           <Badge variant="default" className="text-xs">
                             {statusCounts.available} Disp.
@@ -294,34 +369,45 @@ export function ProjectsList() {
                         </div>
                       </div>
                     )}
+
+                    {project.status === "REJECTED" &&
+                      project.rejectionMessage && (
+                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
+                          <p className="text-xs text-red-700">
+                            <strong>Motivo de rechazo:</strong>{" "}
+                            {project.rejectionMessage}
+                          </p>
+                        </div>
+                      )}
                   </div>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4 pt-4 border-t gap-3">
+                  <div className="flex flex-col gap-3 mt-4 pt-4 border-t">
                     <div className="flex items-center text-xs text-muted-foreground">
                       <Calendar className="mr-1 h-3 w-3" />
                       <ClientDateFormatter date={project.createdAt} />
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="grid grid-cols-3 gap-2">
                       <Button
                         size="sm"
                         variant="outline"
                         asChild
-                        className="flex-1 sm:flex-none"
+                        className="text-xs"
                       >
                         <Link href={`/projects/${project.id}`}>
-                          <Eye className="h-3 w-3 sm:mr-1" />
-                          <span className="hidden sm:inline">Ver</span>
+                          <Eye className="h-3 w-3 mr-1" />
+                          <span className="hidden xs:inline">Ver</span>
                         </Link>
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         asChild
-                        className="flex-1 sm:flex-none"
+                        className="text-xs"
                       >
                         <Link href={`/projects/${project.id}/edit`}>
-                          Editar
+                          <Edit className="h-3 w-3 mr-1" />
+                          <span className="hidden xs:inline">Editar</span>
                         </Link>
                       </Button>
                       <AlertDialog>
@@ -330,15 +416,15 @@ export function ProjectsList() {
                             size="sm"
                             variant="outline"
                             disabled={deletingProjectId === project.id}
-                            className="flex-1 sm:flex-none border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+                            className="text-xs border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
                           >
-                            <Trash2 className="h-3 w-3 sm:mr-1" />
-                            <span className="hidden sm:inline">
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            <span className="hidden xs:inline">
                               {deletingProjectId === project.id
                                 ? "Eliminando..."
                                 : "Eliminar"}
                             </span>
-                            <span className="sm:hidden">
+                            <span className="xs:hidden">
                               {deletingProjectId === project.id ? "..." : ""}
                             </span>
                           </Button>

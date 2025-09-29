@@ -2,8 +2,7 @@ import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { AgentPropertiesTable } from "@/components/dashboard/agent-properties-table";
-import { AgencyPropertyManagement } from "@/components/dashboard/agency-property-management";
+import { CombinedPropertiesProjectsView } from "@/components/dashboard/combined-properties-projects-view";
 
 export default async function MyPropertiesPage() {
   const cookieStore = cookies();
@@ -36,22 +35,18 @@ export default async function MyPropertiesPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
             {userProfile.role === "AGENT"
-              ? "Mis Propiedades"
-              : "Propiedades de la Agencia"}
+              ? "Mis Propiedades y Proyectos"
+              : "Propiedades y Proyectos de la Agencia"}
           </h1>
           <p className="text-muted-foreground">
             {userProfile.role === "AGENT"
-              ? "Gestiona tus listados de propiedades y rastrea su estado de aprobación"
-              : "Gestiona todas las propiedades de tu agencia y rastrea su estado de aprobación"}
+              ? "Gestiona tus listados de propiedades y proyectos, y rastrea su estado de aprobación"
+              : "Gestiona todas las propiedades y proyectos de tu agencia y rastrea su estado de aprobación"}
           </p>
         </div>
       </div>
 
-      {userProfile.role === "AGENT" ? (
-        <AgentPropertiesTable />
-      ) : (
-        <AgencyPropertyManagement />
-      )}
+      <CombinedPropertiesProjectsView />
     </main>
   );
 }

@@ -33,9 +33,14 @@ export default async function ProjectsPage() {
   }
 
   return (
-    <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Mis Proyectos</h2>
+    <main className="flex-1 space-y-4 p-2 sm:p-4 md:p-8 pt-6">
+      <div className="flex flex-col space-y-2">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">
+          Mis Proyectos
+        </h2>
+        <p className="text-sm sm:text-base text-muted-foreground">
+          Gestiona y visualiza todos tus proyectos inmobiliarios
+        </p>
       </div>
       <ProjectsList />
     </main>

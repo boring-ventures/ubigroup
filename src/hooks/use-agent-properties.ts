@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { PropertyStatus } from "@prisma/client";
 
 export interface AgentProperty {
@@ -15,9 +15,10 @@ export interface AgentProperty {
   state: string;
   bedrooms: number;
   bathrooms: number;
+  garageSpaces: number;
   area: number;
   status: PropertyStatus;
-  rejectionReason?: string;
+  rejectionMessage?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -161,5 +162,34 @@ export function useAgentProperties(params: UseAgentPropertiesParams = {}) {
       return response.json();
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+}
+
+export function useResendPropertyForApproval() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (propertyId: string) => {
+      const response = await fetch(`/api/properties/${propertyId}/resend`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(
+          error.error || "Failed to resend property for approval"
+        );
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agent-properties"] });
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] });
+    },
   });
 }

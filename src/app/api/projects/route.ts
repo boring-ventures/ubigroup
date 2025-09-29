@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || "";
     const agencyId = searchParams.get("agencyId");
     const agentId = searchParams.get("agentId");
+    const status = searchParams.get("status");
 
     const skip = (page - 1) * limit;
 
@@ -67,6 +68,11 @@ export async function GET(request: NextRequest) {
     // Add agent filter
     if (agentId) {
       whereClause.agentId = agentId;
+    }
+
+    // Add status filter
+    if (status) {
+      whereClause.status = status as "PENDING" | "APPROVED" | "REJECTED";
     }
 
     const [projects, total] = await Promise.all([

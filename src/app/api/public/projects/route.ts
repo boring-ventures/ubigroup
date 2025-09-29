@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
     // Build where clause for public projects
     const whereClause: Prisma.ProjectWhereInput = {
       active: true, // Only show active projects
+      status: "APPROVED", // Only show approved projects
     };
 
     // Add search filter

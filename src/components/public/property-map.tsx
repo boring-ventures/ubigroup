@@ -462,9 +462,12 @@ export function PropertyMap({
 
             // Add marker to map
             try {
-              const marker = L.marker([property.latitude, property.longitude], {
-                icon: customIcon,
-              })
+              const marker = L.marker(
+                [property.latitude!, property.longitude!],
+                {
+                  icon: customIcon,
+                }
+              )
                 .addTo(map)
                 .bindPopup(popupContent);
 
@@ -472,7 +475,7 @@ export function PropertyMap({
                 `Marker added for property: ${property.title} at [${property.latitude}, ${property.longitude}]`
               );
               markersRef.current.push(marker);
-              bounds.extend([property.latitude, property.longitude]);
+              bounds.extend([property.latitude!, property.longitude!]);
             } catch (e) {
               console.warn(
                 `Error adding marker for property ${property.title}:`,
@@ -521,14 +524,14 @@ export function PropertyMap({
             `;
 
             try {
-              const marker = L.marker([project.latitude, project.longitude], {
+              const marker = L.marker([project.latitude!, project.longitude!], {
                 icon: projectIcon,
               })
                 .addTo(map)
                 .bindPopup(popupContent);
 
               markersRef.current.push(marker);
-              bounds.extend([project.latitude, project.longitude]);
+              bounds.extend([project.latitude!, project.longitude!]);
             } catch (e) {
               console.warn(
                 `Error adding marker for project ${project.name}:`,

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { NumericInput } from "@/components/ui/numeric-input";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Form,
   FormControl,
@@ -39,12 +40,16 @@ import {
   Plus,
   Loader,
   FileText,
+  AlertCircle,
 } from "lucide-react";
 import Image from "next/image";
 import { uploadFiles, validateFile, MAX_TOTAL_SIZE } from "@/lib/upload";
 
 interface ProjectFormProps {
-  initialData?: Partial<CreateProjectInput>;
+  initialData?: Partial<CreateProjectInput> & {
+    status?: "PENDING" | "APPROVED" | "REJECTED";
+    rejectionMessage?: string | null;
+  };
   projectId?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -261,6 +266,16 @@ export function ProjectForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {initialData?.status === "REJECTED" &&
+            initialData?.rejectionMessage && (
+              <Alert className="mb-6 border-red-200 bg-red-50">
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-700">
+                  <strong>Proyecto rechazado:</strong>{" "}
+                  {initialData.rejectionMessage}
+                </AlertDescription>
+              </Alert>
+            )}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField

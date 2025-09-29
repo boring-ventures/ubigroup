@@ -1,119 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
-import { updateProjectSchema } from "@/lib/validations/project";
-
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  const { id } = await context.params;
-  try {
-    const cookieStore = cookies();
-    const supabase = createServerComponentClient({
-      cookies: () => cookieStore,
-    });
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userProfile = await prisma.user.findUnique({
-      where: { userId: user.id },
-      include: { agency: true },
-    });
-
-    if (!userProfile) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const project = await prisma.project.findUnique({
-      where: { id },
-      include: {
-        agent: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatarUrl: true,
-          },
-        },
-        agency: {
-          select: {
-            id: true,
-            name: true,
-            logoUrl: true,
-          },
-        },
-        floors: {
-          include: {
-            quadrants: {
-              orderBy: { customId: "asc" },
-            },
-          },
-          orderBy: { number: "asc" },
-        },
-      },
-    });
-
-    if (!project) {
-      return NextResponse.json({ error: "Project not found" }, { status: 404 });
-    }
-
-    // Check permissions based on user role
-    if (userProfile.role === "AGENT" && project.agentId !== userProfile.id) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
-    }
-
-    if (
-      userProfile.role === "AGENCY_ADMIN" &&
-      project.agencyId !== userProfile.agencyId
-    ) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
-    }
-
-    return NextResponse.json(project);
-  } catch (error) {
-    console.error("Error fetching project:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch project" },
-      { status: 500 }
-    );
-  }
-}
+import { authenticateUser } from "@/lib/auth/server-auth";
+import { createProjectSchema } from "@/lib/validations/project";
 
 export async function PUT(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = await context.params;
   try {
-    const cookieStore = cookies();
-    const supabase = createServerComponentClient({
-      cookies: () => cookieStore,
-    });
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { id } = params;
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!id) {
+      return NextResponse.json(
+        { error: "Project ID is required" },
+        { status: 400 }
+      );
     }
 
+    const { user, error: authError } = await authenticateUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: authError || "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Get user profile to check permissions
     const userProfile = await prisma.user.findUnique({
       where: { userId: user.id },
       include: { agency: true },
     });
 
     if (!userProfile) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "User profile not found" },
+        { status: 404 }
+      );
     }
 
-    // Check if project exists and user has permission
+    // Check if project exists
     const existingProject = await prisma.project.findUnique({
       where: { id },
     });
@@ -122,17 +47,30 @@ export async function PUT(
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    // Only the agent who created the project can update it
-    if (existingProject.agentId !== userProfile.id) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    // Check permissions: only the owning agent can update their project
+    if (
+      userProfile.role !== "AGENT" ||
+      existingProject.agentId !== userProfile.id
+    ) {
+      return NextResponse.json(
+        { error: "You are not authorized to update this project" },
+        { status: 403 }
+      );
     }
 
+    // Parse and validate the request body
     const body = await request.json();
-    const validatedData = updateProjectSchema.parse(body);
+    const validatedData = createProjectSchema.parse(body);
 
-    const project = await prisma.project.update({
+    // Update the project
+    const updatedProject = await prisma.project.update({
       where: { id },
-      data: validatedData,
+      data: {
+        ...validatedData,
+        // Reset status to PENDING when project is updated
+        status: "PENDING",
+        rejectionMessage: null,
+      },
       include: {
         agent: {
           select: {
@@ -149,18 +87,10 @@ export async function PUT(
             logoUrl: true,
           },
         },
-        floors: {
-          include: {
-            quadrants: {
-              orderBy: { customId: "asc" },
-            },
-          },
-          orderBy: { number: "asc" },
-        },
       },
     });
 
-    return NextResponse.json(project);
+    return NextResponse.json(updatedProject);
   } catch (error) {
     console.error("Error updating project:", error);
     if (error instanceof Error && error.name === "ZodError") {
@@ -178,54 +108,83 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = await context.params;
   try {
-    const cookieStore = cookies();
-    const supabase = createServerComponentClient({
-      cookies: () => cookieStore,
-    });
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { id } = params;
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!id) {
+      return NextResponse.json(
+        { error: "Project ID is required" },
+        { status: 400 }
+      );
     }
 
+    const { user, error: authError } = await authenticateUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: authError || "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Get user profile to check permissions
     const userProfile = await prisma.user.findUnique({
       where: { userId: user.id },
       include: { agency: true },
     });
 
     if (!userProfile) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "User profile not found" },
+        { status: 404 }
+      );
     }
 
-    // Check if project exists and user has permission
+    // Check if project exists
     const existingProject = await prisma.project.findUnique({
       where: { id },
+      include: { agency: true },
     });
 
     if (!existingProject) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 });
     }
 
-    // Only the agent who created the project can delete it
-    if (existingProject.agentId !== userProfile.id) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    // Check permissions: agency admins can delete projects from their agency, agents can delete their own projects
+    if (userProfile.role === "AGENCY_ADMIN") {
+      if (existingProject.agencyId !== userProfile.agencyId) {
+        return NextResponse.json(
+          { error: "You are not authorized to delete this project" },
+          { status: 403 }
+        );
+      }
+    } else if (userProfile.role === "AGENT") {
+      if (existingProject.agentId !== userProfile.id) {
+        return NextResponse.json(
+          { error: "You are not authorized to delete this project" },
+          { status: 403 }
+        );
+      }
+    } else {
+      return NextResponse.json(
+        { error: "You are not authorized to delete projects" },
+        { status: 403 }
+      );
     }
 
+    // Delete the project (cascade will handle floors and quadrants)
     await prisma.project.delete({
       where: { id },
     });
 
-    return NextResponse.json({ message: "Project deleted successfully" });
+    return NextResponse.json({
+      message: `Project "${existingProject.name}" has been deleted permanently`,
+    });
   } catch (error) {
     console.error("Error deleting project:", error);
     return NextResponse.json(
-      { error: "Failed to delete project" },
+      { error: "Error deleting project" },
       { status: 500 }
     );
   }

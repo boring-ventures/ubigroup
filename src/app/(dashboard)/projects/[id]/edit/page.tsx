@@ -43,6 +43,8 @@ export default async function EditProjectPage({
       googleMapsUrl: true,
       latitude: true,
       longitude: true,
+      status: true,
+      rejectionMessage: true,
       agentId: true,
     },
   });
@@ -57,9 +59,14 @@ export default async function EditProjectPage({
   }
 
   return (
-    <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Editar Proyecto</h2>
+    <main className="flex-1 space-y-4 p-2 sm:p-4 md:p-8 pt-6">
+      <div className="flex flex-col space-y-2">
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">
+          Editar Proyecto
+        </h2>
+        <p className="text-sm sm:text-base text-muted-foreground">
+          Modifica los detalles de tu proyecto inmobiliario
+        </p>
       </div>
       <ProjectForm
         projectId={project.id}
@@ -72,6 +79,8 @@ export default async function EditProjectPage({
           googleMapsUrl: project.googleMapsUrl || undefined,
           latitude: project.latitude || undefined,
           longitude: project.longitude || undefined,
+          status: project.status,
+          rejectionMessage: project.rejectionMessage,
         }}
       />
     </main>
