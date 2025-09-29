@@ -2,7 +2,7 @@ import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { SuperAdminAllProperties } from "@/components/dashboard/super-admin-all-properties";
+import { SuperAdminTabs } from "@/components/dashboard/super-admin-tabs";
 
 export default async function AllPropertiesPage() {
   const cookieStore = cookies();
@@ -29,15 +29,16 @@ export default async function AllPropertiesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Todas las Propiedades
+            Gestión de Propiedades y Proyectos
           </h1>
           <p className="text-muted-foreground">
-            Gestión y supervisión de propiedades a nivel de plataforma
+            Supervisión y gestión de propiedades y proyectos a nivel de
+            plataforma
           </p>
         </div>
       </div>
 
-      <SuperAdminAllProperties />
+      <SuperAdminTabs />
     </main>
   );
 }
