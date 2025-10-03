@@ -18,6 +18,8 @@ import {
   PropertySingleMap,
   type PropertySingleMapHandle,
 } from "./property-single-map";
+import Header from "@/components/views/landing-page/Header";
+import Footer from "@/components/views/landing-page/Footer";
 import Image from "next/image";
 import type { PropertyType, TransactionType } from "@prisma/client";
 import {
@@ -304,109 +306,104 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground dark">
-      {/* Header */}
-      <div className="bg-background border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.history.back()}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver
-            </Button>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
-                <Heart className="h-4 w-4 mr-2" />
-                Favorito
-              </Button>
-              <Button variant="outline" size="sm">
-                <Share2 className="h-4 w-4 mr-2" />
-                Compartir
-              </Button>
-              {property && (
-                <div className="flex items-center gap-2">
-                  <PropertyPdfDownload
-                    property={property}
-                    variant="header"
-                    mapView={mapView}
-                    mapSnapshotDataUrl={mapSnapshot}
-                    onBeforeGenerate={captureMapSnapshot}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
+    <div className="flex flex-col min-h-screen bg-background text-foreground dark">
+      <Header />
 
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold mb-1 md:mb-2">
-                {property.title}
-              </h1>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground">
-                <div className="flex items-center">
-                  <MapPin className="h-4 w-4 mr-1" />
-                  <span>
-                    {property.locationNeigh}, {property.locationCity} -{" "}
-                    {property.locationState}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getTransactionBadge(property.transactionType)}
-                  <Badge variant="outline">
-                    {getPropertyTypeLabel(property.type)}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-            <div className="md:text-right">
-              <div className="text-2xl md:text-3xl font-bold text-primary mb-0.5 md:mb-1">
-                {formatPrice(
-                  property.price,
-                  property.currency,
-                  property.exchangeRate,
-                  property.transactionType
+      <main className="flex-grow pt-20">
+        {/* Property Header */}
+        <div className="bg-background border-b border-border">
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.history.back()}
+                className="text-foreground border-border hover:bg-accent hover:text-accent-foreground"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Volver
+              </Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-foreground border-border hover:bg-accent hover:text-accent-foreground"
+                >
+                  <Heart className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Favorito</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-foreground border-border hover:bg-accent hover:text-accent-foreground"
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Compartir</span>
+                </Button>
+                {property && (
+                  <div className="flex items-center gap-2">
+                    <PropertyPdfDownload
+                      property={property}
+                      variant="header"
+                      mapView={mapView}
+                      mapSnapshotDataUrl={mapSnapshot}
+                      onBeforeGenerate={captureMapSnapshot}
+                    />
+                  </div>
                 )}
               </div>
-              <div className="text-xs md:text-sm text-muted-foreground">
-                {property.squareMeters}m² • Publicado el{" "}
-                {new Date(property.createdAt).toLocaleDateString()}
+            </div>
+
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex-1">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
+                  {property.title}
+                </h1>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-muted-foreground">
+                  <div className="flex items-center">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    <span className="text-sm sm:text-base">
+                      {property.locationNeigh}, {property.locationCity} -{" "}
+                      {property.locationState}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getTransactionBadge(property.transactionType)}
+                    <Badge variant="outline">
+                      {getPropertyTypeLabel(property.type)}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="lg:text-right">
+                <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-1">
+                  {formatPrice(
+                    property.price,
+                    property.currency,
+                    property.exchangeRate,
+                    property.transactionType
+                  )}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {property.squareMeters}m² • Publicado el{" "}
+                  {new Date(property.createdAt).toLocaleDateString()}
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="container mx-auto px-4 py-8">
-        {/* Image Gallery and Contact */}
-        <div className="mb-8">
-          {property.images.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-              {/* Property Images */}
-              <div className="lg:col-span-3">
-                {property.images.length === 1 ? (
-                  /* Single Image Layout: Full width */
-                  <div className="h-full">
-                    <div
-                      className="relative w-full h-full rounded-lg overflow-hidden border border-border cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => setShowImageGallery(true)}
-                    >
-                      <Image
-                        src={property.images[0]}
-                        alt={`${property.title} - Imagen principal`}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  /* Multiple Images Layout: Main image + thumbnails */
-                  <div className="grid grid-cols-3 gap-4 h-full">
-                    {/* Main Image - spans 2 columns */}
-                    <div className="col-span-2 h-full">
+        {/* Content */}
+        <div className="container mx-auto px-4 py-8">
+          {/* Image Gallery and Contact */}
+          <div className="mb-8">
+            {property.images.length > 0 ? (
+              <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 lg:gap-8">
+                {/* Property Images */}
+                <div className="xl:col-span-3">
+                  {property.images.length === 1 ? (
+                    /* Single Image Layout: Full width */
+                    <div className="aspect-[4/3] sm:aspect-[16/10] lg:aspect-[4/3]">
                       <div
                         className="relative w-full h-full rounded-lg overflow-hidden border border-border cursor-pointer hover:opacity-90 transition-opacity"
                         onClick={() => setShowImageGallery(true)}
@@ -417,241 +414,274 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                           fill
                           className="object-cover"
                         />
-                        <div className="absolute bottom-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-sm">
-                          1 / {property.images.length}
-                        </div>
                       </div>
                     </div>
-
-                    {/* Thumbnails Column */}
-                    <div className="grid grid-rows-3 gap-4 h-full">
-                      {/* Thumbnail 2 */}
-                      {property.images.length > 1 && (
-                        <div className="h-full">
-                          <div
-                            className="relative w-full h-full rounded-lg overflow-hidden border border-border cursor-pointer hover:opacity-90 transition-opacity"
-                            onClick={() => {
-                              setCurrentImageIndex(1);
-                              setShowImageGallery(true);
-                            }}
-                          >
-                            <Image
-                              src={property.images[1]}
-                              alt={`${property.title} - Imagen 2`}
-                              fill
-                              className="object-cover"
-                            />
+                  ) : (
+                    /* Multiple Images Layout: Main image + thumbnails */
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 h-full">
+                      {/* Main Image - spans 2 columns on sm+ */}
+                      <div className="sm:col-span-2 aspect-[4/3] sm:aspect-[16/10] lg:aspect-[4/3]">
+                        <div
+                          className="relative w-full h-full rounded-lg overflow-hidden border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => setShowImageGallery(true)}
+                        >
+                          <Image
+                            src={property.images[0]}
+                            alt={`${property.title} - Imagen principal`}
+                            fill
+                            className="object-cover"
+                          />
+                          <div className="absolute bottom-4 right-4 bg-black/70 text-white px-2 py-1 rounded text-sm">
+                            1 / {property.images.length}
                           </div>
-                        </div>
-                      )}
-
-                      {/* Thumbnail 3 */}
-                      {property.images.length > 2 && (
-                        <div className="h-full">
-                          <div
-                            className="relative w-full h-full rounded-lg overflow-hidden border border-border cursor-pointer hover:opacity-90 transition-opacity"
-                            onClick={() => {
-                              setCurrentImageIndex(2);
-                              setShowImageGallery(true);
-                            }}
-                          >
-                            <Image
-                              src={property.images[2]}
-                              alt={`${property.title} - Imagen 3`}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Thumbnail 4 or Overflow */}
-                      {property.images.length > 3 && (
-                        <div className="h-full">
-                          <div
-                            className="relative w-full h-full rounded-lg overflow-hidden border border-border cursor-pointer hover:opacity-90 transition-opacity"
-                            onClick={() => {
-                              setCurrentImageIndex(3);
-                              setShowImageGallery(true);
-                            }}
-                          >
-                            <Image
-                              src={property.images[3]}
-                              alt={`${property.title} - ${property.images.length === 4 ? "Imagen 4" : "Más imágenes"}`}
-                              fill
-                              className="object-cover"
-                            />
-                            {property.images.length > 4 && (
-                              <div className="absolute inset-0 bg-black/70 flex items-center justify-center text-white font-medium">
-                                +{property.images.length - 4}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Contact and Info Sidebar */}
-              <div className="lg:col-span-1 space-y-6">
-                {/* Agent Contact */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Contacta al agente</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Agent Info */}
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={property.agent.avatarUrl || ""} />
-                        <AvatarFallback>
-                          {property.agent.firstName?.[0]}
-                          {property.agent.lastName?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-semibold">
-                          {property.agent.firstName} {property.agent.lastName}
-                        </div>
-                        <div className="text-sm text-muted-foreground flex items-center">
-                          <Building2 className="h-3 w-3 mr-1" />
-                          {property.agency.name}
                         </div>
                       </div>
-                    </div>
 
-                    <Separator />
+                      {/* Thumbnails Column */}
+                      <div className="grid grid-cols-3 sm:grid-cols-1 gap-3 sm:gap-4 sm:h-full">
+                        {/* Thumbnail 2 */}
+                        {property.images.length > 1 && (
+                          <div className="aspect-[4/3] sm:h-full">
+                            <div
+                              className="relative w-full h-full rounded-lg overflow-hidden border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => {
+                                setCurrentImageIndex(1);
+                                setShowImageGallery(true);
+                              }}
+                            >
+                              <Image
+                                src={property.images[1]}
+                                alt={`${property.title} - Imagen 2`}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          </div>
+                        )}
 
-                    {/* Contact Buttons */}
-                    <div className="space-y-3">
-                      {property.agent.phone && (
-                        <Button
-                          onClick={handleContactWhatsApp}
-                          className="w-full bg-green-600 hover:bg-green-700"
-                        >
-                          <MessageCircle className="mr-2 h-4 w-4" />
-                          WhatsApp
-                        </Button>
-                      )}
+                        {/* Thumbnail 3 */}
+                        {property.images.length > 2 && (
+                          <div className="aspect-[4/3] sm:h-full">
+                            <div
+                              className="relative w-full h-full rounded-lg overflow-hidden border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => {
+                                setCurrentImageIndex(2);
+                                setShowImageGallery(true);
+                              }}
+                            >
+                              <Image
+                                src={property.images[2]}
+                                alt={`${property.title} - Imagen 3`}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          </div>
+                        )}
 
-                      {property.agent.phone && (
-                        <Button
-                          onClick={handleContactPhone}
-                          variant="outline"
-                          className="w-full"
-                        >
-                          <Phone className="mr-2 h-4 w-4" />
-                          Llamar
-                        </Button>
-                      )}
+                        {/* Thumbnail 4 or Overflow */}
+                        {property.images.length > 3 && (
+                          <div className="aspect-[4/3] sm:h-full">
+                            <div
+                              className="relative w-full h-full rounded-lg overflow-hidden border border-border cursor-pointer hover:opacity-90 transition-opacity"
+                              onClick={() => {
+                                setCurrentImageIndex(3);
+                                setShowImageGallery(true);
+                              }}
+                            >
+                              <Image
+                                src={property.images[3]}
+                                alt={`${property.title} - ${property.images.length === 4 ? "Imagen 4" : "Más imágenes"}`}
+                                fill
+                                className="object-cover"
+                              />
+                              {property.images.length > 4 && (
+                                <div className="absolute inset-0 bg-black/70 flex items-center justify-center text-white font-medium">
+                                  +{property.images.length - 4}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
+                  )}
+                </div>
 
-                    <div className="text-xs text-muted-foreground text-center pt-2">
-                      Al contactar, menciona que viste esta propiedad en
-                      UbiGroup
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Contact and Info Sidebar */}
+                <div className="xl:col-span-1 space-y-4 lg:space-y-6">
+                  {/* Agent Contact */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg">
+                        Contacta al agente
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Agent Info */}
+                      <div className="flex items-center space-x-3">
+                        <Avatar className="h-12 w-12 flex-shrink-0">
+                          <AvatarImage src={property.agent.avatarUrl || ""} />
+                          <AvatarFallback>
+                            {property.agent.firstName?.[0]}
+                            {property.agent.lastName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-semibold text-sm sm:text-base truncate">
+                            {property.agent.firstName} {property.agent.lastName}
+                          </div>
+                          <div className="text-xs sm:text-sm text-muted-foreground flex items-center">
+                            <Building2 className="h-3 w-3 mr-1 flex-shrink-0" />
+                            <span className="truncate">
+                              {property.agency.name}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
-                {/* Quick Info */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Información rápida</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Tipo:</span>
-                      <span className="font-medium">
-                        {getPropertyTypeLabel(property.type)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">
-                        Transacción:
-                      </span>
-                      <span className="font-medium">
-                        {getTransactionTypeLabel(property.transactionType)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Publicado:</span>
-                      <span className="font-medium">
-                        {new Date(property.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
+                      <Separator />
 
-                    {/* PDF Download Button */}
-                    <div className="pt-3 border-t">
-                      <PropertyPdfDownload
-                        property={property}
-                        variant="sidebar"
-                        mapView={mapView}
-                        mapSnapshotDataUrl={mapSnapshot}
-                        onBeforeGenerate={captureMapSnapshot}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
+                      {/* Contact Buttons */}
+                      <div className="space-y-3">
+                        {property.agent.phone && (
+                          <Button
+                            onClick={handleContactWhatsApp}
+                            className="w-full bg-green-600 hover:bg-green-700 text-sm sm:text-base"
+                          >
+                            <MessageCircle className="mr-2 h-4 w-4" />
+                            WhatsApp
+                          </Button>
+                        )}
+
+                        {property.agent.phone && (
+                          <Button
+                            onClick={handleContactPhone}
+                            variant="outline"
+                            className="w-full text-sm sm:text-base"
+                          >
+                            <Phone className="mr-2 h-4 w-4" />
+                            Llamar
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="text-xs text-muted-foreground text-center pt-2">
+                        Al contactar, menciona que viste esta propiedad en
+                        UbiGroup
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Quick Info */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg">
+                        Información rápida
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground text-sm sm:text-base">
+                          Tipo:
+                        </span>
+                        <span className="font-medium text-sm sm:text-base">
+                          {getPropertyTypeLabel(property.type)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground text-sm sm:text-base">
+                          Transacción:
+                        </span>
+                        <span className="font-medium text-sm sm:text-base">
+                          {getTransactionTypeLabel(property.transactionType)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground text-sm sm:text-base">
+                          Publicado:
+                        </span>
+                        <span className="font-medium text-sm sm:text-base">
+                          {new Date(property.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+
+                      {/* PDF Download Button */}
+                      <div className="pt-3 border-t">
+                        <PropertyPdfDownload
+                          property={property}
+                          variant="sidebar"
+                          mapView={mapView}
+                          mapSnapshotDataUrl={mapSnapshot}
+                          onBeforeGenerate={captureMapSnapshot}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="aspect-[4/3] rounded-lg bg-muted flex items-center justify-center border border-border">
-              <div className="text-center">
-                <Home className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">
-                  Sin imágenes disponibles
-                </p>
+            ) : (
+              <div className="aspect-[4/3] rounded-lg bg-muted flex items-center justify-center border border-border">
+                <div className="text-center">
+                  <Home className="mx-auto h-12 w-12 text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground">
+                    Sin imágenes disponibles
+                  </p>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 gap-8">
-          {/* Property Information */}
-          <div className="space-y-6">
+          {/* Main Content */}
+          <div className="space-y-6 lg:space-y-8">
             {/* Property Details */}
             <Card>
-              <CardHeader>
-                <CardTitle>Detalles de la Propiedad</CardTitle>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-xl">
+                  Detalles de la Propiedad
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-                  <div className="text-center">
-                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-2 mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
+                  <div className="text-center p-4 rounded-lg bg-muted/50">
+                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-3 mx-auto">
                       <Bed className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="font-semibold">{property.bedrooms}</div>
+                    <div className="font-semibold text-lg sm:text-xl">
+                      {property.bedrooms}
+                    </div>
                     <div className="text-sm text-muted-foreground">
                       Habitaciones
                     </div>
                   </div>
 
-                  <div className="text-center">
-                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-2 mx-auto">
+                  <div className="text-center p-4 rounded-lg bg-muted/50">
+                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-3 mx-auto">
                       <Bath className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="font-semibold">{property.bathrooms}</div>
+                    <div className="font-semibold text-lg sm:text-xl">
+                      {property.bathrooms}
+                    </div>
                     <div className="text-sm text-muted-foreground">Baños</div>
                   </div>
 
-                  <div className="text-center">
-                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-2 mx-auto">
+                  <div className="text-center p-4 rounded-lg bg-muted/50">
+                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-3 mx-auto">
                       <Square className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="font-semibold">
+                    <div className="font-semibold text-lg sm:text-xl">
                       {property.squareMeters}m²
                     </div>
                     <div className="text-sm text-muted-foreground">Área</div>
                   </div>
 
-                  <div className="text-center">
-                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-2 mx-auto">
+                  <div className="text-center p-4 rounded-lg bg-muted/50">
+                    <div className="flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-3 mx-auto">
                       <Car className="h-6 w-6 text-primary" />
                     </div>
-                    <div className="font-semibold">{property.garageSpaces}</div>
+                    <div className="font-semibold text-lg sm:text-xl">
+                      {property.garageSpaces}
+                    </div>
                     <div className="text-sm text-muted-foreground">
                       Parqueos
                     </div>
@@ -661,10 +691,16 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                 {/* Features */}
                 {property.features.length > 0 && (
                   <div>
-                    <h4 className="font-semibold mb-3">Características</h4>
+                    <h4 className="font-semibold mb-3 text-lg">
+                      Características
+                    </h4>
                     <div className="flex flex-wrap gap-2">
                       {property.features.map((feature, index) => (
-                        <Badge key={index} variant="outline">
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="text-xs sm:text-sm"
+                        >
                           {feature}
                         </Badge>
                       ))}
@@ -744,11 +780,13 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             </Card>
           </div>
         </div>
-      </div>
+      </main>
+
+      <Footer />
 
       {/* Image Gallery Modal */}
       <Dialog open={showImageGallery} onOpenChange={setShowImageGallery}>
-        <DialogContent className="max-w-4xl w-full h-[80vh] p-0">
+        <DialogContent className="max-w-4xl w-[95vw] h-[85vh] sm:h-[80vh] p-0">
           <DialogHeader className="sr-only">
             <DialogTitle>{property.title}</DialogTitle>
           </DialogHeader>
@@ -766,7 +804,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2"
+                  className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 rounded-full"
                   onClick={prevImage}
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -774,7 +812,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2"
+                  className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 rounded-full"
                   onClick={nextImage}
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -783,7 +821,7 @@ export function PropertyDetails({ propertyId }: PropertyDetailsProps) {
             )}
 
             {/* Counter */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full font-medium">
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-3 py-1 rounded-full text-sm font-medium">
               {currentImageIndex + 1} / {property.images.length}
             </div>
           </div>
