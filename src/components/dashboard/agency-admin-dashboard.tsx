@@ -125,7 +125,7 @@ export function AgencyAdminDashboard() {
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full justify-start">
-              <Link href="/agents">
+              <Link href="/users">
                 <Users className="mr-2 h-4 w-4" />
                 Gestionar Agentes
               </Link>
