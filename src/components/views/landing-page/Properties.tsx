@@ -106,6 +106,7 @@ export default function Properties() {
   const [activeTab, setActiveTab] = useState<
     "venta" | "alquiler" | "anticretico" | "proyectos" | "mapa"
   >("mapa");
+  const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<PaginationInfo>({
     limit: 6,
     offset: 0,
@@ -173,15 +174,17 @@ export default function Properties() {
 
   // Fetch properties from API with search and pagination
   const fetchProperties = useCallback(
-    async (searchFilters?: SearchFilters, page = 1) => {
+    async (searchFilters?: SearchFilters) => {
       try {
         setError(null);
+        setCurrentPage(1); // Reset to page 1 when fetching new data
         const params = new URLSearchParams();
 
         // Add pagination params
-        // For the "mapa" tab (Todos), fetch more properties to show on the map
-        const limit = activeTab === "mapa" ? 100 : 6;
-        const offset = (page - 1) * limit;
+        // Always fetch enough properties to show all on the map (100)
+        // This ensures the map shows all filtered properties, not just the current page
+        const limit = 100;
+        const offset = 0;
         params.append("limit", limit.toString());
         params.append("offset", offset.toString());
         params.append("sortBy", "createdAt");
@@ -295,13 +298,19 @@ export default function Properties() {
           )
         );
         setProperties(data.properties || []);
+
+        // Calculate client-side pagination for card display (6 per page)
+        const totalCount = data.properties?.length || 0;
+        const cardsPerPage = 6;
+        const totalPages = Math.ceil(totalCount / cardsPerPage);
+
         setPagination({
-          limit: data.pagination.limit,
-          offset: data.pagination.offset,
-          page: data.pagination.page,
-          totalPages: data.pagination.totalPages,
-          totalCount: data.total,
-          hasMore: data.hasMore,
+          limit: cardsPerPage,
+          offset: 0,
+          page: 1,
+          totalPages: totalPages,
+          totalCount: totalCount,
+          hasMore: totalPages > 1,
         });
       } catch (error) {
         console.error("Error fetching properties:", error);
@@ -339,6 +348,9 @@ export default function Properties() {
   useEffect(() => {
     // While typing, wait for debounce to settle
     if (filters.searchTerm !== debouncedSearch) return;
+
+    // Reset to page 1 when tab or filters change
+    setCurrentPage(1);
 
     const effectiveFilters = { ...filters, searchTerm: debouncedSearch };
 
@@ -395,10 +407,20 @@ export default function Properties() {
     }
   }, [searchParams]);
 
-  // Handle pagination
+  // Handle pagination (client-side)
   const handlePageChange = (newPage: number) => {
-    fetchProperties(filters, newPage);
+    setCurrentPage(newPage);
+    setPagination((prev) => ({
+      ...prev,
+      page: newPage,
+    }));
   };
+
+  // Get properties to display on current page
+  const displayedProperties = properties.slice(
+    (currentPage - 1) * 6,
+    currentPage * 6
+  );
 
   const handlePropertyClick = (propertyId: string) => {
     router.push(`/property/${propertyId}`);
@@ -655,7 +677,7 @@ export default function Properties() {
               {viewMode === "cards" ? (
                 /* Card View */
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {properties.map((property) => (
+                  {displayedProperties.map((property) => (
                     <Card
                       key={property.id}
                       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
@@ -820,7 +842,7 @@ export default function Properties() {
               ) : (
                 /* List View */
                 <div className="space-y-3">
-                  {properties.map((property) => (
+                  {displayedProperties.map((property) => (
                     <Card
                       key={property.id}
                       className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"

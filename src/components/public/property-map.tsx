@@ -1,7 +1,8 @@
 "use client";
 import "leaflet/dist/leaflet.css";
 
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPropertyPinColor, isValidCoordinates } from "@/lib/utils";
 import { TransactionType } from "@prisma/client";
@@ -63,8 +64,9 @@ export function PropertyMap({
   projects = [],
   className,
 }: PropertyMapProps) {
+  const router = useRouter();
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<Map>(null);
+  const mapInstanceRef = useRef<Map | null>(null);
   const markersRef = useRef<Marker[]>([]);
   const isInitializedRef = useRef(false);
   const cssInjectedRef = useRef(false);
@@ -73,21 +75,8 @@ export function PropertyMap({
   const isCancelledRef = useRef(false);
   const switchedToFallbackRef = useRef(false);
   const [isVisible, setIsVisible] = useState(false);
+  const leafletRef = useRef<typeof import("leaflet") | null>(null);
 
-  // Create a simple hash of the data to detect changes efficiently
-  const propertiesHash = useMemo(() => {
-    return properties.length + "_" + properties.map((p) => p.id).join(",");
-  }, [properties]);
-
-  const projectsHash = useMemo(() => {
-    return projects.length + "_" + projects.map((p) => p.id).join(",");
-  }, [projects]);
-
-  // Track previous data to detect actual changes
-  const prevDataRef = useRef<{ properties: string; projects: string }>({
-    properties: "",
-    projects: "",
-  });
 
   // Observe visibility to initialize only when in viewport
   useEffect(() => {
@@ -107,34 +96,20 @@ export function PropertyMap({
     return () => observer.disconnect();
   }, []);
 
+  // Initialize map only once
   useEffect(() => {
     if (!isVisible) return;
+    if (isInitializedRef.current) return; // Don't reinitialize if already done
 
     // Capture the current map ref value to avoid the React hooks warning
     const currentMapRef = mapRef.current;
 
-    // Check if data has actually changed
-    if (
-      prevDataRef.current.properties === propertiesHash &&
-      prevDataRef.current.projects === projectsHash &&
-      isInitializedRef.current
-    ) {
-      console.log("Data unchanged, skipping map reinitialization");
-      return;
-    }
-
-    // Update previous data reference
-    prevDataRef.current = {
-      properties: propertiesHash,
-      projects: projectsHash,
-    };
-
-    // Reset cancellation and fallback flags for each re-run
+    // Reset cancellation and fallback flags
     isCancelledRef.current = false;
     switchedToFallbackRef.current = false;
 
     // Only load Leaflet on client side
-    const loadMap = async () => {
+    const initializeMap = async () => {
       if (typeof window === "undefined" || !mapRef.current) return;
 
       try {
@@ -142,6 +117,7 @@ export function PropertyMap({
 
         // Dynamically import Leaflet
         const L = await import("leaflet");
+        leafletRef.current = L;
 
         // Inject Leaflet CSS once to ensure tiles/controls are visible
         if (!cssInjectedRef.current && typeof document !== "undefined") {
@@ -162,38 +138,13 @@ export function PropertyMap({
 
         if (isCancelledRef.current) return;
 
-        // Clear existing markers first
-        if (markersRef.current.length > 0) {
-          markersRef.current.forEach((marker) => {
-            if (marker && marker.remove) {
-              try {
-                marker.remove();
-              } catch (e) {
-                console.warn("Error removing marker:", e);
-              }
-            }
-          });
-          markersRef.current = [];
-        }
-
-        // Clear existing map
-        if (mapInstanceRef.current) {
+        // Check if container already has a map instance
+        const containerWithLeaflet = mapRef.current as HTMLDivElement & {
+          _leaflet_id?: number;
+        };
+        if (containerWithLeaflet._leaflet_id) {
           try {
-            mapInstanceRef.current.remove();
-          } catch (e) {
-            console.warn("Error removing map:", e);
-          }
-          mapInstanceRef.current = null;
-          isInitializedRef.current = false;
-        }
-
-        // Ensure Leaflet can re-initialize on the same container
-        if (
-          (mapRef.current as unknown as { _leaflet_id?: number })?._leaflet_id
-        ) {
-          try {
-            delete (mapRef.current as unknown as { _leaflet_id?: number })
-              ._leaflet_id;
+            delete containerWithLeaflet._leaflet_id;
           } catch {}
         }
 
@@ -217,27 +168,6 @@ export function PropertyMap({
             await new Promise((r) => setTimeout(r, 150));
           }
           if (!hasSize() || isCancelledRef.current) return;
-        }
-
-        // Check if the container already has a map instance
-        const containerWithLeaflet = mapRef.current as HTMLDivElement & {
-          _leaflet_id?: number;
-        };
-        if (containerWithLeaflet._leaflet_id) {
-          console.log("Container already has a map instance, removing...");
-          try {
-            // Try to remove any existing map from the container
-            const existingMap = L.map(mapRef.current);
-            existingMap.remove();
-            // Clear the leaflet ID
-            delete containerWithLeaflet._leaflet_id;
-          } catch (e) {
-            console.warn("Error removing existing map from container:", e);
-            // If we can't remove it properly, try to clear the ID manually
-            try {
-              delete containerWithLeaflet._leaflet_id;
-            } catch {}
-          }
         }
 
         // Create map instance
@@ -269,33 +199,61 @@ export function PropertyMap({
         console.log("Tiles added to map");
 
         // Force map to refresh after a short delay to ensure proper rendering
-        setTimeout(() => {
-          try {
-            if (!isCancelledRef.current) {
-              map.invalidateSize();
-            }
-          } catch {}
-        }, 200);
-        setTimeout(() => {
-          try {
-            if (!isCancelledRef.current) {
-              map.invalidateSize();
-            }
-          } catch {}
-        }, 800);
-        setTimeout(() => {
-          try {
-            if (!isCancelledRef.current) {
-              map.invalidateSize();
-            }
-          } catch {}
-        }, 1500);
+        const timeouts: NodeJS.Timeout[] = [];
+        timeouts.push(
+          setTimeout(() => {
+            try {
+              if (
+                !isCancelledRef.current &&
+                mapInstanceRef.current &&
+                map.getContainer()
+              ) {
+                map.invalidateSize();
+              }
+            } catch {}
+          }, 200)
+        );
+        timeouts.push(
+          setTimeout(() => {
+            try {
+              if (
+                !isCancelledRef.current &&
+                mapInstanceRef.current &&
+                map.getContainer()
+              ) {
+                map.invalidateSize();
+              }
+            } catch {}
+          }, 800)
+        );
+        timeouts.push(
+          setTimeout(() => {
+            try {
+              if (
+                !isCancelledRef.current &&
+                mapInstanceRef.current &&
+                map.getContainer()
+              ) {
+                map.invalidateSize();
+              }
+            } catch {}
+          }, 1500)
+        );
+
+        // Store timeouts for cleanup
+        (
+          map as unknown as { _customTimeouts?: NodeJS.Timeout[] }
+        )._customTimeouts = timeouts;
 
         // Observe container resize and invalidate map size
         if (mapRef.current && typeof ResizeObserver !== "undefined") {
           const ro = new ResizeObserver(() => {
             try {
-              if (!isCancelledRef.current) {
+              if (
+                !isCancelledRef.current &&
+                mapInstanceRef.current &&
+                map.getContainer()
+              ) {
                 map.invalidateSize();
               }
             } catch {}
@@ -352,200 +310,7 @@ export function PropertyMap({
         `;
         document.head.appendChild(style);
 
-        // Add markers for each property
-        console.log("Properties received:", properties);
-
-        // Log invalid coordinates for debugging
-        const invalidProperties = properties.filter(
-          (p: Property) =>
-            p.latitude !== null &&
-            p.latitude !== undefined &&
-            p.longitude !== null &&
-            p.longitude !== undefined &&
-            !isValidCoordinates(p.latitude, p.longitude)
-        );
-        if (invalidProperties.length > 0) {
-          console.log(
-            "Properties with invalid coordinates (filtered out):",
-            invalidProperties.map((p) => ({
-              id: p.id,
-              title: p.title,
-              latitude: p.latitude,
-              longitude: p.longitude,
-            }))
-          );
-        }
-
-        console.log(
-          "Properties with valid coordinates:",
-          properties.filter((p: Property) =>
-            isValidCoordinates(p.latitude, p.longitude)
-          )
-        );
-
-        const validProperties = properties.filter((p: Property) =>
-          isValidCoordinates(p.latitude, p.longitude)
-        );
-
-        const validProjects = (projects || []).filter((p: ProjectPin) =>
-          isValidCoordinates(p.latitude, p.longitude)
-        );
-
-        if (validProperties.length > 0 || validProjects.length > 0) {
-          const bounds = L.latLngBounds([]);
-
-          // Ensure map is ready before adding markers
-          if (!map || !map.getContainer()) {
-            console.warn("Map not ready, skipping marker creation");
-            return;
-          }
-
-          validProperties.forEach((property) => {
-            if (!isValidCoordinates(property.latitude, property.longitude))
-              return;
-
-            const pinColor = getPropertyPinColor(property.transactionType);
-
-            // Create custom icon
-            const customIcon = L.divIcon({
-              className: "custom-marker",
-              html: `
-                <div style="
-                  width: 20px;
-                  height: 20px;
-                  background-color: ${pinColor};
-                  border: 2px solid white;
-                  border-radius: 50%;
-                  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-size: 10px;
-                  font-weight: bold;
-                  color: white;
-                  text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
-                ">
-                  ${
-                    property.transactionType === TransactionType.SALE
-                      ? "V"
-                      : property.transactionType === TransactionType.RENT
-                        ? "A"
-                        : "C"
-                  }
-                </div>
-              `,
-              iconSize: [20, 20],
-              iconAnchor: [10, 10],
-            });
-
-            // Create popup content
-            const popupContent = `
-              <div style="min-width: 200px;">
-                <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">
-                  ${property.title}
-                </h3>
-                <p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">
-                  ${property.address || ""}, ${property.locationCity}, ${property.locationState}
-                </p>
-                <p style="margin: 0 0 4px 0; font-size: 12px;">
-                  <strong>Precio:</strong> ${property.currency === "DOLLARS" ? "$" : "Bs."} ${property.price.toLocaleString()}
-                </p>
-                <p style="margin: 0 0 4px 0; font-size: 12px;">
-                  <strong>Tipo:</strong> ${property.transactionType === "SALE" ? "Venta" : property.transactionType === "RENT" ? "Alquiler" : "Anticrético"}
-                </p>
-                <p style="margin: 0 0 4px 0; font-size: 12px;">
-                  <strong>Detalles:</strong> ${property.bedrooms} dormitorios, ${property.bathrooms} baños, ${property.squareMeters}m²
-                </p>
-                ${property.customId ? `<p style="margin: 0; font-size: 11px; color: #999;">ID: ${property.customId}</p>` : ""}
-              </div>
-            `;
-
-            // Add marker to map
-            try {
-              const marker = L.marker(
-                [property.latitude!, property.longitude!],
-                {
-                  icon: customIcon,
-                }
-              )
-                .addTo(map)
-                .bindPopup(popupContent);
-
-              console.log(
-                `Marker added for property: ${property.title} at [${property.latitude}, ${property.longitude}]`
-              );
-              markersRef.current.push(marker);
-              bounds.extend([property.latitude!, property.longitude!]);
-            } catch (e) {
-              console.warn(
-                `Error adding marker for property ${property.title}:`,
-                e
-              );
-            }
-          });
-
-          // Add markers for projects
-          validProjects.forEach((project) => {
-            if (!isValidCoordinates(project.latitude, project.longitude))
-              return;
-
-            const projectIcon = L.divIcon({
-              className: "custom-marker",
-              html: `
-                <div style="
-                  width: 20px;
-                  height: 20px;
-                  background-color: #7c3aed;
-                  border: 2px solid white;
-                  border-radius: 50%;
-                  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  font-size: 10px;
-                  font-weight: bold;
-                  color: white;
-                  text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
-                ">
-                  P
-                </div>
-              `,
-              iconSize: [20, 20],
-              iconAnchor: [10, 10],
-            });
-
-            const popupContent = `
-              <div style="min-width: 200px;">
-                <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">
-                  ${project.name}
-                </h3>
-                ${project.location ? `<p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">${project.location}</p>` : ""}
-              </div>
-            `;
-
-            try {
-              const marker = L.marker([project.latitude!, project.longitude!], {
-                icon: projectIcon,
-              })
-                .addTo(map)
-                .bindPopup(popupContent);
-
-              markersRef.current.push(marker);
-              bounds.extend([project.latitude!, project.longitude!]);
-            } catch (e) {
-              console.warn(
-                `Error adding marker for project ${project.name}:`,
-                e
-              );
-            }
-          });
-
-          // Fit map to show all markers
-          if (bounds.isValid()) {
-            map.fitBounds(bounds, { padding: [20, 20] });
-          }
-        }
-
+        // Store map reference - markers will be added separately
         mapInstanceRef.current = map;
         isInitializedRef.current = true;
       } catch (error) {
@@ -556,13 +321,38 @@ export function PropertyMap({
 
     // Use a timeout to ensure the component is fully mounted
     const timeoutId = setTimeout(() => {
-      if (!isCancelledRef.current) loadMap();
+      if (!isCancelledRef.current) initializeMap();
     }, 100);
 
     // Cleanup on unmount
     return () => {
       clearTimeout(timeoutId);
       isCancelledRef.current = true;
+
+      // Clear all pending timeouts
+      if (mapInstanceRef.current) {
+        const customTimeouts = (
+          mapInstanceRef.current as unknown as {
+            _customTimeouts?: NodeJS.Timeout[];
+          }
+        )._customTimeouts;
+        if (customTimeouts) {
+          customTimeouts.forEach((t) => clearTimeout(t));
+        }
+      }
+
+      // Disconnect resize observer first
+      if (resizeObserverRef.current) {
+        try {
+          resizeObserverRef.current.disconnect();
+        } catch (e) {
+          console.warn(
+            "Error disconnecting resize observer during cleanup:",
+            e
+          );
+        }
+        resizeObserverRef.current = null;
+      }
 
       // Clear markers
       if (markersRef.current.length > 0) {
@@ -578,9 +368,13 @@ export function PropertyMap({
         markersRef.current = [];
       }
 
-      // Clear map
+      // Clear map - stop any ongoing animations first
       if (mapInstanceRef.current) {
         try {
+          // Stop any ongoing animations/transitions
+          mapInstanceRef.current.stop();
+
+          // Remove the map instance
           mapInstanceRef.current.remove();
         } catch (e) {
           console.warn("Error removing map during cleanup:", e);
@@ -602,21 +396,199 @@ export function PropertyMap({
           }
         }
       }
-
-      // Disconnect resize observer
-      if (resizeObserverRef.current) {
-        try {
-          resizeObserverRef.current.disconnect();
-        } catch (e) {
-          console.warn(
-            "Error disconnecting resize observer during cleanup:",
-            e
-          );
-        }
-        resizeObserverRef.current = null;
-      }
     };
-  }, [propertiesHash, projectsHash, isVisible, properties, projects]);
+  }, [isVisible]); // Only run once when visible
+
+  // Update markers whenever properties or projects change
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const L = leafletRef.current;
+
+    if (!map || !L || !isInitializedRef.current) return;
+
+    // Clear existing markers
+    if (markersRef.current.length > 0) {
+      markersRef.current.forEach((marker) => {
+        try {
+          marker.remove();
+        } catch (e) {
+          console.warn("Error removing marker:", e);
+        }
+      });
+      markersRef.current = [];
+    }
+
+    const validProperties = properties.filter((p: Property) =>
+      isValidCoordinates(p.latitude, p.longitude)
+    );
+
+    const validProjects = (projects || []).filter((p: ProjectPin) =>
+      isValidCoordinates(p.latitude, p.longitude)
+    );
+
+    if (validProperties.length > 0 || validProjects.length > 0) {
+      const bounds = L.latLngBounds([]);
+
+      // Add property markers
+      validProperties.forEach((property) => {
+        if (!isValidCoordinates(property.latitude, property.longitude)) return;
+
+        const pinColor = getPropertyPinColor(property.transactionType);
+
+        const customIcon = L.divIcon({
+          className: "custom-marker",
+          html: `
+            <div style="
+              width: 20px;
+              height: 20px;
+              background-color: ${pinColor};
+              border: 2px solid white;
+              border-radius: 50%;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 10px;
+              font-weight: bold;
+              color: white;
+              text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+            ">
+              ${
+                property.transactionType === TransactionType.SALE
+                  ? "V"
+                  : property.transactionType === TransactionType.RENT
+                    ? "A"
+                    : "C"
+              }
+            </div>
+          `,
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
+        });
+
+        const popupContent = `
+          <div style="min-width: 200px;">
+            <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">
+              ${property.title}
+            </h3>
+            <p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">
+              ${property.address || ""}, ${property.locationCity}, ${property.locationState}
+            </p>
+            <p style="margin: 0 0 4px 0; font-size: 12px;">
+              <strong>Precio:</strong> ${property.currency === "DOLLARS" ? "$" : "Bs."} ${property.price.toLocaleString()}
+            </p>
+            <p style="margin: 0 0 4px 0; font-size: 12px;">
+              <strong>Tipo:</strong> ${property.transactionType === "SALE" ? "Venta" : property.transactionType === "RENT" ? "Alquiler" : "Anticrético"}
+            </p>
+            <p style="margin: 0 0 4px 0; font-size: 12px;">
+              <strong>Detalles:</strong> ${property.bedrooms} dormitorios, ${property.bathrooms} baños, ${property.squareMeters}m²
+            </p>
+            ${property.customId ? `<p style="margin: 0; font-size: 11px; color: #999;">ID: ${property.customId}</p>` : ""}
+          </div>
+        `;
+
+        try {
+          const marker = L.marker([property.latitude!, property.longitude!], {
+            icon: customIcon,
+          })
+            .addTo(map)
+            .bindTooltip(popupContent, {
+              permanent: false,
+              direction: "auto",
+            });
+
+          marker.on("click", () => {
+            router.push(`/property/${property.id}`);
+          });
+
+          marker.on("mouseover", () => {
+            marker.openTooltip();
+          });
+
+          marker.on("mouseout", () => {
+            marker.closeTooltip();
+          });
+
+          markersRef.current.push(marker);
+          bounds.extend([property.latitude!, property.longitude!]);
+        } catch (e) {
+          console.warn(`Error adding marker for property ${property.title}:`, e);
+        }
+      });
+
+      // Add project markers
+      validProjects.forEach((project) => {
+        if (!isValidCoordinates(project.latitude, project.longitude)) return;
+
+        const projectIcon = L.divIcon({
+          className: "custom-marker",
+          html: `
+            <div style="
+              width: 20px;
+              height: 20px;
+              background-color: #7c3aed;
+              border: 2px solid white;
+              border-radius: 50%;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 10px;
+              font-weight: bold;
+              color: white;
+              text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+            ">
+              P
+            </div>
+          `,
+          iconSize: [20, 20],
+          iconAnchor: [10, 10],
+        });
+
+        const popupContent = `
+          <div style="min-width: 200px;">
+            <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: bold;">
+              ${project.name}
+            </h3>
+            ${project.location ? `<p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">${project.location}</p>` : ""}
+          </div>
+        `;
+
+        try {
+          const marker = L.marker([project.latitude!, project.longitude!], {
+            icon: projectIcon,
+          })
+            .addTo(map)
+            .bindTooltip(popupContent, {
+              permanent: false,
+              direction: "auto",
+            });
+
+          marker.on("click", () => {
+            router.push(`/project/${project.id}`);
+          });
+
+          marker.on("mouseover", () => {
+            marker.openTooltip();
+          });
+
+          marker.on("mouseout", () => {
+            marker.closeTooltip();
+          });
+
+          markersRef.current.push(marker);
+          bounds.extend([project.latitude!, project.longitude!]);
+        } catch (e) {
+          console.warn(`Error adding marker for project ${project.name}:`, e);
+        }
+      });
+
+      // Fit map to show all markers
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [20, 20] });
+      }
+    }
+  }, [properties, projects, router]);
 
   return (
     <Card className={className}>
