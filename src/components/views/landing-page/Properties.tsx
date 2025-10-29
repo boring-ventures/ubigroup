@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   MapPin,
@@ -344,12 +344,48 @@ export default function Properties() {
     }
   }, [filters.searchTerm]);
 
-  // Initial load
+  // Track if we've done initial load and what the last activeTab was
+  const initialLoadRef = useRef(false);
+  const lastActiveTabRef = useRef<string | null>(null);
+
   useEffect(() => {
-    // While typing, wait for debounce to settle
+    const tabChanged =
+      lastActiveTabRef.current !== null &&
+      lastActiveTabRef.current !== activeTab;
+    const isInitialLoad = !initialLoadRef.current;
+
+    // On initial load or tab change, load immediately without waiting for debounce
+    // Otherwise, wait for debounce to settle
+    if (isInitialLoad || tabChanged) {
+      if (isInitialLoad) {
+        initialLoadRef.current = true;
+        setLoading(true);
+      }
+
+      // Update tab ref after checking for change
+      lastActiveTabRef.current = activeTab;
+
+      const effectiveFilters = { ...filters, searchTerm: debouncedSearch };
+
+      if (activeTab === "proyectos") {
+        fetchProjects();
+      } else if (activeTab === "mapa") {
+        // Load both datasets for the map
+        fetchProperties(effectiveFilters);
+        fetchProjects();
+      } else {
+        fetchProperties(effectiveFilters);
+      }
+      return;
+    }
+
+    // Update tab ref if it changed (shouldn't happen here, but just in case)
+    lastActiveTabRef.current = activeTab;
+
+    // After initial load and tab is stable, wait for debounce to settle before refetching
     if (filters.searchTerm !== debouncedSearch) return;
 
-    // Reset to page 1 when tab or filters change
+    // Reset to page 1 when filters change
     setCurrentPage(1);
 
     const effectiveFilters = { ...filters, searchTerm: debouncedSearch };
