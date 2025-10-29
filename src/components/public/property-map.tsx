@@ -76,7 +76,7 @@ export function PropertyMap({
   const switchedToFallbackRef = useRef(false);
   const [isVisible, setIsVisible] = useState(false);
   const leafletRef = useRef<typeof import("leaflet") | null>(null);
-
+  const [mapReady, setMapReady] = useState(false);
 
   // Observe visibility to initialize only when in viewport
   useEffect(() => {
@@ -313,6 +313,10 @@ export function PropertyMap({
         // Store map reference - markers will be added separately
         mapInstanceRef.current = map;
         isInitializedRef.current = true;
+
+        // Signal that map is ready - this will trigger marker update if properties are already loaded
+        setMapReady(true);
+        console.log("Map initialization complete, mapReady set to true");
       } catch (error) {
         console.error("Error loading map:", error);
         setMapError("No se pudo cargar el mapa. Por favor, recarga la página.");
@@ -399,12 +403,29 @@ export function PropertyMap({
     };
   }, [isVisible]); // Only run once when visible
 
-  // Update markers whenever properties or projects change
+  // Update markers whenever properties or projects change, or when map becomes ready
   useEffect(() => {
     const map = mapInstanceRef.current;
     const L = leafletRef.current;
 
-    if (!map || !L || !isInitializedRef.current) return;
+    console.log("Marker update effect triggered", {
+      hasMap: !!map,
+      hasLeaflet: !!L,
+      isInitialized: isInitializedRef.current,
+      mapReady: mapReady,
+      propertiesCount: properties.length,
+      projectsCount: projects?.length || 0,
+    });
+
+    if (!map || !L || !isInitializedRef.current || !mapReady) {
+      console.log("Map not ready, skipping marker update", {
+        hasMap: !!map,
+        hasLeaflet: !!L,
+        isInitialized: isInitializedRef.current,
+        mapReady: mapReady,
+      });
+      return;
+    }
 
     // Clear existing markers
     if (markersRef.current.length > 0) {
@@ -426,8 +447,14 @@ export function PropertyMap({
       isValidCoordinates(p.latitude, p.longitude)
     );
 
+    console.log("Valid items for markers", {
+      validPropertiesCount: validProperties.length,
+      validProjectsCount: validProjects.length,
+    });
+
     if (validProperties.length > 0 || validProjects.length > 0) {
       const bounds = L.latLngBounds([]);
+      let markersAdded = 0;
 
       // Add property markers
       validProperties.forEach((property) => {
@@ -511,8 +538,15 @@ export function PropertyMap({
 
           markersRef.current.push(marker);
           bounds.extend([property.latitude!, property.longitude!]);
+          markersAdded++;
+          console.log(
+            `Marker added for property: ${property.title} at [${property.latitude}, ${property.longitude}]`
+          );
         } catch (e) {
-          console.warn(`Error adding marker for property ${property.title}:`, e);
+          console.warn(
+            `Error adding marker for property ${property.title}:`,
+            e
+          );
         }
       });
 
@@ -578,17 +612,30 @@ export function PropertyMap({
 
           markersRef.current.push(marker);
           bounds.extend([project.latitude!, project.longitude!]);
+          markersAdded++;
+          console.log(
+            `Marker added for project: ${project.name} at [${project.latitude}, ${project.longitude}]`
+          );
         } catch (e) {
           console.warn(`Error adding marker for project ${project.name}:`, e);
         }
       });
 
+      console.log(
+        `Total markers added: ${markersAdded}, bounds valid: ${bounds.isValid()}`
+      );
+
       // Fit map to show all markers
       if (bounds.isValid()) {
         map.fitBounds(bounds, { padding: [20, 20] });
+        console.log("Map bounds adjusted to fit all markers");
+      } else {
+        console.warn("Bounds are not valid, could not fit map to markers");
       }
+    } else {
+      console.log("No valid properties or projects to display on map");
     }
-  }, [properties, projects, router]);
+  }, [properties, projects, router, mapReady]);
 
   return (
     <Card className={className}>
